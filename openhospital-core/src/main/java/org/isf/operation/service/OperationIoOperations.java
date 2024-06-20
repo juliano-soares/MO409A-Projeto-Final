@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,44 +17,50 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.operation.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.operation.model.Operation;
 import org.isf.opetype.model.OperationType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.pagination.PagedResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * This class offers the io operations for recovering and managing
+ * operations records from the database
+ *
+ * @author Rick, Vero, pupo
+ * modification history
+ * ====================
+ * 13/02/09 - Alex - modified query for ordering resultset by description only
+ * 13/02/09 - Alex - added Major/Minor control
+ */
 @Service
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class OperationIoOperations {
 
+	@Autowired
 	private OperationIoOperationRepository repository;
-
-	public OperationIoOperations(OperationIoOperationRepository operationIoOperationRepository) {
-		this.repository = operationIoOperationRepository;
-	}
-
+	
 	/**
 	 * Return the {@link Operation}s whose type matches specified string
 	 * 
 	 * @param typeDescription - a type description
-	 * @return the list of {@link Operation}s. It could be {@code empty} or {@code null}.
+	 * @return the list of {@link Operation}s. It could be <code>empty</code> or <code>null</code>.
 	 * @throws OHServiceException 
 	 */
 	public List<Operation> getOperationByTypeDescription(String typeDescription) throws OHServiceException {
-		return typeDescription == null ?
+		return new ArrayList<>(typeDescription == null ?
 				repository.findByOrderByDescriptionAsc() :
-				repository.findAllByType_DescriptionContainsOrderByDescriptionAsc('%' + typeDescription + '%');
+				repository.findAllByType_DescriptionContainsOrderByDescriptionAsc("%" + typeDescription + "%"));
 	}
 
 	public Operation findByCode(String code) throws OHServiceException{
@@ -73,41 +79,43 @@ public class OperationIoOperations {
 	 * Insert an {@link Operation} in the DBs
 	 * 
 	 * @param operation - the {@link Operation} to insert
-	 * @return the newly saved {@link Operation} object
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the operation has been inserted, <code>false</code> otherwise.
+	 * @throws OHServiceException 
 	 */
-	public Operation newOperation(Operation operation) throws OHServiceException {
-		return repository.save(operation);
+	public boolean newOperation(Operation operation) throws OHServiceException {
+		return repository.save(operation) != null;
 	}
 	
 	/** 
 	 * Updates an {@link Operation} in the DB
 	 * 
 	 * @param operation - the {@link Operation} to update
-	 * @return the newly updated {@link Operation} object
+	 * @return <code>true</code> if the item has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
-	public Operation updateOperation(Operation operation) throws OHServiceException {
-		return repository.save(operation);
+	public boolean updateOperation(Operation operation) throws OHServiceException {
+		return repository.save(operation) != null;
 	}
 	
 	/** 
 	 * Delete a {@link Operation} in the DB
 	 * @param operation - the {@link Operation} to delete
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the item has been updated, <code>false</code> otherwise.
+	 * @throws OHServiceException 
 	 */
-	public void deleteOperation(Operation operation) throws OHServiceException {
+	public boolean deleteOperation(Operation operation) throws OHServiceException {
 		repository.delete(operation);
+		return true;
 	}
 	
 	/**
 	 * Checks if an {@link Operation} code has already been used
 	 * @param code - the code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise.
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+		return repository.exists(code);
 	}
 	
 	/**
@@ -115,24 +123,12 @@ public class OperationIoOperations {
 	 * 
 	 * @param description - the {@link Operation} description
 	 * @param typeCode - the {@link OperationType} code
-	 * @return {@code true} if the description is already in use, {@code false} otherwise.
+	 * @return <code>true</code> if the description is already in use, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
 	public boolean isDescriptionPresent(String description, String typeCode) throws OHServiceException {
 		Operation foundOperation = repository.findOneByDescriptionAndType_Code(description, typeCode);
 		return foundOperation != null && foundOperation.getDescription().compareTo(description) == 0;
 	}
-	
-	/**
-	 * Retrieves a page of {@link Operation}s
-	 * 
-	 * @param page - The page number of the operations to retrieve
-	 * @param size - The size of the page of operations to retrieve.
-	 * @return a {@link PagedResponse} object that contains the {@link Operation}s.
-	 * @throws OHServiceException 
-	 */
-	public Page<Operation> getOperationPageable(int page, int size) throws OHServiceException {
-		return repository.findAllPageable(PageRequest.of(page, size));
-
-	}
 }
+

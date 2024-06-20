@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patient.model;
 
@@ -27,25 +27,24 @@ import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
 import javax.imageio.ImageIO;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 /**
  * Photo related to a single {@link Patient}
  */
 @Entity
-@Table(name="OH_PATIENT_PROFILE_PHOTO")
+@Table(name = "PATIENT_PROFILE_PHOTO")
 public class PatientProfilePhoto implements Serializable {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="PAT_PROFILE_PHOTO_ID")
 	private Integer code;
 
@@ -57,6 +56,9 @@ public class PatientProfilePhoto implements Serializable {
 	private byte[] photo;
 
 
+	public byte[] getPhoto() {
+		return photo;
+	}
 
 	public Image getPhotoAsImage() {
 		try {
@@ -70,6 +72,9 @@ public class PatientProfilePhoto implements Serializable {
 		}
 	}
 
+	public void setPhoto(byte[] photo) {
+		this.photo = photo;
+	}
 
 	public Patient getPatient() {
 		return patient;
@@ -78,18 +83,4 @@ public class PatientProfilePhoto implements Serializable {
 	public void setPatient(final Patient patient) {
 		this.patient = patient;
 	}
-
-
-
-	public byte[] getPhoto() {
-		return photo;
-	}
-
-
-
-	public void setPhoto(byte[] photo) {
-		this.photo = photo;
-	}
-
-
 }

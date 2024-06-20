@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,11 +17,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.service;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.isf.medicalstock.model.Lot;
@@ -32,40 +32,32 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MovementIoOperationRepository extends JpaRepository<Movement, Integer>, MovementIoOperationRepositoryCustom {
-
-	@Query(value = "select m from Movement m join m.medical med where med.code = :code")
-	List<Movement> findAllByMedicalCode(@Param("code") Integer code);
+public interface MovementIoOperationRepository extends JpaRepository<Movement, Integer>, MovementIoOperationRepositoryCustom {    
+    @Query(value = "select m from Movement m join m.medical med where med.code = :code")
+    Movement findAllByMedicalCode(@Param("code") Integer code);
 
 	@Query(value = "select m from Movement m join m.medical med where med.code = :code")
 	Movement findAllByMedicalCodeOrderByLot_(@Param("code") Integer code);
+    
+    @Query(value = "select distinct med.code from Movement mov " +
+			"join mov.medical med " +
+			"join mov.type movtype " +
+			"join mov.lot lot " +
+			"where lot.code=:lot")
+    List<Integer> findAllByLot(@Param("lot") String lot);
+    
+    @Query(value = "select mov from Movement mov " +
+			"join mov.type movtype " +
+			"left join mov.lot lot " +
+			"left join mov.ward ward " +
+			"where mov.refNo = :refNo order by mov.date, mov.refNo")
+    List<Movement> findAllByRefNo(@Param("refNo") String refNo);
 
-	@Query(value = "select distinct med.code from Movement mov " +
-					"join mov.medical med " +
-					"join mov.type movtype " +
-					"join mov.lot lot " +
-					"where lot.code=:lot")
-	List<Integer> findAllByLot(@Param("lot") String lot);
+    List<Movement> findByLot(Lot lot);
+    
+    @Query(value = "select max(mov.date) from Movement mov")
+	GregorianCalendar findMaxDate();
 
-	@Query(value = "select mov from Movement mov " +
-					"join mov.type movtype " +
-					"left join mov.lot lot " +
-					"left join mov.ward ward " +
-					"where mov.refNo = :refNo order by mov.date, mov.refNo")
-	List<Movement> findAllByRefNo(@Param("refNo") String refNo);
-
-	List<Movement> findByLot(Lot lot);
-
-	@Query(value = "select max(mov.date) from Movement mov")
-	LocalDateTime findMaxDate();
-
-	@Query(value = "select mov.refNo from Movement mov where mov.refNo like :refNo")
-	List<String> findAllWhereRefNo(@Param("refNo") String refNo);
-	
-	@Query(value = "SELECT * FROM OH_MEDICALDSRSTOCKMOV ORDER BY MMV_ID DESC limit 1", nativeQuery = true)
-	Movement findLastMovement();
-
-	@Query("select count(m) from Movement m where active=1")
-	long countAllActiveMovements();
-
+    @Query(value = "select mov.refNo from Movement mov where mov.refNo like :refNo")
+    List<String> findAllWhereRefNo(@Param("refNo") String refNo);
 }

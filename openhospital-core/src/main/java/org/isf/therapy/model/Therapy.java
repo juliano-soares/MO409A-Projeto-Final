@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,16 +17,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.therapy.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
 import org.isf.medicals.model.Medical;
 
 /**
- * Bean to host Therapies information extracted from TherapyRow beans.
+ * Bean to host Therapies informations extract from TherapyRow beans.
  *
  * @author Mwithi
  */
@@ -34,7 +34,7 @@ public class Therapy {
 	
 	private int therapyID;
 	private int patID;
-	private LocalDateTime[] dates;
+	private GregorianCalendar[] dates;
 	private Medical medical;
 	private Double qty;
 	private String units;
@@ -59,7 +59,7 @@ public class Therapy {
 	 * @param notify
 	 * @param sms
 	 */
-	public Therapy(int therapyID, int patID, LocalDateTime[] dates,
+	public Therapy(int therapyID, int patID, GregorianCalendar[] dates,
 			Medical medical, Double qty, String units, int freqInDay,
 			String note, boolean notify, boolean sms) {
 		super();
@@ -83,11 +83,11 @@ public class Therapy {
 		this.therapyID = therapyID;
 	}
 
-	public LocalDateTime[] getDates() {
+	public GregorianCalendar[] getDates() {
 		return dates;
 	}
 
-	public void setDates(LocalDateTime[] dates) {
+	public void setDates(GregorianCalendar[] dates) {
 		this.dates = dates;
 	}
 
@@ -155,8 +155,8 @@ public class Therapy {
 		this.sms = sms;
 	}
 	
-	@Override
 	public String toString() {
-		return qty + this.units + " of " + medical.toString() + " - " + this.freqInDay + " per day";
+		String desc = "" + qty + this.units + " of " + medical.toString() + " - " + this.freqInDay + " per day";
+		return desc;
 	}
 }

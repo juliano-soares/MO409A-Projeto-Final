@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.serviceprinting.manager;
 
@@ -45,8 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRExporterParameter;
-import net.sf.jasperreports.engine.JRPrintPage;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperPrintManager;
 import net.sf.jasperreports.engine.export.JRTextExporter;
@@ -78,8 +76,8 @@ public class PrintReceipt {
 				if (TxtPrinter.MODE.equalsIgnoreCase("ZPL")) {
 					
 					JRTextExporter exporter = new JRTextExporter();
-					exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
-					exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, fileName);
+					exporter.setParameter(JRTextExporterParameter.JASPER_PRINT, jasperPrint);
+					exporter.setParameter(JRTextExporterParameter.OUTPUT_FILE_NAME, fileName);
 					exporter.setParameter(JRTextExporterParameter.CHARACTER_WIDTH, TxtPrinter.TXT_CHAR_WIDTH);
 					exporter.setParameter(JRTextExporterParameter.CHARACTER_HEIGHT, TxtPrinter.TXT_CHAR_HEIGHT);
 					exporter.exportReport();
@@ -93,6 +91,7 @@ public class PrintReceipt {
 					} else {
 						JasperPrintManager.printReport(jasperPrint, !TxtPrinter.USE_DEFAULT_PRINTER);
 					}
+					
 				} else if (TxtPrinter.MODE.equalsIgnoreCase("PDF")) {
 					
 					if (jasperPrint.getPages().size() > 1) {
@@ -129,42 +128,42 @@ public class PrintReceipt {
 			} else {
 				printService = defaultPrintService;
 			}
-			if (printService == null) {
-				return;
-			}
+			if (printService == null) return;
 			getPrinterDetails(printService);
 			DocPrintJob job = printService.createPrintJob();
 			DocFlavor flavor = DocFlavor.BYTE_ARRAY.AUTOSENSE;
 			PrintRequestAttributeSet pras = new HashPrintRequestAttributeSet();
 			DocAttributeSet das = new HashDocAttributeSet();
 			
-			try (FileReader frStream = new FileReader(file)) {
-				try (BufferedReader brStream = new BufferedReader(frStream)) {
-
-					int charH = TxtPrinter.ZPL_ROW_HEIGHT;
-					String font = "^A" + TxtPrinter.ZPL_FONT_TYPE;
-					String aLine = brStream.readLine();
-					String header = "^XA^LH0,30" + aLine;//starting point
-
-					StringBuilder zpl = new StringBuilder();
-					int i = 0;
-					while (!aLine.equals("")) {
-						zpl.append("^FO0,").append(i * charH);         //line position
-						zpl.append(font).append(',').append(charH);    //font size
-						zpl.append("^FD").append(aLine).append("^FS"); //line field
-						aLine = brStream.readLine();
-						i++;
-					}
-					zpl.append("^XZ");//end
-					String labelLength = "^LL" + charH * i;
-					header += labelLength;
-					String label = header + zpl;
-
-					byte[] by = label.getBytes();
-					Doc doc = new SimpleDoc(by, flavor, das);
-					job.print(doc, pras);
-				}
+			FileReader frStream = new FileReader(file);
+			BufferedReader brStream = new BufferedReader(frStream);
+			
+			int charH = TxtPrinter.ZPL_ROW_HEIGHT;
+			String font = "^A" + TxtPrinter.ZPL_FONT_TYPE;
+			String aLine = brStream.readLine();
+			String header = "^XA^LH0,30" + aLine;//starting point
+			
+			StringBuilder zpl = new StringBuilder();
+			int i = 0;
+			while (!aLine.equals("")) {
+				//System.out.println(aLine);
+				zpl.append("^FO0,").append(i * charH);         //line position
+				zpl.append(font).append(",").append(charH);    //font size
+				zpl.append("^FD").append(aLine).append("^FS"); //line field
+				aLine = brStream.readLine();
+				i++;
 			}
+			zpl.append("^XZ");//end
+			String labelLength = "^LL" + charH * i;
+			header+=labelLength;
+			String label = header + zpl;
+
+			byte[] by = label.getBytes();
+			Doc doc = new SimpleDoc(by, flavor, das);
+			job.print(doc, pras);
+			brStream.close();
+			frStream.close();
+
 		} catch (IOException | PrintException exception) {
 			LOGGER.error(exception.getMessage(), exception);
 		}
@@ -175,8 +174,10 @@ public class PrintReceipt {
 	 */
 	private void printReversPages(JasperPrint jasperPrint) {
 		try {
-			List<JRPrintPage> pages = jasperPrint.getPages();
+			
+			List pages = jasperPrint.getPages();
 			JasperPrintManager.printPages(jasperPrint, 0, pages.size()-1, !TxtPrinter.USE_DEFAULT_PRINTER);
+			
 		} catch (JRException jrException) {
 			LOGGER.error(jrException.getMessage(), jrException);
 		}
@@ -194,10 +195,11 @@ public class PrintReceipt {
 				LOGGER.debug(flavor.toString());
 			}
 		}
+		//System.out.println("Attributes:");
 		Attribute[] attributes = printService.getAttributes().toArray();
 		if (attributes != null) {
 			for (Attribute attr : attributes) {
-				LOGGER.debug("{}: {}", attr.getName(), attr.getClass());
+				LOGGER.debug("{}: {}", attr.getName(), (attr.getClass()).toString());
 			}
 		}
 	}

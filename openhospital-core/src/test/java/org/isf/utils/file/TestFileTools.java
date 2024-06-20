@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,23 +17,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.file;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-class TestFileTools {
+public class TestFileTools {
 
 	// The ultimate goal is to return a single Date object instead of an List of Dates.
 	// Until that change is made and the corresponding changes in the GUI project
@@ -47,7 +45,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyydashMMdashdd_HHmmss() throws Exception {
+	public void testGetTimestampFromNameyyyydashMMdashdd_HHmmss() throws Exception {
 
 		// Variations of "yyyy-MM-dd_HHmmss"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -68,7 +66,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyydashMMdashddblanlHHmmss() throws Exception {
+	public void testGetTimestampFromNameyyyydashMMdashddblanlHHmmss() throws Exception {
 
 		// Variations of "yyyy-MM-dd HHmmss"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -89,7 +87,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyydashMMdashdd_HHmm() throws Exception {
+	public void testGetTimestampFromNameyyyydashMMdashdd_HHmm() throws Exception {
 
 		// Variations of "yyyy-MM-dd_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -110,7 +108,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyydashMMdashddblankHHmm() throws Exception {
+	public void testGetTimestampFromNameyyyydashMMdashddblankHHmm() throws Exception {
 
 		// Variations of "yyyy-MM-dd HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -131,7 +129,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyydashMMdashdd() throws Exception {
+	public void testGetTimestampFromNameyyyydashMMdashdd() throws Exception {
 
 		// Variations of "yyyy-MM-dd"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -152,7 +150,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyyMMdd_HHmmss() throws Exception {
+	public void testGetTimestampFromNameyyyyMMdd_HHmmss() throws Exception {
 
 		// Variations of "yyyyMMdd_HHmmss"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -173,7 +171,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyyMMddblanlHHmmss() throws Exception {
+	public void testGetTimestampFromNameyyyyMMddblanlHHmmss() throws Exception {
 
 		// Variations of "yyyyMMdd HHmmss"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -194,7 +192,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyyMMdd_HHmm() throws Exception {
+	public void testGetTimestampFromNameyyyyMMdd_HHmm() throws Exception {
 
 		// Variations of "yyyyMMdd_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -215,7 +213,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyyMMddblankHHmm() throws Exception {
+	public void testGetTimestampFromNameyyyyMMddblankHHmm() throws Exception {
 
 		// Variations of "yyyyMMdd HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -236,7 +234,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimestampFromNameyyyyMMdd() throws Exception {
+	public void testGetTimestampFromNameyyyyMMdd() throws Exception {
 
 		// Variations of "yyyyMMdd"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -257,7 +255,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyyyy_HHmm() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyyyy_HHmm() throws Exception {
 
 		// Variations of "dd-MM-yyyy_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -278,7 +276,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyyyyblankHHmm() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyyyyblankHHmm() throws Exception {
 
 		// Variations of "dd-MM-yyyy HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -299,7 +297,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyyyy() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyyyy() throws Exception {
 
 		// Variations of "dd-MM-yyyy"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -320,7 +318,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyy_HHmm() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyy_HHmm() throws Exception {
 
 		// Variations of "dd-MM-yy_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -341,7 +339,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyyblankHHmm() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyyblankHHmm() throws Exception {
 
 		// Variations of "dd-MM-yy HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -362,7 +360,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNamedddashMMdashyy() throws Exception {
+	public void testGetTimeStampFromNamedddashMMdashyy() throws Exception {
 
 		// Variations of "dd-MM-yy"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -383,7 +381,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyyyy_HHmm() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyyyy_HHmm() throws Exception {
 
 		// Variations of "dd/MM/yyyy_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -404,7 +402,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyyyyblankHHmm() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyyyyblankHHmm() throws Exception {
 
 		// Variations of "dd/MM/yyyy HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -425,7 +423,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyyyy() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyyyy() throws Exception {
 
 		// Variations of "dd/MM/yyyy"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -446,7 +444,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyy_HHmm() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyy_HHmm() throws Exception {
 
 		// Variations of "dd/MM/yy_HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -467,7 +465,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyyblankHHmm() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyyblankHHmm() throws Exception {
 
 		// Variations of "dd/MM/yy HHmm"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -488,7 +486,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampFromNameddslashMMslashyy() throws Exception {
+	public void testGetTimeStampFromNameddslashMMslashyy() throws Exception {
 
 		// Variations of "dd/MM/yy"
 		Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
@@ -509,7 +507,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testGetTimeStampNoThere() throws Exception {
+	public void testGetTimeStampNoThere() throws Exception {
 		assertThat(getTimestampFromName(null)).isNull();
 		assertThat(getTimestampFromName("")).isNull();
 		assertThat(getTimestampFromName("justText")).isNull();
@@ -517,7 +515,7 @@ class TestFileTools {
 	}
 
 	@Test
-	void testHumanReadableByteCountParse() throws Exception {
+	public void testHumanReadableByteCountParse() throws Exception {
 		assertThat(FileTools.humanReadableByteCountParse("1024B")).isEqualTo(1024L);
 		assertThat(FileTools.humanReadableByteCountParse("4M")).isEqualTo(4194304L);
 		assertThat(FileTools.humanReadableByteCountParse("16M")).isEqualTo(16777216L);
@@ -526,46 +524,11 @@ class TestFileTools {
 	}
 
 	@Test
-	void testHumanReadableByteCount() throws Exception {
+	public void testHumanReadableByteCount() throws Exception {
 		assertThat(FileTools.humanReadableByteCount(1024L, Locale.US)).isEqualTo("1.0 B");
 		assertThat(FileTools.humanReadableByteCount(4194304L, Locale.US)).isEqualTo("4.0 M");
 		assertThat(FileTools.humanReadableByteCount(16777216L, Locale.US)).isEqualTo("16.0 M");
 		assertThat(FileTools.humanReadableByteCount(268435456L, Locale.US)).isEqualTo("256.0 M");
 		assertThat(FileTools.humanReadableByteCount(1073741824L, Locale.US)).isEqualTo("1.0 G");
-	}
-
-	@Test
-	void testReadFileToStringLineByLineWithHtml() {
-		File file = getFile("testFile.txt");
-		String result = FileTools.readFileToStringLineByLine(file.getAbsolutePath(), true);
-
-		assertThat(result).isNotNull();
-		assertThat(result).startsWith("<html>");
-		assertThat(result).endsWith("</html>");
-		assertThat(result).contains("<br>");
-		assertThat(result).contains("This could be one line text");
-		assertThat(result).contains("or text with");
-	}
-
-	@Test
-	void testReadFileToStringLineByLineWithoutHtml() {
-		File file = getFile("testFile.txt");
-		String result = FileTools.readFileToStringLineByLine(file.getAbsolutePath(), false);
-
-		assertThat(result).isNotNull();
-		assertThat(result).doesNotStartWith("<html>");
-		assertThat(result).doesNotEndWith("</html>");
-		assertThat(result).doesNotContain("<br>");
-		assertThat(result).contains("This could be one line text");
-		assertThat(result).contains("or text with");
-	}
-
-	@Test
-	void testReadNonExistentFile() {
-		assertThrows(IllegalArgumentException.class, () -> FileTools.readFileToStringLineByLine("nonexistent.txt", true));
-	}
-
-	private File getFile(String fileName) {
-		return new File(getClass().getResource(fileName).getFile());
 	}
 }

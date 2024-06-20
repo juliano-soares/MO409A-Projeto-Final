@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,67 +17,63 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patient.manager;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.isf.accounting.manager.BillBrowserManager;
 import org.isf.accounting.model.Bill;
 import org.isf.admission.manager.AdmissionBrowserManager;
 import org.isf.generaldata.MessageBundle;
 import org.isf.patient.model.Patient;
-import org.isf.patient.model.PatientProfilePhoto;
 import org.isf.patient.service.PatientIoOperations;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.pagination.PagedResponse;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class PatientBrowserManager {
 
-	private final PatientIoOperations ioOperations;
+	@Autowired
+	private PatientIoOperations ioOperations;
 
-	private final AdmissionBrowserManager admissionManager;
+	@Autowired
+	private AdmissionBrowserManager admissionManager;
 
-	private final BillBrowserManager billManager;
+	@Autowired
+	private BillBrowserManager billManager;
 
 	protected LinkedHashMap<String, String> maritalHashMap;
 
 	protected LinkedHashMap<String, String> professionHashMap;
 
-	public PatientBrowserManager(PatientIoOperations ioOperations, AdmissionBrowserManager admissionManager, BillBrowserManager billManager) {
-		this.ioOperations = ioOperations;
-		this.admissionManager = admissionManager;
-		this.billManager = billManager;
-	}
-
 	/**
-	 * Method that inserts a new {@link Patient}.
+	 * Method that inserts a new Patient in the db
 	 *
 	 * @param patient
-	 * @return saved / updated {@link Patient}
-	 * @throws OHServiceException
-	 *             when validation failed
+	 * @return saved / updated patient
+	 * @throws OHServiceException when validation failed
 	 */
 	public Patient savePatient(Patient patient) throws OHServiceException {
-		validatePatient(patient);
+		validate(patient);
 		return ioOperations.savePatient(patient);
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted.
+	 * Method that returns the full list of Patients not logically deleted
 	 *
-	 * @return the list of {@link Patient}s (could be empty)
+	 * @return the list of patients (could be empty)
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatient() throws OHServiceException {
@@ -85,24 +81,34 @@ public class PatientBrowserManager {
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted by pages.
+	 * Method that returns the full list of Patients not logically deleted by pages
 	 *
 	 * @return the list of patients (could be empty)
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatient(int page, int size) throws OHServiceException {
-		return ioOperations.getPatients(PageRequest.of(page, size));
-	}
-	
-	public PagedResponse<Patient> getPatientsPageable(int page, int size) throws OHServiceException {
-		return ioOperations.getPatientsPageable(PageRequest.of(page, size));
+		return ioOperations.getPatients(new PageRequest(page, size));
 	}
 
 	/**
-	 * Method that gets a list of {@link Patient}s by his/her name.
+	 * Method that gets a Patient by his/her name
+	 *
+	 * @param name
+	 * @return the Patient that match specified name (could be null)
+	 * @throws OHServiceException
+	 * @deprecated use getPatient(Integer code) for one patient or
+	 * getPatientsByOneOfFieldsLike(String regex) for a list
+	 */
+	@Deprecated
+	public Patient getPatientByName(String name) throws OHServiceException {
+		return ioOperations.getPatient(name);
+	}
+
+	/**
+	 * method that get a Patient list by his/her name
 	 *
 	 * @param params
-	 * @return the list of {@link Patient}s that match specified name.
+	 * @return the list of Patients that match specified name
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatients(Map<String, Object> params) throws OHServiceException {
@@ -110,10 +116,10 @@ public class PatientBrowserManager {
 	}
 
 	/**
-	 * Method that gets a {@link Patient} by his/her ID.
+	 * Method that gets a Patient by his/her ID
 	 *
 	 * @param code
-	 * @return the {@link Patient} (could be {@code null})
+	 * @return the Patient (could be null)
 	 * @throws OHServiceException
 	 */
 	public Patient getPatientById(Integer code) throws OHServiceException {
@@ -121,10 +127,10 @@ public class PatientBrowserManager {
 	}
 
 	/**
-	 * Get a {@link Patient} by his/her ID, even if he/her has been logically deleted.
+	 * Get a Patient by his/her ID, even if he/her has been logically deleted
 	 *
 	 * @param code
-	 * @return the {@link Patient} (could be {@code null})
+	 * @return the list of Patients (could be null)
 	 * @throws OHServiceException
 	 */
 	public Patient getPatientAll(Integer code) throws OHServiceException {
@@ -142,7 +148,7 @@ public class PatientBrowserManager {
 	}
 
 	private void buildMaritalHashMap() {
-		maritalHashMap = new LinkedHashMap<>(5);
+		maritalHashMap = new LinkedHashMap<>();
 		maritalHashMap.put("unknown", MessageBundle.getMessage("angal.patient.maritalstatusunknown.txt"));
 		maritalHashMap.put("single", MessageBundle.getMessage("angal.patient.maritalstatussingle.txt"));
 		maritalHashMap.put("married", MessageBundle.getMessage("angal.patient.maritalstatusmarried.txt"));
@@ -151,19 +157,17 @@ public class PatientBrowserManager {
 	}
 
 	public String[] getMaritalList() {
-		if (maritalHashMap == null) {
+		if (maritalHashMap == null)
 			buildMaritalHashMap();
-		}
-		return maritalHashMap.values().toArray(new String[0]);
+		String[] maritalDescriptionList = maritalHashMap.values().toArray(new String[0]);
+		return maritalDescriptionList;
 	}
 
 	public String getMaritalTranslated(String maritalKey) {
-		if (maritalHashMap == null) {
+		if (maritalHashMap == null)
 			buildMaritalHashMap();
-		}
-		if (maritalKey == null || !maritalHashMap.containsKey(maritalKey)) {
+		if (maritalKey == null || !maritalHashMap.containsKey(maritalKey))
 			return MessageBundle.getMessage("angal.patient.maritalstatusunknown.txt");
-		}
 		return maritalHashMap.get(maritalKey);
 	}
 
@@ -171,16 +175,16 @@ public class PatientBrowserManager {
 		if (maritalHashMap == null) {
 			buildMaritalHashMap();
 		}
-		for (Map.Entry<String, String> entry : maritalHashMap.entrySet()) {
-			if (entry.getValue().equals(description)) {
-				return entry.getKey();
+		for (String key : maritalHashMap.keySet()) {
+			if (maritalHashMap.get(key).equals(description)) {
+				return key;
 			}
 		}
 		return "undefined";
 	}
 
 	private void buildProfessionHashMap() {
-		professionHashMap = new LinkedHashMap<>(12);
+		professionHashMap = new LinkedHashMap<>();
 		professionHashMap.put("unknown", MessageBundle.getMessage("angal.patient.profession.unknown.txt"));
 		professionHashMap.put("other", MessageBundle.getMessage("angal.patient.profession.other.txt"));
 		professionHashMap.put("farming", MessageBundle.getMessage("angal.patient.profession.farming.txt"));
@@ -196,19 +200,17 @@ public class PatientBrowserManager {
 	}
 
 	public String[] getProfessionList() {
-		if (professionHashMap == null) {
+		if (professionHashMap == null)
 			buildProfessionHashMap();
-		}
-		return professionHashMap.values().toArray(new String[0]);
+		String[] professionDescriptionList = professionHashMap.values().toArray(new String[0]);
+		return professionDescriptionList;
 	}
 
 	public String getProfessionTranslated(String professionKey) {
-		if (professionHashMap == null) {
+		if (professionHashMap == null)
 			buildProfessionHashMap();
-		}
-		if (professionKey == null || !professionHashMap.containsKey(professionKey)) {
+		if (professionKey == null || !professionHashMap.containsKey(professionKey))
 			return MessageBundle.getMessage("angal.patient.profession.unknown.txt");
-		}
 		return professionHashMap.get(professionKey);
 	}
 
@@ -216,61 +218,74 @@ public class PatientBrowserManager {
 		if (professionHashMap == null) {
 			buildProfessionHashMap();
 		}
-		for (Map.Entry<String, String> entry : professionHashMap.entrySet()) {
-			if (entry.getValue().equals(description)) {
-				return entry.getKey();
+		for (String key : professionHashMap.keySet()) {
+			if (professionHashMap.get(key).equals(description)) {
+				return key;
 			}
 		}
 		return "undefined";
 	}
 
-	protected void validateMergePatients(Patient mergedPatient, Patient patient2) throws OHServiceException {
+	protected List<OHExceptionMessage> validateMergePatients(Patient mergedPatient, Patient patient2) throws OHServiceException {
 		List<OHExceptionMessage> errors = new ArrayList<>();
+		boolean admitted = false;
 
-		if (admissionManager.getCurrentAdmission(mergedPatient) != null || admissionManager.getCurrentAdmission(patient2) != null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.admission.cannotmergeadmittedpatients.msg")));
+		if (admissionManager.getCurrentAdmission(mergedPatient) != null)
+			admitted = true;
+		else if (admissionManager.getCurrentAdmission(patient2) != null)
+			admitted = true;
+		if (admitted) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.admission.cannotmergeadmittedpatients.msg"),
+					OHSeverityLevel.ERROR));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.admission.patientscannothavependingtasks.msg"),
+					OHSeverityLevel.INFO));
 		}
 
 		boolean billPending = false;
 
 		List<Bill> bills = billManager.getPendingBills(mergedPatient.getCode());
-		if (bills != null && !bills.isEmpty()) {
+		if (bills != null && !bills.isEmpty())
 			billPending = true;
-		} else {
+		else {
 			bills = billManager.getPendingBills(patient2.getCode());
-			if (bills != null && !bills.isEmpty()) {
+			if (bills != null && !bills.isEmpty())
 				billPending = true;
-			}
 		}
 		if (billPending) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.admission.cannotmergewithpendingbills.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.admission.cannotmergewithpendingbills.msg"),
+					OHSeverityLevel.ERROR));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.admission.patientscannothavependingtasks.msg"),
+					OHSeverityLevel.INFO));
 		}
 		if (mergedPatient.getSex() != patient2.getSex()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.admission.selectedpatientshavedifferentsex.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.admission.selectedpatientshavedifferentsex.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (!errors.isEmpty()) {
-			throw new OHDataValidationException(errors);
-		}
+		return errors;
 	}
 
 	/**
-	 * Method that logically deletes a {@link Patient} (not physically deleted).
+	 * Method that logically delete a Patient (not physically deleted)
 	 *
-	 * @param patient
-	 *            - the {@link Patient} to be deleted
+	 * @param patient - the {@link Patient} to be deleted
+	 * @return true - if the Patient has been deleted (logically)
 	 * @throws OHServiceException
 	 */
-	public void deletePatient(Patient patient) throws OHServiceException {
-		ioOperations.deletePatient(patient);
+	public boolean deletePatient(Patient patient) throws OHServiceException {
+		return ioOperations.deletePatient(patient);
 	}
 
 	/**
-	 * Method that checks if the {@link Patient}'s name is already present in the DB (the passed string 'name' should
-	 * be a concatenation of firstName + " " + secondName).
+	 * Method that checks if the patient's name is already present in the DB
+	 * (the passed string 'name' should be a concatenation of firstName + " " + secondName)
 	 *
-	 * @param name
-	 *            - name of the patient
-	 * @return true - if the {@link Patient} is already present
+	 * @param name - name of the patient
+	 * @return true - if the patient is already present
 	 * @throws OHServiceException
 	 */
 	public boolean isNamePresent(String name) throws OHServiceException {
@@ -278,126 +293,122 @@ public class PatientBrowserManager {
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted, having the passed String in:<br>
+	 * Method that returns the full list of Patients not logically deleted, having the passed String in:<br>
 	 * - code<br>
 	 * - firstName<br>
 	 * - secondName<br>
 	 * - taxCode<br>
 	 * - note<br>
 	 *
-	 * @param keyword
-	 *            - String to search, {@code null} for full list
-	 * @return the list of {@link Patient}s (could be empty)
+	 * @param keyword - String to search, <code>null</code> for full list
+	 * @return the list of Patients (could be empty)
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatientsByOneOfFieldsLike(String keyword) throws OHServiceException {
 		return ioOperations.getPatientsByOneOfFieldsLike(keyword);
 	}
 
-	public PatientProfilePhoto retrievePatientProfilePhoto(Patient patient) throws OHServiceException {
-		return ioOperations.retrievePatientProfilePhoto(patient);
-	}
-
 	/**
-	 * Method that merges {@link Patient}s and all clinic details under the same PAT_ID.
+	 * Method that merges patients and all clinic details under the same PAT_ID
 	 *
 	 * @param mergedPatient
 	 * @param patient2
+	 * @return true - if no OHServiceException occurred
 	 * @throws OHServiceException
 	 */
-	public void mergePatient(Patient mergedPatient, Patient patient2) throws OHServiceException {
+	public boolean mergePatient(Patient mergedPatient, Patient patient2) throws OHServiceException {
 		if (mergedPatient.getBirthDate() != null && StringUtils.isEmpty(mergedPatient.getAgetype())) {
-			// mergedPatient only Age
-			LocalDate bdate2 = patient2.getBirthDate();
+			//mergedPatient only Age
+			Date bdate2 = patient2.getBirthDate();
 			int age2 = patient2.getAge();
 			String ageType2 = patient2.getAgetype();
 			if (bdate2 != null) {
-				// patient2 has BirthDate
+				//patient2 has BirthDate
 				mergedPatient.setAge(age2);
 				mergedPatient.setBirthDate(bdate2);
 			}
-			if (bdate2 != null && StringUtils.isNotEmpty(ageType2)) {
-				// patient2 has AgeType
+			if (bdate2 != null && !StringUtils.isEmpty(ageType2)) {
+				//patient2 has AgeType
 				mergedPatient.setAge(age2);
 				mergedPatient.setAgetype(ageType2);
 			}
 		}
 
-		if (StringUtils.isEmpty(mergedPatient.getAddress())) {
+		if (StringUtils.isEmpty(mergedPatient.getAddress()))
 			mergedPatient.setAddress(patient2.getAddress());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getCity())) {
+		if (StringUtils.isEmpty(mergedPatient.getCity()))
 			mergedPatient.setCity(patient2.getCity());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getNextKin())) {
+		if (StringUtils.isEmpty(mergedPatient.getNextKin()))
 			mergedPatient.setNextKin(patient2.getNextKin());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getTelephone())) {
+		if (StringUtils.isEmpty(mergedPatient.getTelephone()))
 			mergedPatient.setTelephone(patient2.getTelephone());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getMotherName())) {
+		if (StringUtils.isEmpty(mergedPatient.getMotherName()))
 			mergedPatient.setMotherName(patient2.getMotherName());
-		}
 
-		if (mergedPatient.getMother() == 'U') {
+		if (mergedPatient.getMother() == 'U')
 			mergedPatient.setMother(patient2.getMother());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getFatherName())) {
+		if (StringUtils.isEmpty(mergedPatient.getFatherName()))
 			mergedPatient.setFatherName(patient2.getFatherName());
-		}
 
-		if (mergedPatient.getFather() == 'U') {
+		if (mergedPatient.getFather() == 'U')
 			mergedPatient.setFather(patient2.getFather());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getBloodType())) {
+		if (StringUtils.isEmpty(mergedPatient.getBloodType()))
 			mergedPatient.setBloodType(patient2.getBloodType());
-		}
 
-		if (mergedPatient.getHasInsurance() == 'U') {
+		if (mergedPatient.getHasInsurance() == 'U')
 			mergedPatient.setHasInsurance(patient2.getHasInsurance());
-		}
 
-		if (mergedPatient.getParentTogether() == 'U') {
+		if (mergedPatient.getParentTogether() == 'U')
 			mergedPatient.setParentTogether(patient2.getParentTogether());
-		}
 
-		if (StringUtils.isEmpty(mergedPatient.getNote())) {
+		if (StringUtils.isEmpty(mergedPatient.getNote()))
 			mergedPatient.setNote(patient2.getNote());
-		} else {
+		else {
 			String note = mergedPatient.getNote();
 			mergedPatient.setNote(patient2.getNote() + "\n\n" + note);
 		}
 
-		validateMergePatients(mergedPatient, patient2);
-		ioOperations.mergePatientHistory(mergedPatient, patient2);
+		List<OHExceptionMessage> errors = validateMergePatients(mergedPatient, patient2);
+		if (!errors.isEmpty()) {
+			throw new OHDataValidationException(errors);
+		}
+		return ioOperations.mergePatientHistory(mergedPatient, patient2);
 	}
 
 	/**
-	 * Verify if the object is valid for CRUD and return a list of errors, if any.
+	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param patient
 	 * @throws OHDataValidationException
 	 */
-	protected void validatePatient(Patient patient) throws OHDataValidationException {
+	protected void validate(Patient patient) throws OHDataValidationException {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 
 		if (StringUtils.isEmpty(patient.getFirstName())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patient.insertfirstname.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patient.insertfirstname.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (StringUtils.isEmpty(patient.getSecondName())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patient.insertsecondname.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patient.insertsecondname.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!checkAge(patient)) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patient.insertvalidage.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patient.insertvalidage.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (' ' == patient.getSex()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patient.pleaseselectpatientssex.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patient.pleaseselectpatientssex.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -405,21 +416,16 @@ public class PatientBrowserManager {
 	}
 
 	private boolean checkAge(Patient patient) {
-		LocalDate now = LocalDate.now();
-		LocalDate birthDate = patient.getBirthDate();
+		Date now = new Date();
+		Date birthDate = patient.getBirthDate();
+
 		if (patient.getAge() < 0 || patient.getAge() > 200) {
 			return false;
 		}
-		return birthDate != null && !birthDate.isAfter(now);
+		if (birthDate == null || birthDate.after(now)) {
+			return false;
+		}
+		return true;
 	}
 
-	/**
-	 * Method that returns the full list of Cities of the {@link Patient}s not logically deleted.
-	 * 
-	 * @return the list of Cities (could be empty)
-	 * @throws OHServiceException
-	 */
-	public List<String> getCities() throws OHServiceException {
-		return ioOperations.getCities();
-	}
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,41 +17,52 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.accounting.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * BillPayments - model a patient Payment for a Bill
+ * -----------------------------------------
+ * modification history
+ * ? - Mwithi - first version
+ * 23/08/2051 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_BILLPAYMENTS")
+@Table(name="BILLPAYMENTS")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "BLP_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "BLP_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "BLP_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "BLP_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "BLP_LAST_MODIFIED_DATE"))
-public class BillPayments extends Auditable<String> implements Comparable<BillPayments> {
-
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="BLP_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="BLP_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="BLP_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="BLP_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="BLP_LAST_MODIFIED_DATE"))
+})
+public class BillPayments extends Auditable<String> implements Comparable<BillPayments>
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="BLP_ID")
 	private int id;
 	
@@ -60,8 +71,8 @@ public class BillPayments extends Auditable<String> implements Comparable<BillPa
 	private Bill bill;
 
 	@NotNull
-	@Column(name="BLP_DATE")		// SQL type: datetime
-	private LocalDateTime date;
+	@Column(name="BLP_DATE")
+	private GregorianCalendar date;
 
 	@NotNull
 	@Column(name="BLP_AMOUNT")
@@ -72,18 +83,19 @@ public class BillPayments extends Auditable<String> implements Comparable<BillPa
 	private String user;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	
 	public BillPayments() {
 		super();
 	}
 	
-	public BillPayments(int id, Bill bill, LocalDateTime date, double amount, String user) {
+	public BillPayments(int id, Bill bill, GregorianCalendar date,
+			double amount, String user) {
 		super();
 		this.id = id;
 		this.bill = bill;
-		this.date = TimeTools.truncateToSeconds(date);
+		this.date = date;
 		this.amount = amount;
 		this.user = user;
 	}
@@ -104,12 +116,12 @@ public class BillPayments extends Auditable<String> implements Comparable<BillPa
 		this.bill = bill;
 	}
 
-	public LocalDateTime getDate() {
+	public GregorianCalendar getDate() {
 		return date;
 	}
 
-	public void setDate(LocalDateTime date) {
-		this.date = TimeTools.truncateToSeconds(date);
+	public void setDate(GregorianCalendar date) {
+		this.date = date;
 	}
 
 	public double getAmount() {
@@ -130,7 +142,7 @@ public class BillPayments extends Auditable<String> implements Comparable<BillPa
 	
 	@Override
 	public int compareTo(BillPayments anObject) {
-		return this.date.compareTo(anObject.getDate());
+		return this.date.compareTo(((BillPayments)anObject).getDate());
 	}
 
 	@Override

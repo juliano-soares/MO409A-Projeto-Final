@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,32 +17,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.agetype.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * AgeType - model for the age type entity; represent age's ranges
+ * -----------------------------------------
+ * modification history
+ * ? - bob - first version
+ * 17/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_AGETYPE")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "AT_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "AT_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "AT_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "AT_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "AT_LAST_MODIFIED_DATE"))
-public class AgeType extends Auditable<String> {
-
+@Table(name="AGETYPE")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="AT_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="AT_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="AT_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="AT_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="AT_LAST_MODIFIED_DATE"))
+})
+public class AgeType extends Auditable<String>
+{
 	@Id 
 	@Column(name="AT_CODE") 
     private String code;
@@ -60,7 +72,7 @@ public class AgeType extends Auditable<String> {
     private int to;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	public AgeType() 
     {
@@ -72,20 +84,18 @@ public class AgeType extends Auditable<String> {
      * @param aDescription
      */
     public AgeType(String aCode, String aDescription) {
-	    super();
-	    this.code = aCode;
-	    this.description = aDescription;
+        super();
+        this.code = aCode;
+        this.description = aDescription;
     }
-
-	public AgeType(String aCode, int from, int to, String aDescription) {
-		super();
-		this.code = aCode;
-		this.from = from;
-		this.to = to;
-		this.description = aDescription;
-	}
-
-	public String getCode() {
+    public AgeType(String aCode, int from, int to, String aDescription) {
+        super();
+        this.code = aCode;
+        this.from = from;
+        this.to = to;
+        this.description = aDescription;
+    }
+    public String getCode() {
         return this.code;
     }
     public void setCode(String aCode) {
@@ -109,7 +119,6 @@ public class AgeType extends Auditable<String> {
 	public int getTo() {
 		return to;
 	}
-	@Override
 	public String toString() {
         return getDescription();
     }

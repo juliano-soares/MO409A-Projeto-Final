@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.opetype.manager;
 
@@ -30,21 +30,20 @@ import org.isf.opetype.service.OperationTypeIoOperation;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OperationTypeBrowserManager {
 
+	@Autowired
 	private OperationTypeIoOperation ioOperations;
-
-	public OperationTypeBrowserManager(OperationTypeIoOperation operationTypeIoOperation) {
-		this.ioOperations = operationTypeIoOperation;
-	}
 
 	/**
 	 * Return the list of {@link OperationType}s
 	 *
-	 * @return the list of {@link OperationType}s. It could be {@code empty} or {@code null}.
+	 * @return the list of {@link OperationType}s. It could be <code>empty</code> or <code>null</code>.
 	 * @throws OHServiceException
 	 */
 	public List<OperationType> getOperationType() throws OHServiceException {
@@ -55,11 +54,14 @@ public class OperationTypeBrowserManager {
 	 * Insert an {@link OperationType} in the DB
 	 *
 	 * @param operationType - the {@link OperationType} to insert
-	 * @return the newly inserted {@link OperationType} object.
+	 * @return <code>true</code> if the {@link OperationType} has been inserted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public OperationType newOperationType(OperationType operationType) throws OHServiceException {
-		validateOperationType(operationType, true);
+	public boolean newOperationType(OperationType operationType) throws OHServiceException {
+		List<OHExceptionMessage> errors = validateOperationType(operationType, true);
+		if (!errors.isEmpty()) {
+			throw new OHDataValidationException(errors);
+		}
 		return ioOperations.newOperationType(operationType);
 	}
 
@@ -67,56 +69,67 @@ public class OperationTypeBrowserManager {
 	 * Update an {@link OperationType}
 	 *
 	 * @param operationType - the {@link OperationType} to update
-	 * @return the newly updated {@link OperationType} object.
+	 * @return <code>true</code> if the {@link OperationType} has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public OperationType updateOperationType(OperationType operationType) throws OHServiceException {
-		validateOperationType(operationType, false);
+	public boolean updateOperationType(OperationType operationType) throws OHServiceException {
+		List<OHExceptionMessage> errors = validateOperationType(operationType, false);
+		if (!errors.isEmpty()) {
+			throw new OHDataValidationException(errors);
+		}
 		return ioOperations.updateOperationType(operationType);
 	}
 
 	/**
-	 * Delete an {@link OperationType} object. If the object does not exist it is silently ignored.  If the
-	 * object is null a {@link OHServiceException} is thrown.
+	 * Delete an {@link OperationType}
 	 *
 	 * @param operationType - the {@link OperationType} to delete
+	 * @return <code>true</code> if the {@link OperationType} has been delete, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteOperationType(OperationType operationType) throws OHServiceException {
-		ioOperations.deleteOperationType(operationType);
+	public boolean deleteOperationType(OperationType operationType) throws OHServiceException {
+		return ioOperations.deleteOperationType(operationType);
 	}
 
 	/**
 	 * Checks if an {@link OperationType} code has already been used
 	 *
 	 * @param code - the code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise.
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
 		return ioOperations.isCodePresent(code);
 	}
 
-	protected void validateOperationType(OperationType operationType, boolean insert) throws OHServiceException {
+	protected List<OHExceptionMessage> validateOperationType(OperationType operationType, boolean insert) throws OHServiceException {
 		String key = operationType.getCode();
 		String description = operationType.getDescription();
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		if (key == null || key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
-		} else {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
+		}
+		else {
 			if (key.length() > 2) {
-				errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 2)));
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 2),
+						OHSeverityLevel.ERROR));
 			}
 		}
-		if (insert && isCodePresent(key)) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(key)) {
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
 		if (description == null || description.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (!errors.isEmpty()) {
-			throw new OHDataValidationException(errors);
-		}
+		return errors;
 	}
-
 }

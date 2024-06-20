@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,15 +17,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-class TestBCrypt {
+public class TestBCrypt {
 
 	String testVectors[][] = {   // [0] = plain;  [1] = salt; [2] = expected
 			{ "",
@@ -46,7 +46,7 @@ class TestBCrypt {
 	};
 
 	@Test
-	void testHashpw() throws Exception {
+	public void testHashpw() throws Exception {
 		for (int idx = 0; idx < testVectors.length; idx++) {
 			String plain = testVectors[idx][0];
 			String salt = testVectors[idx][1];
@@ -57,7 +57,7 @@ class TestBCrypt {
 	}
 
 	@Test
-	void testGensaltInt() throws Exception {
+	public void testGensaltInt() throws Exception {
 		for (int idx = 4; idx <= testVectors.length; idx++) {
 			for (int jdx = 0; jdx < testVectors.length; jdx += 4) {
 				String plain = testVectors[jdx][0];
@@ -70,7 +70,7 @@ class TestBCrypt {
 	}
 
 	@Test
-	void testGensalt() {
+	public void testGensalt() {
 		for (int idx = 0; idx < testVectors.length; idx += 4) {
 			String plain = testVectors[idx][0];
 			String salt = BCrypt.gensalt();
@@ -81,7 +81,7 @@ class TestBCrypt {
 	}
 
 	@Test
-	void testCheckpwSuccess() {
+	public void testCheckpwSuccess() {
 		for (int idx = 0; idx < testVectors.length; idx++) {
 			String plain = testVectors[idx][0];
 			String expected = testVectors[idx][2];
@@ -90,7 +90,7 @@ class TestBCrypt {
 	}
 
 	@Test
-	void testCheckpwFailure() {
+	public void testCheckpwFailure() {
 		for (int idx = 0; idx < testVectors.length; idx++) {
 			int broken_index = (idx + 4) % testVectors.length;
 			String plain = testVectors[idx][0];
@@ -100,7 +100,7 @@ class TestBCrypt {
 	}
 
 	@Test
-	void testInternationalChars() {
+	public void testInternationalChars() {
 		String pw1 = "\u2605\u2605\u2605\u2605\u2605\u2605\u2605\u2605";
 		String pw2 = "????????";
 

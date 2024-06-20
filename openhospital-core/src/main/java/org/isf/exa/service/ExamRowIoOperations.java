@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,10 +17,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.exa.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.exa.model.ExamRow;
@@ -28,23 +29,35 @@ import org.isf.exatype.model.ExamType;
 import org.isf.exatype.service.ExamTypeIoOperationRepository;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * ------------------------------------------
+ * ExamRowIoOperations - provides the I/OO operations for recovering and managing exam records from the database.
+ * -----------------------------------------
+ * modification history
+ * ??/??/2005 - Davide/Theo - first beta version
+ * 07/11/2006 - ross - modified to accept, within the description, the character quote (')
+ *                     (to do this, just double every quote. replaceall("'","''")
+ *                     when record locked all data is saved now, not only descritpion
+ * ------------------------------------------
+ */
 @Service
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class ExamRowIoOperations {
 
+	//@Autowired
+	//private ExamIoOperationRepository repository;
+	
+	@Autowired
 	private ExamRowIoOperationRepository rowRepository;
-
+	
+	@Autowired
 	private ExamTypeIoOperationRepository typeRepository;
-
-	public ExamRowIoOperations(ExamRowIoOperationRepository examRowIoOperationRepository, ExamTypeIoOperationRepository examTypeIoOperationRepository) {
-		this.rowRepository = examRowIoOperationRepository;
-		this.typeRepository = examTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Returns a list of {@link ExamRow}s that matches passed exam code and description
 	 * @param aExamCode - the exam code
@@ -57,12 +70,12 @@ public class ExamRowIoOperations {
 
 		if (aExamCode != 0) {
 			if (aDescription != null) {
-				examrows = rowRepository.findAllByCodeAndDescriptionOrderByCodeAscDescriptionAsc(aExamCode, aDescription);
+				examrows = (ArrayList<ExamRow>) rowRepository.findAllByCodeAndDescriptionOrderByCodeAscDescriptionAsc(aExamCode, aDescription);
 			} else {
-				examrows = rowRepository.findAllByCodeOrderByDescription(aExamCode);
+				examrows = (ArrayList<ExamRow>) rowRepository.findAllByCodeOrderByDescription(aExamCode);
 			}
 		} else {
-			examrows = rowRepository.findAll();
+			examrows = (ArrayList<ExamRow>) rowRepository.findAll();
 		}
 		return examrows;
 	}
@@ -83,10 +96,14 @@ public class ExamRowIoOperations {
 	 * @throws OHServiceException
 	 */
 	public List<ExamRow> getExamsRowByDesc(String description) throws OHServiceException {
+		List<ExamRow> examrows = new ArrayList<>();
+
 		if (description != null) {
-			return rowRepository.findAllByDescriptionOrderByDescriptionAsc(description);
+			examrows = (ArrayList<ExamRow>) rowRepository.findAllByDescriptionOrderByDescriptionAsc(description);
+		} else {
+			examrows = (ArrayList<ExamRow>) rowRepository.findAll();
 		}
-		return rowRepository.findAll();
+		return examrows;
 	}
 
 	/**
@@ -102,30 +119,49 @@ public class ExamRowIoOperations {
 	 * Insert a new {@link ExamRow} in the DB.
 	 * 
 	 * @param examRow - the {@link ExamRow} to insert
-	 * @return the newly persisted {@link ExamRow}.
+	 * @return <code>true</code> if the {@link ExamRow} has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public ExamRow newExamRow(ExamRow examRow) throws OHServiceException {
-		return rowRepository.save(examRow);
+	public boolean newExamRow(
+			ExamRow examRow) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		ExamRow savedExam = rowRepository.save(examRow);
+		result = (savedExam != null);
+		
+		return result;
 	}
 
 	/**
 	 * Update an already existing {@link ExamRow}.
 	 * @param examRow - the {@link ExamRow} to update
-	 * @return the updated {@link ExamRow}.
+	 * @return <code>true</code> if the {@link ExamRow} has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public ExamRow updateExamRow(ExamRow examRow) throws OHServiceException {
-		return rowRepository.save(examRow);
+	public boolean updateExamRow(
+			ExamRow examRow) throws OHServiceException 
+	{
+		boolean result = true;
+		
+		rowRepository.save(examRow);
+    	
+		return result;	
 	}
 
 	/**
 	 * Delete an {@link ExamRow}
 	 * @param examRow - the {@link ExamRow} to delete
+	 * @return <code>true</code> if the {@link ExamRow} has been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deleteExamRow(ExamRow examRow) throws OHServiceException {
-		rowRepository.deleteById(examRow.getCode());
+	public boolean deleteExamRow(
+                    ExamRow examRow) throws OHServiceException 
+        {
+            boolean result = true;
+            rowRepository.delete(examRow.getCode());
+            return result;	
 	}
 
 	
@@ -135,50 +171,68 @@ public class ExamRowIoOperations {
 	 * true
 	 * 
 	 * @param examrow the {@link ExamRow}
-	 * @return {@code true} if the Exam code has already been used, {@code false} otherwise
+	 * @return <code>true</code> if the Exam code has already been used, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public boolean isKeyPresent(ExamRow examrow) throws OHServiceException {
-		return rowRepository.findById(examrow.getCode()).orElse(null) != null;
+	public boolean isKeyPresent(
+			ExamRow examrow) throws OHServiceException 
+	{
+		boolean result = false;
+		ExamRow foundExam = rowRepository.findOne(examrow.getCode());
+		
+		
+		if (foundExam != null)
+		{
+			result = true;
+		}
+		
+		return result;
 	}
 	
 	/**
 	 * Sanitize the given {@link String} value. 
 	 * This method is maintained only for backward compatibility.
 	 * @param value the value to sanitize.
-	 * @return the sanitized value or {@code null} if the passed value is {@code null}.
+	 * @return the sanitized value or <code>null</code> if the passed value is <code>null</code>.
 	 */
-	protected String sanitize(String value) {
-		if (value == null) {
-			return null;
+	protected String sanitize(
+			String value)
+	{
+		String result = null;
+		
+		
+		if (value != null) 
+		{
+			result = value.trim().replaceAll("'", "''");
 		}
-		return value.trim().replace("'", "''");
+		
+		return result;
 	}
 
 	/**
 	 * Checks if the code is already in use
 	 *
 	 * @param code - the exam code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
 	public boolean isCodePresent(int code) throws OHServiceException{
-		return rowRepository.existsById(code);
+		return rowRepository.exists(code);
 	}
 
 	/**
 	 * Checks if the code is already in use
 	 *
 	 * @param code - the exam row code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
 	public boolean isRowPresent(Integer code) throws OHServiceException {
-		return rowRepository.existsById(code);
+		return rowRepository.exists(code);
 	}
 
-	public List<ExamRow> getExamRowByExamCode(String aExamCode) throws OHServiceException {
-		return rowRepository.findAllByExam_CodeOrderByDescription(aExamCode);
+    public List<ExamRow> getExamRowByExamCode(String aExamCode)  throws OHServiceException {
+       return rowRepository.findAllByExam_CodeOrderByDescription(aExamCode);
     }
 
 }

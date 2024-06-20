@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.serviceprinting.print;
 
@@ -30,17 +30,14 @@ public class Medical4Print {
 	private double minQty;
 	private double curQty;
 	private String expiring;
-
-	public Medical4Print(Medical medical) {
-		medicalDescription = medical.getDescription();
-		medicalType = medical.getType().getDescription();
-		minQty = medical.getMinqty();
-		curQty = medical.getInitialqty() + medical.getInqty() - medical.getOutqty();
-		if (curQty < minQty) {
-			expiring = "Yes";
-		} else {
-			expiring = "No";
-		}
+	
+	public Medical4Print(Medical medical){
+		medicalDescription=medical.getDescription();
+		medicalType=medical.getType().getDescription();
+		minQty=medical.getMinqty();
+		curQty=medical.getInitialqty()+medical.getInqty()-medical.getOutqty();
+		if(curQty<minQty)expiring="Yes";
+		else expiring="No";
 	}
 
 	public double getCurQty() {

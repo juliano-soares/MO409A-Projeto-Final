@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,15 +17,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.malnutrition.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.malnutrition.model.Malnutrition;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,12 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class MalnutritionIoOperation {
 
+	@Autowired
 	private MalnutritionIoOperationRepository repository;
-
-	public MalnutritionIoOperation(MalnutritionIoOperationRepository malnutritionIoOperationRepository) {
-		this.repository = malnutritionIoOperationRepository;
-	}
-
+	
 	/**
 	 * Returns all the available {@link Malnutrition} for the specified admission id.
 	 * @param admissionId the admission id
@@ -56,64 +55,84 @@ public class MalnutritionIoOperation {
 	/**
 	 * Stores a new {@link Malnutrition}. The malnutrition object is updated with the generated id.
 	 * @param malnutrition the malnutrition to store.
-	 * @return the newly stored new {@link Malnutrition} object.
+	 * @return <code>true</code> if the malnutrition has been stored, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs storing the malnutrition.
 	 */
-	public Malnutrition newMalnutrition(Malnutrition malnutrition) throws OHServiceException {
-		return repository.save(malnutrition);
+	public boolean newMalnutrition(
+			Malnutrition malnutrition) throws OHServiceException
+	{
+		boolean result = true;
+	
+
+		Malnutrition savedMalnutrition = repository.save(malnutrition);
+		result = (savedMalnutrition != null);
+		
+		return result;
 	}
 
 	/**
 	 * Updates the specified {@link Malnutrition}.
 	 * @param malnutrition the malnutrition to update.
-	 * @return the updated {@link Malnutrition} object.
+	 * @return the updated {@link Malnutrition}
 	 * @throws OHServiceException if an error occurs updating the malnutrition.
 	 */
-	public Malnutrition updateMalnutrition(Malnutrition malnutrition) throws OHServiceException {
-		return repository.save(malnutrition);
+	public Malnutrition updateMalnutrition(
+			Malnutrition malnutrition) throws OHServiceException
+	{
+
+		Malnutrition savedMalnutrition = repository.save(malnutrition);
+				
+		return savedMalnutrition;
 	}
 	
 	/**
-	 * Get the specified {@link Malnutrition}.
-	 * @param code of the malnutrition.
-	 * @return {@link Malnutrition}
-	 * @throws OHServiceException if an error occurs updating the malnutrition.
-	 */
-	public Malnutrition getMalnutrition(int code) throws OHServiceException {
-		return repository.getReferenceById(code);
-	}
-
-	/**
 	 * Returns the last {@link Malnutrition} entry for specified patient ID
 	 * @param patientID - the patient ID
-	 * @return the last {@link Malnutrition} for specified patient ID. {@code null} if none.
+	 * @return the last {@link Malnutrition} for specified patient ID. <code>null</code> if none.
 	 * @throws OHServiceException
 	 */
-	public Malnutrition getLastMalnutrition(int patientID) throws OHServiceException {
-		List<Malnutrition> malnutritions = repository.findAllWhereAdmissionByOrderDateDesc(patientID);
-		if (malnutritions.isEmpty()) {
-			return null;
-		}
-		return malnutritions.get(0);
+	public Malnutrition getLastMalnutrition(
+			int patientID) throws OHServiceException 
+	{
+		ArrayList<Malnutrition> malnutritions = (ArrayList<Malnutrition>) repository.findAllWhereAdmissionByOrderDateDesc(patientID);
+		
+		Malnutrition lastMalnutrition = malnutritions.get(0);
+
+		return lastMalnutrition;
 	}
 
 	/**
 	 * Deletes the specified {@link Malnutrition}.
 	 * @param malnutrition the malnutrition to delete.
+	 * @return <code>true</code> if the malnutrition has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs deleting the specified malnutrition.
 	 */
-	public void deleteMalnutrition(Malnutrition malnutrition) throws OHServiceException {
+	public boolean deleteMalnutrition(
+			Malnutrition malnutrition) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(malnutrition);
+		
+		return result;
 	}
 
 	/**
-	 * Checks if the code is already in use.
+	 * Checks if the code is already in use
 	 *
 	 * @param code - the malnutrition code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(Integer code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			Integer code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;	
 	}
 }

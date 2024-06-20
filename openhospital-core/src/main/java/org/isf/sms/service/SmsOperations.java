@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,23 +17,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.service;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import org.isf.sms.model.Sms;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.time.TimeTools;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Mwithi
- * @see {@link Sms}
+ * @see org.isf.sms.model.Sms
  *
  * Generated 31-gen-2014 15.39.04 by Hibernate Tools 3.4.0.CR1
  */
@@ -42,64 +42,62 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class SmsOperations {
 
+	@Autowired
 	private SmsIoOperationRepository repository;
 	
-	public SmsOperations(SmsIoOperationRepository smsIoOperationRepository) {
-		this.repository = smsIoOperationRepository;
-	}
+	public SmsOperations() {}
 	
 	/**
-	 * Save or update a {@link Sms}.
+	 * Save or Update a {@link Sms}
 	 * @param sms - the {@link Sms} to save or update
-	 * @return the newly inserted or updated {@link Sms} object.
+	 * @return <code>true</code> if data has been saved, <code>false</code> otherwise. 
 	 * @throws OHServiceException 
 	 */
-	public Sms saveOrUpdate(Sms sms) throws OHServiceException {
-		return repository.save(sms);
+	public boolean saveOrUpdate(Sms sms) throws OHServiceException {
+		return repository.save(sms) != null;
 	}
 	
 	/**
-	 * Save or update a list of {@link Sms}s.
+	 * Save or Update a list of {@link Sms}s
 	 * @param smsList - the list of {@link Sms} to save or update
-	 * @return the newly inserted or updated list of {@link Sms} objects.
+	 * @return <code>true</code> if data has been saved, <code>false</code> otherwise. 
 	 * @throws OHServiceException 
 	 */
-	public List<Sms> saveOrUpdate(List<Sms> smsList) throws OHServiceException {
-		return repository.saveAll(smsList);
+	public boolean saveOrUpdate(List<Sms> smsList) throws OHServiceException {
+		return repository.save(smsList) != null;
 	}
 	
 	/**
-	 * Returns a {@link Sms} with specified ID.
-	 * @param id- sms ID
-	 * @return the {@link Sms} with specified ID or null if not found.
+	 * Returns a {@link Sms} with specified ID
+	 * @param ID - sms ID
+	 * @return sms - the sms with specified ID
 	 * @throws OHServiceException 
 	 */
-	public Sms getByID(int id) throws OHServiceException {
-		return repository.findById(id).orElse(null);
+	public Sms getByID(int ID) throws OHServiceException {
+		return repository.findOne(ID);
 	}
 	
 	/**
-	 * Returns the list of all {@link Sms}s, sent and not sent, between the two dates.
-	 * @return smsList - the list of {@link Sms}s objects.
+	 * Returns the list of all {@link Sms}s, sent and not sent, between the two dates
+	 * @return smsList - the list of {@link Sms}s
 	 * @throws OHServiceException 
 	 */
-	public List<Sms> getAll(LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
-		return repository.findBySmsDateSchedBetweenOrderBySmsDateSchedAsc(TimeTools.truncateToSeconds(dateFrom), TimeTools.truncateToSeconds(dateTo));
+	public List<Sms> getAll(Date dateFrom, Date dateTo) throws OHServiceException {
+		return repository.findBySmsDateSchedBetweenOrderBySmsDateSchedAsc(dateFrom, dateTo);
 	}
 	
 	/**
-	 * Returns the list of not sent {@link Sms}s between the two dates.
-	 * @return smsList - the list of {@link Sms}s objects.
+	 * Returns the list of not sent {@link Sms}s between the two dates
+	 * @return smsList - the list of {@link Sms}s
 	 * @throws OHServiceException 
 	 */
-	public List<Sms> getList(LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
-		return repository.findBySmsDateSchedBetweenAndSmsDateSentIsNullOrderBySmsDateSchedAsc(TimeTools.truncateToSeconds(dateFrom),
-		                                                                                      TimeTools.truncateToSeconds(dateTo));
+	public List<Sms> getList(Date dateFrom,	Date dateTo) throws OHServiceException {
+		return repository.findBySmsDateSchedBetweenAndSmsDateSentIsNullOrderBySmsDateSchedAsc(dateFrom, dateTo);
 	}
 	
 	/**
-	 * Returns the list of not sent {@link Sms}s objects.
-	 * @return smsList - the list of {@link Sms}s objects.
+	 * Returns the list of not sent {@link Sms}s
+	 * @return smsList - the list of {@link Sms}s
 	 * @throws OHServiceException 
 	 */
 	public List<Sms> getList() throws OHServiceException {
@@ -107,8 +105,8 @@ public class SmsOperations {
 	}
 	
 	/**
-	 * Delete the specified {@link Sms} object.
-	 * @param sms - the {@link Sms}s to delete.
+	 * Delete the specified {@link Sms}
+	 * @param sms - the {@link Sms}s to delete
 	 * @throws OHServiceException 
 	 */
 	public void delete(Sms sms) throws OHServiceException {
@@ -116,12 +114,12 @@ public class SmsOperations {
 	}
 
 	/**
-	 * Delete the specified list of {@link Sms} objects.
-	 * @param smsList - the list of {@link Sms}s objects to delete.
+	 * Delete the specified list of {@link Sms}
+	 * @param smsList - the list of {@link Sms}s to delete
 	 * @throws OHServiceException 
 	 */
 	public void delete(List<Sms> smsList) throws OHServiceException	{
-		repository.deleteAll(smsList);
+		repository.delete(smsList);
 	}
 
 	/**
@@ -138,11 +136,10 @@ public class SmsOperations {
 	 * Checks if the code is already in use
 	 *
 	 * @param code - the Sms code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
 	public boolean isCodePresent(Integer code) throws OHServiceException {
-		return repository.existsById(code);
+		return repository.exists(code);
 	}
-
 }

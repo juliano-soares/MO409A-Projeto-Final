@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.exa.manager;
 
@@ -30,16 +30,15 @@ import org.isf.generaldata.MessageBundle;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExamRowBrowsingManager {
 
+	@Autowired
 	private ExamRowIoOperations ioOperations;
-
-	public ExamRowBrowsingManager(ExamRowIoOperations examRowIoOperations) {
-		this.ioOperations = examRowIoOperations;
-	}
 
 	/**
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
@@ -51,7 +50,9 @@ public class ExamRowBrowsingManager {
 		String description = examRow.getDescription();
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		if (description.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -61,7 +62,7 @@ public class ExamRowBrowsingManager {
 	/**
 	 * Returns the list of {@link ExamRow}s
 	 *
-	 * @return the list of {@link ExamRow}s. It could be {@code null}
+	 * @return the list of {@link ExamRow}s. It could be <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public List<ExamRow> getExamRow() throws OHServiceException {
@@ -72,7 +73,7 @@ public class ExamRowBrowsingManager {
 	 * Returns a list of {@link ExamRow}s that matches passed exam code
 	 *
 	 * @param aExamCode - the exam code
-	 * @return the list of {@link ExamRow}s. It could be {@code null}
+	 * @return the list of {@link ExamRow}s. It could be <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public List<ExamRow> getExamRow(int aExamCode) throws OHServiceException {
@@ -84,7 +85,7 @@ public class ExamRowBrowsingManager {
 	 *
 	 * @param aExamRowCode - the exam code
 	 * @param aDescription - the exam description
-	 * @return the list of {@link ExamRow}s. It could be {@code null}
+	 * @return the list of {@link ExamRow}s. It could be <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public List<ExamRow> getExamRow(int aExamRowCode, String aDescription) throws OHServiceException {
@@ -95,10 +96,10 @@ public class ExamRowBrowsingManager {
 	 * Insert a new {@link ExamRow} in the DB.
 	 *
 	 * @param examRow - the {@link ExamRow} to insert
-	 * @return {@code true} if the {@link ExamRow} has been inserted, {@code false} otherwise
+	 * @return <code>true</code> if the {@link ExamRow} has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public ExamRow newExamRow(ExamRow examRow) throws OHServiceException {
+	public boolean newExamRow(ExamRow examRow) throws OHServiceException {
 		validateExamRow(examRow);
 		return ioOperations.newExamRow(examRow);
 	}
@@ -107,17 +108,18 @@ public class ExamRowBrowsingManager {
 	 * Delete an {@link ExamRow}.
 	 *
 	 * @param examRow - the {@link ExamRow} to delete
+	 * @return <code>true</code> if the {@link ExamRow} has been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deleteExamRow(ExamRow examRow) throws OHServiceException {
-		ioOperations.deleteExamRow(examRow);
+	public boolean deleteExamRow(ExamRow examRow) throws OHServiceException {
+		return ioOperations.deleteExamRow(examRow);
 	}
 
 	/**
 	 * Returns a list of {@link ExamRow}s that matches passed exam code
 	 *
 	 * @param aExamCode - the exam code
-	 * @return the list of {@link ExamRow}s. It could be {@code null}
+	 * @return the list of {@link ExamRow}s. It could be <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public List<ExamRow> getExamRowByExamCode(String aExamCode) throws OHServiceException {

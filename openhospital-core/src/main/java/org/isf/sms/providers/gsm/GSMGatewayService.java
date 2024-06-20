@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,35 +17,41 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.providers.gsm;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.TooManyListenersException;
 
 import org.isf.sms.model.Sms;
 import org.isf.sms.providers.SmsSenderInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.web.server.PortInUseException;
 import org.springframework.stereotype.Component;
 
-import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortDataListener;
-import com.fazecast.jSerialComm.SerialPortEvent;
+import gnu.io.CommPortIdentifier;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import gnu.io.SerialPortEvent;
+import gnu.io.SerialPortEventListener;
 
 /**
  * @author Mwithi 03/feb/2014
  */
 @Component
-public class GSMGatewayService implements SmsSenderInterface, SerialPortDataListener {
+public class GSMGatewayService implements SmsSenderInterface, SerialPortEventListener {
 
 	public static final String SERVICE_NAME = "gsm-gateway-service";
 	private static final Logger LOGGER = LoggerFactory.getLogger(GSMGatewayService.class);
 	private static final String EOF = "\r";
 
+	private Enumeration< ? > portList;
+	private CommPortIdentifier portId;
+	private String port;
 	private SerialPort serialPort;
 	private boolean connected;
 	private OutputStream outputStream;
@@ -63,53 +69,63 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 	 */
 	@Override
 	public boolean terminate() {
-		serialPort.closePort();
+		serialPort.close();
 		return true;
 	}
 
 	/**
 	 * Method that looks for the port specified
 	 * 
-	 * @return {@code true} if the COM port is ready to be used, {@code false} otherwise.
+	 * @return <code>true</code> if the COM port is ready to be used, <code>false</code> otherwise.
 	 */
 	@Override
 	public boolean initialize() {
 		LOGGER.debug("Initialize...");
 		connected = false;
-		SerialPort[] portList = SerialPort.getCommPorts();
-		String port = GSMParameters.PORT;
-		for (SerialPort comPort : portList) {
+		portList = CommPortIdentifier.getPortIdentifiers();
+		port = GSMParameters.PORT;
+		while (portList.hasMoreElements()) {
 
-			if (comPort.getSystemPortName().equals(port)) {
+			portId = (CommPortIdentifier) portList.nextElement();
+
+			if (portId.getName().equals(port) && portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
 
 				LOGGER.debug("COM PORT found ({})", port);
-				serialPort = comPort;
 				break;
 
-			}
+			} else
+				portId = null;
 		}
 
-		if (serialPort != null) {
+		if (portId != null) {
 			try {
-				serialPort.openPort();
-				serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
-				serialPort.addDataListener(this);
+				serialPort = (SerialPort) portId.open("SmsSender", 1000);
+				if (serialPort != null) {
 
-				outputStream = serialPort.getOutputStream();
-				if (outputStream != null) {
-					inputStream = serialPort.getInputStream();
+					outputStream = serialPort.getOutputStream();
+					if (outputStream != null) {
+						inputStream = serialPort.getInputStream();
 
-					LOGGER.debug("Output stream OK");
-					connected = true;
+						LOGGER.debug("Output stream OK");
+						connected = true;
 
-				} else {
-					LOGGER.debug("A problem occured on output stream");
+					} else
+						LOGGER.debug("A problem occured on output stream");
+
+				} else
+					LOGGER.debug("Not possible to open the stream");
+
+				try {
+					serialPort.addEventListener(this);
+					serialPort.notifyOnDataAvailable(true);
+				} catch (TooManyListenersException e) {
+					LOGGER.debug("Too many listeners. ({})", e.toString());
 				}
 
 			} catch (PortInUseException e) {
-				LOGGER.error("Port in use.");
+				LOGGER.error("Port in use: {}", portId.getCurrentOwner());
 			} catch (Exception e) {
-				LOGGER.error("Failed to open port {}", serialPort.getSystemPortName(), e);
+				LOGGER.error("Failed to open port {} {}", portId.getName(), e);
 			}
 		} else {
 			LOGGER.error("COM PORT not found ({})!!!", port);
@@ -127,9 +143,9 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 			LOGGER.debug("Sending SMS ({}) to: {}", sms.getSmsId(), sms.getSmsNumber());
 			LOGGER.debug("Sending text: {}", sms.getSmsText());
 
-			StringBuilder buildCMGS = new StringBuilder(GSMParameters.CMGS);
-			buildCMGS.append(sms.getSmsNumber());
-			buildCMGS.append("\"\r");
+			StringBuilder build_CMGS = new StringBuilder(GSMParameters.CMGS);
+			build_CMGS.append(sms.getSmsNumber());
+			build_CMGS.append("\"\r");
 
 			String text = sms.getSmsText() + EOF;
 
@@ -137,9 +153,8 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 
 				// SET SMS MODE
 				LOGGER.trace(GSMParameters.CMGF);
-				if (!debug) {
+				if (!debug)
 					outputStream.write(GSMParameters.CMGF.getBytes());
-				}
 				Thread.sleep(1000);
 
 				// SET SMS PARAMETERS
@@ -148,23 +163,20 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 //				Thread.sleep(1000);
 
 				// SET SMS NUMBER
-				LOGGER.trace(buildCMGS.toString());
-				if (!debug) {
-					outputStream.write(buildCMGS.toString().getBytes());
-				}
+				LOGGER.trace(build_CMGS.toString());
+				if (!debug)
+					outputStream.write(build_CMGS.toString().getBytes());
 				Thread.sleep(1000);
 
 				// SET SMS TEXT
 				LOGGER.trace(text);
-				if (!debug) {
+				if (!debug)
 					outputStream.write(text.getBytes());
-				}
 				Thread.sleep(1000);
 
 				// SEND SMS
-				if (!debug) {
+				if (!debug)
 					outputStream.write("\u001A".getBytes()); // Ctrl-Z();
-				}
 				Thread.sleep(1000);
 
 				// FLUSH STREAM
@@ -203,7 +215,7 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 				sent = false;
 			}
 		} catch (IOException e) {
-			LOGGER.error("Exception in serialEvent method.", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -215,10 +227,5 @@ public class GSMGatewayService implements SmsSenderInterface, SerialPortDataList
 	@Override
 	public String getRootKey() {
 		return SERVICE_NAME;
-	}
-
-	@Override
-	public int getListeningEvents() {
-		return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
 	}
 }

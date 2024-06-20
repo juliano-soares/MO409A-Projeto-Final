@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,18 +17,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.db;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Optional;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
@@ -38,36 +32,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorAware")
 public class JpaConfig {
-
-	private final AuditorAwareInterface auditorAwareImpl;
-
-	public JpaConfig(@Lazy AuditorAwareInterface auditorAwareImpl) {
-		this.auditorAwareImpl = auditorAwareImpl;
-	}
-
-	@Bean
-	public AuditorAware<String> auditorAware() {
-		if (auditorAwareImpl != null) {
-			return () -> auditorAwareImpl.getCurrentAuditor();
-		}
-		return () -> Optional.of("defaultAuditor");
-	}
-
-	@Bean
-	@ConditionalOnClass(name = "org.isf.security.ApiAuditorAwareImpl")
-	public AuditorAwareInterface auditorAwareCustomizer() {
-		try {
-			Class< ? > customAuditorAwareImplClass = Class.forName("org.isf.security.ApiAuditorAwareImpl");
-			return (AuditorAwareInterface) customAuditorAwareImplClass.getDeclaredConstructor().newInstance();
-		} catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
-			return new DefaultAuditorAwareImpl();
-		}
-	}
-
-	@Bean
-	@ConditionalOnMissingBean(AuditorAwareInterface.class)
-	public AuditorAwareInterface defaultAuditorAwareCustomizer() {
-		return new DefaultAuditorAwareImpl();
-	}
-
+    
+    @Bean
+    public AuditorAware<String> auditorAware() {
+        return new AuditorAwareImpl();
+    }
 }

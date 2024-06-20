@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.exatype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.exatype.model.ExamType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,12 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class ExamTypeIoOperation {
 
+	@Autowired
 	private ExamTypeIoOperationRepository repository;
-
-	public ExamTypeIoOperation(ExamTypeIoOperationRepository examTypeIoOperationRepository) {
-		this.repository = examTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Return the list of {@link ExamType}s.
 	 * @return the list of {@link ExamType}s.
@@ -52,40 +50,70 @@ public class ExamTypeIoOperation {
 	/**
 	 * Update an already existing {@link ExamType}.
 	 * @param examType - the {@link ExamType} to update
-	 * @return the updated {@link ExamType}.
+	 * @return <code>true</code> if the examType has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public ExamType updateExamType(ExamType examType) throws OHServiceException {
-		return repository.save(examType);
+	public boolean updateExamType(
+			ExamType examType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		ExamType savedExamType = repository.save(examType);
+		result = (savedExamType != null);
+		
+		return result;
 	}
 	
 	/**
 	 * Insert a new {@link ExamType} in the DB.
 	 * @param examType - the {@link ExamType} to insert.
-	 * @return the newly persisted {@link ExamType}.
+	 * @return <code>true</code> if the examType has been inserted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public ExamType newExamType(ExamType examType) throws OHServiceException {
-		return repository.save(examType);
+	public boolean newExamType(
+			ExamType examType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		repository.save(examType);
+		
+		return result;
 	}
 	
 	/**
 	 * Delete the passed {@link ExamType}.
 	 * @param examType - the {@link ExamType} to delete.
+	 * @return <code>true</code> if the examType has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteExamType(ExamType examType) throws OHServiceException {
+	public boolean deleteExamType(
+			ExamType examType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(examType);
+		
+		return result;
 	}
 	
 	/**
 	 * This function controls the presence of a record with the same code as in
 	 * the parameter.
 	 * @param code - the code
-	 * @return {@code true} if the code is present, {@code false} otherwise.
+	 * @return <code>true</code> if the code is present, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 }

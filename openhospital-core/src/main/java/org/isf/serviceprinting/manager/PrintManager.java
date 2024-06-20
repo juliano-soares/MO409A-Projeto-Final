@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.serviceprinting.manager;
 
@@ -36,6 +36,7 @@ import org.isf.hospital.model.Hospital;
 import org.isf.utils.exception.OHServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import net.sf.jasperreports.engine.JRException;
@@ -59,11 +60,10 @@ public class PrintManager {
 
 	public static final int toPrint = 2;
 	
+	@Autowired
 	private HospitalBrowsingManager hospitalManager;
 	
-	public PrintManager(HospitalBrowsingManager hospitalManager) {
-		this.hospitalManager = hospitalManager;
-	}
+	public PrintManager() {}
 	
 	public void print(String filename, List<?> toPrint, int action) throws OHServiceException {
 		
@@ -77,7 +77,7 @@ public class PrintManager {
 		parameters.put("ospedaleMail", hospital.getEmail());
 
 		JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(toPrint);
-		File jasperFile = new File("rpt_base/" + filename + ".jasper");
+		File jasperFile = new File("rpt/" + filename + ".jasper");
 		try {
 			if (jasperFile.isFile()) {
 				JasperReport jasperReport = (JasperReport) JRLoader
@@ -86,21 +86,21 @@ public class PrintManager {
 						jasperReport, parameters, dataSource);
 				switch (action) {
 				case 0:
-					if (GeneralData.INTERNALVIEWER) {
+					if (GeneralData.INTERNALVIEWER)
 						JasperViewer.viewReport(jasperPrint,false, new Locale(GeneralData.LANGUAGE));
-					} else {
-						String pdfFile = "rpt_base/PDF/" + filename + ".pdf";
-						JasperExportManager.exportReportToPdfFile(jasperPrint, pdfFile);
+					else { 
+						String PDFfile = "rpt/PDF/" + filename + ".pdf";
+						JasperExportManager.exportReportToPdfFile(jasperPrint, PDFfile);
 						try {
 							Runtime rt = Runtime.getRuntime();
-							rt.exec(GeneralData.VIEWER + ' ' + pdfFile);
+							rt.exec(GeneralData.VIEWER +" "+ PDFfile);
 						} catch(Exception exception) {
 							LOGGER.error(exception.getMessage(), exception);
 						}
 					}
 					break;
 				case 1:
-					JasperExportManager.exportReportToPdfFile(jasperPrint,"rpt_base/PDF/"+
+					JasperExportManager.exportReportToPdfFile(jasperPrint,"rpt/PDF/"+
 							JOptionPane.showInputDialog(null,MessageBundle.getMessage("angal.serviceprinting.selectapathforthepdffile.msg"), filename)
 							+".pdf");
 					break;
@@ -109,9 +109,7 @@ public class PrintManager {
 				default:JOptionPane.showMessageDialog(null,MessageBundle.getMessage("angal.serviceprinting.selectacorrectaction.msg"));
 					break;
 				}
-			} else {
-				JOptionPane.showMessageDialog(null,MessageBundle.getMessage("angal.serviceprinting.notavalidfile.msg"));
-			}
+			} else JOptionPane.showMessageDialog(null,MessageBundle.getMessage("angal.serviceprinting.notavalidfile.msg"));
 		} catch (JRException jrException) {
 			LOGGER.error(jrException.getMessage(), jrException);
 		}

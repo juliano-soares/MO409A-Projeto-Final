@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,30 +17,38 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.menu.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.ColumnResult;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityResult;
-import jakarta.persistence.FieldResult;
-import jakarta.persistence.Id;
-import jakarta.persistence.SqlResultSetMapping;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.Entity;
+import javax.persistence.EntityResult;
+import javax.persistence.FieldResult;
+import javax.persistence.Id;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
-import org.hibernate.type.YesNoConverter;
 import org.isf.generaldata.MessageBundle;
-import org.springframework.data.annotation.Transient;
 
+/**
+ * ------------------------------------------
+ * UserUserMenuItem - an item in user menu
+ * not pure model class
+ * -----------------------------------------
+ * modification history
+ * ? 		  - flavio - first version
+ * 07/05/2016 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_MENUITEM")
+@Table(name="MENUITEM")
 @SqlResultSetMapping(name="UserMenuItemWithStatus",
 	entities={
-	    @EntityResult(entityClass=UserMenuItem.class, fields={
+	    @EntityResult(entityClass=org.isf.menu.model.UserMenuItem.class, fields={
                 @FieldResult(name="code", column="MNI_ID_A"),
                 @FieldResult(name="buttonLabel", column="MNI_BTN_LABEL"), 
                 @FieldResult(name="altLabel", column="MNI_LABEL"),
@@ -54,8 +62,8 @@ import org.springframework.data.annotation.Transient;
 	columns={
 	    @ColumnResult(name="is_active")}
 	)
-public class UserMenuItem {
-
+public class UserMenuItem 
+{
 	@Id 
 	@Column(name="MNI_ID_A")	
 	private String 	code;
@@ -82,7 +90,6 @@ public class UserMenuItem {
 	@Column(name="MNI_CLASS")
 	private String	myClass;
 
-	@Convert(converter = YesNoConverter.class)
 	@NotNull
 	@Column(name="MNI_IS_SUBMENU")
 	private boolean	isASubMenu;
@@ -95,14 +102,13 @@ public class UserMenuItem {
 	private boolean isActive;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	public UserMenuItem() {
 		super();
 	}
-
-	public UserMenuItem(String code, String buttonLabel, String altLabel, String tooltip, char shortcut, String mySubmenu, String myClass, boolean isASubMenu,
-			int position, boolean isActive) {
+		
+	public UserMenuItem(String code, String buttonLabel, String altLabel, String tooltip, char shortcut, String mySubmenu, String myClass, boolean isASubMenu, int position, boolean isActive) {
 		super();
 		this.code = code;
 		this.buttonLabel = buttonLabel;
@@ -115,6 +121,7 @@ public class UserMenuItem {
 		this.position = position;
 		this.isActive = isActive;
 	}
+	
 	
 	public String getAltLabel() {
 		return MessageBundle.getMessage(altLabel); 
@@ -176,38 +183,36 @@ public class UserMenuItem {
 	public void setTooltip(String tooltip) {
 		this.tooltip = tooltip;
 	}
-
+		
 	@Override
 	public boolean equals(Object anObject) {
-		return anObject instanceof UserMenuItem
-				&& (getCode().equals(((UserMenuItem) anObject).getCode())
-				&& getButtonLabel().equalsIgnoreCase(((UserMenuItem) anObject).getButtonLabel())
-				&& getAltLabel().equals(((UserMenuItem) anObject).getAltLabel())
-				&& getTooltip().equals(((UserMenuItem) anObject).getTooltip())
-				&& getShortcut() == ((UserMenuItem) anObject).getShortcut()
-				&& getMySubmenu().equals(((UserMenuItem) anObject).getMySubmenu())
-				&& getMyClass().equals(((UserMenuItem) anObject).getMyClass())
-				&& isASubMenu() == ((UserMenuItem) anObject).isASubMenu()
-				&& getPosition() == ((UserMenuItem) anObject).getPosition()
-				&& (isActive() == ((UserMenuItem) anObject).isActive()));
-	}
-
-	@Override
-	public String toString() {
+        return !(anObject instanceof UserMenuItem) ? false
+                : (getCode().equals(((UserMenuItem) anObject).getCode())
+                  && getButtonLabel().equalsIgnoreCase(((UserMenuItem) anObject).getButtonLabel()) 
+                  && getAltLabel().equals(((UserMenuItem) anObject).getAltLabel())
+                  && getTooltip().equals(((UserMenuItem) anObject).getTooltip())
+                  && getShortcut()==((UserMenuItem) anObject).getShortcut()
+                  && getMySubmenu().equals(((UserMenuItem) anObject).getMySubmenu())
+                  && getMyClass().equals(((UserMenuItem) anObject).getMyClass())
+                  && isASubMenu()==((UserMenuItem) anObject).isASubMenu()
+                  && getPosition()==((UserMenuItem) anObject).getPosition()
+                  && (isActive()==((UserMenuItem) anObject).isActive()));
+    }
+	
+	public String toString(){
 		return getButtonLabel();
 	}
 
 	@Override
 	public int hashCode() {
-		if (this.hashCode == 0) {
-			final int m = 23;
-			int c = 133;
-
-			c = m * c + code.hashCode();
-
-			this.hashCode = c;
-		}
-		return this.hashCode;
-	}
-
+	    if (this.hashCode == 0) {
+	        final int m = 23;
+	        int c = 133;
+	        
+	        c = m * c + code.hashCode();
+	        
+	        this.hashCode = c;
+	    }
+	    return this.hashCode;
+	}		
 }

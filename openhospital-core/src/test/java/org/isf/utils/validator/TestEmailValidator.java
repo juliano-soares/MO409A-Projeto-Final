@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,24 +17,24 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-class TestEmailValidator {
+public class TestEmailValidator {
 
 	@Test
-	void testIsEmpty() throws Exception {
+	public void testIsEmpty() throws Exception {
 		assertThat(EmailValidator.isValid("")).isTrue();
 		assertThat(EmailValidator.isValid(null)).isTrue();
 	}
 
 	@Test
-	void testDoesNotMatchPattern() throws Exception {
+	public void testDoesNotMatchPattern() throws Exception {
 		assertThat(EmailValidator.isValid("abc")).isFalse();
 		assertThat(EmailValidator.isValid("\"ThisIsName\"@thisCompany.com")).isFalse();
 		assertThat(EmailValidator.isValid("@yahoo.com")).isFalse();
@@ -42,7 +42,7 @@ class TestEmailValidator {
 	}
 
 	@Test
-	void testDoesMatchPattern() throws Exception {
+	public void testDoesMatchPattern() throws Exception {
 		assertThat(EmailValidator.isValid("ABCD@MYCOMPANY.COM")).isTrue();
 		assertThat(EmailValidator.isValid("abcabcd@mycompany.org")).isTrue();
 		assertThat(EmailValidator.isValid("someTpoint@domain.co.in")).isTrue();
@@ -50,7 +50,7 @@ class TestEmailValidator {
 	}
 
 	@Test
-	void testQuestionablePatterns() throws Exception {
+	public void testQuestionablePatterns() throws Exception {
 		// just numbers (like an IP address)
 		assertThat(EmailValidator.isValid("1.2@3.4")).isTrue();
 		// no domain (.com, .org, .net, etc.)

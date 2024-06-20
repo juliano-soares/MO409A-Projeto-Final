@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,15 +17,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.disctype.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.disctype.model.DischargeType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,62 +36,90 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class DischargeTypeIoOperation {
 
+	@Autowired
 	private DischargeTypeIoOperationRepository repository;
-
-	public DischargeTypeIoOperation(DischargeTypeIoOperationRepository dischargeTypeIoOperationRepository) {
-		this.repository = dischargeTypeIoOperationRepository;
-	}
-
+	
 	/**
-	 * Method that returns all {@link DischargeType}s in a list
+	 * Method that returns all DischargeTypes in a list
 	 * 
 	 * @return the list of all DischargeTypes
 	 * @throws OHServiceException
 	 */
 	public List<DischargeType> getDischargeType() throws OHServiceException {
-		return repository.findAllByOrderByDescriptionAsc();
+		return new ArrayList<>(repository.findAllByOrderByDescriptionAsc());
 	}
 
 	/**
-	 * Method that updates an already existing {@link DischargeType}
+	 * Method that updates an already existing DischargeType
 	 * 
 	 * @param dischargeType
-	 * @return the persisted updated DischargeType object.
+	 * @return true - if the existing DischargeType has been updated
 	 * @throws OHServiceException
 	 */
-	public DischargeType updateDischargeType(DischargeType dischargeType) throws OHServiceException {
-		return repository.save(dischargeType);
+	public boolean updateDischargeType(
+			DischargeType dischargeType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		DischargeType savedDischargeType = repository.save(dischargeType);
+		result = (savedDischargeType != null);
+		
+		return result;
 	}
 
 	/**
-	 * Method that create a new {@link DischargeType}.
+	 * Method that create a new DischargeType
 	 * 
 	 * @param dischargeType
-	 * @return the persisted new DischargeType object.
+	 * @return true - if the new DischargeType has been inserted
 	 * @throws OHServiceException
 	 */
-	public DischargeType newDischargeType(DischargeType dischargeType) throws OHServiceException {
-		return repository.save(dischargeType);
+	public boolean newDischargeType(
+			DischargeType dischargeType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		DischargeType savedDischargeType = repository.save(dischargeType);
+		result = (savedDischargeType != null);
+		
+		return result;
 	}
 
 	/**
-	 * Method that deletes a {@link DischargeType}.
+	 * Method that delete a DischargeType
 	 * 
 	 * @param dischargeType
+	 * @return true - if the DischargeType has been deleted
 	 * @throws OHServiceException
 	 */
-	public void deleteDischargeType(DischargeType dischargeType) throws OHServiceException {
+	public boolean deleteDischargeType(
+			DischargeType dischargeType) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
 		repository.delete(dischargeType);
+		
+		return result;
 	}
 
 	/**
-	 * Method that checks if a {@link DischargeType} already exists.
+	 * Method that check if a DischargeType already exists
 	 * 
 	 * @param code
 	 * @return true - if the DischargeType already exists
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 }

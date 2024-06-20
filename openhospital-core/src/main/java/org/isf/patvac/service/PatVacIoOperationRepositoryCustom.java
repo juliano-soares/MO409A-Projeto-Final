@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,18 +17,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patvac.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.isf.patvac.model.PatientVaccine;
 
+import java.util.GregorianCalendar;
+import java.util.List;
+
 public interface PatVacIoOperationRepositoryCustom {
-
-	List<PatientVaccine> findAllByCodesAndDatesAndSexAndAges(String vaccineTypeCode, String vaccineCode, LocalDateTime dateFrom, LocalDateTime dateTo, char sex,
-			int ageFrom, int ageTo);
-
+	
+	List<PatientVaccine> findAllByCodesAndDatesAndSexAndAges(String vaccineTypeCode, String vaccineCode,
+															 GregorianCalendar dateFrom, GregorianCalendar dateTo, char sex, int ageFrom, int ageTo);
 }

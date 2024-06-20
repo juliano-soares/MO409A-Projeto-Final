@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,12 +17,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.therapy.manager;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.isf.generaldata.MessageBundle;
@@ -38,33 +39,29 @@ import org.isf.sms.service.SmsOperations;
 import org.isf.therapy.model.Therapy;
 import org.isf.therapy.model.TherapyRow;
 import org.isf.therapy.service.TherapyIoOperations;
-import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.time.TimeTools;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class TherapyManager {
 
+	@Autowired
 	private TherapyIoOperations ioOperations;
 
+	@Autowired
 	private SmsOperations smsOp;
 
+	@Autowired
 	private PatientBrowserManager patientManager;
 
+	@Autowired
 	private MedicalBrowsingManager medManager;
 
+	@Autowired
 	private MovWardBrowserManager wardManager;
-
-	public TherapyManager(TherapyIoOperations therapyIoOperations, SmsOperations smsOperations, PatientBrowserManager patientBrowserManager,
-	                      MedicalBrowsingManager medicalBrowsingManager, MovWardBrowserManager movWardBrowserManager) {
-		this.ioOperations = therapyIoOperations;
-		this.smsOp = smsOperations;
-		this.patientManager = patientBrowserManager;
-		this.medManager = medicalBrowsingManager;
-		this.wardManager = movWardBrowserManager;
-	}
 
 	/**
 	 * Returns a {@link Therapy} object from a {@link TherapyRow} (DB record)
@@ -74,13 +71,14 @@ public class TherapyManager {
 	 * @throws OHServiceException
 	 */
 	public Therapy createTherapy(TherapyRow th) throws OHServiceException {
-		return createTherapy(th.getTherapyID(), th.getPatient().getCode(), th.getMedical(), th.getQty(), th.getStartDate(), th.getEndDate(),
-				th.getFreqInPeriod(), th.getFreqInDay(), th.getNote(), th.isNotify(), th.isSms());
+		return createTherapy(th.getTherapyID(), th.getPatient().getCode(), th.getMedical(), th.getQty(),
+				th.getStartDate(), th.getEndDate(), th.getFreqInPeriod(), th.getFreqInDay(),
+				th.getNote(), th.isNotify(), th.isSms());
 	}
 
 	/**
 	 * Creates a {@link Therapy} from its parameters, fetching the {@link Medical}
-	 * and building the array of Dates ({@link LocalDateTime})
+	 * and building the array of Dates ({@link GregorianCalendar})
 	 *
 	 * @param therapyID
 	 * @param patID
@@ -96,23 +94,29 @@ public class TherapyManager {
 	 * @return the {@link Therapy}
 	 */
 	private Therapy createTherapy(int therapyID, int patID, Integer medId, Double qty,
-			LocalDateTime startDate, LocalDateTime endDate, int freqInPeriod,
+			GregorianCalendar startDate, GregorianCalendar endDate, int freqInPeriod,
 			int freqInDay, String note, boolean notify, boolean sms) throws OHServiceException {
 
-		List<LocalDateTime> datesArray = new ArrayList<>();
+		ArrayList<GregorianCalendar> datesArray = new ArrayList<>();
 
-		LocalDateTime stepDate = TimeTools.truncateToSeconds(startDate);
-		datesArray.add(stepDate);
+		GregorianCalendar stepDate = new GregorianCalendar();
+		stepDate.setTime(startDate.getTime());
+		datesArray.add(new GregorianCalendar(
+				startDate.get(GregorianCalendar.YEAR),
+				startDate.get(GregorianCalendar.MONTH),
+				startDate.get(GregorianCalendar.DAY_OF_MONTH)));
 
-		endDate = TimeTools.truncateToSeconds(endDate);
+		while (stepDate.before(endDate)) {
 
-		while (stepDate.isBefore(endDate)) {
-			LocalDateTime newDate = stepDate.plusDays(freqInPeriod);
-			datesArray.add(newDate);
-			stepDate = newDate;
+			stepDate.add(GregorianCalendar.DAY_OF_MONTH, freqInPeriod);
+			datesArray.add(new GregorianCalendar(
+					stepDate.get(GregorianCalendar.YEAR),
+					stepDate.get(GregorianCalendar.MONTH),
+					stepDate.get(GregorianCalendar.DAY_OF_MONTH))
+			);
 		}
 
-		LocalDateTime[] dates = new LocalDateTime[datesArray.size()];
+		GregorianCalendar[] dates = new GregorianCalendar[datesArray.size()];
 
 		for (int i = 0; i < datesArray.size(); i++) {
 			dates[i] = datesArray.get(i);
@@ -132,8 +136,10 @@ public class TherapyManager {
 	public List<Therapy> getTherapies(List<TherapyRow> thRows) throws OHServiceException {
 
 		if (thRows != null) {
-			List<Therapy> therapies = new ArrayList<>();
+			ArrayList<Therapy> therapies = new ArrayList<>();
+
 			for (TherapyRow thRow : thRows) {
+
 				therapies.add(createTherapy(thRow));
 			}
 			return therapies;
@@ -144,7 +150,7 @@ public class TherapyManager {
 	/**
 	 * Return the list of {@link TherapyRow}s (therapies) for specified Patient ID
 	 * or
-	 * return all {@link TherapyRow}s (therapies) if {@code 0} is passed
+	 * return all {@link TherapyRow}s (therapies) if <code>0</code> is passed
 	 *
 	 * @param code - the Patient ID
 	 * @return the list of {@link TherapyRow}s (therapies)
@@ -169,11 +175,10 @@ public class TherapyManager {
 	 * Replace all {@link TherapyRow}s (therapies) for related Patient
 	 *
 	 * @param thRows - the list of {@link TherapyRow}s (therapies)
-	 * @return {@code true} if the row has been inserted, {@code false} otherwise
+	 * @return <code>true</code> if the row has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
 	@Transactional(rollbackFor = OHServiceException.class)
-	@TranslateOHServiceException
 	public boolean newTherapies(List<TherapyRow> thRows) throws OHServiceException {
 		if (!thRows.isEmpty()) {
 
@@ -185,14 +190,14 @@ public class TherapyManager {
 				ioOperations.newTherapy(thRow);
 				if (thRow.isSms()) {
 					Therapy th = createTherapy(thRow);
-					LocalDateTime[] dates = th.getDates();
-					for (LocalDateTime date : dates) {
-						date = date.withHour(8);
-						if (date.isAfter(TimeTools.getDateToday24())) {
+					GregorianCalendar[] dates = th.getDates();
+					for (GregorianCalendar date : dates) {
+						date.set(Calendar.HOUR_OF_DAY, 8);
+						if (date.after(TimeTools.getDateToday24())) {
 							Patient pat = patientManager.getPatientById(patID);
 
 							Sms sms = new Sms();
-							sms.setSmsDateSched(date);
+							sms.setSmsDateSched(date.getTime());
 							sms.setSmsNumber(pat.getTelephone());
 							sms.setSmsText(prepareSmsFromTherapy(th));
 							sms.setSmsUser(UserBrowsingManager.getCurrentUser());
@@ -236,14 +241,13 @@ public class TherapyManager {
 	 * Delete all {@link TherapyRow}s (therapies) for specified Patient ID
 	 *
 	 * @param code - the Patient ID
-	 * @return {@code true} if the therapies have been deleted, {@code false} otherwise
+	 * @return <code>true</code> if the therapies have been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
 	@Transactional(rollbackFor = OHServiceException.class)
-	@TranslateOHServiceException
-	public void deleteAllTherapies(Integer code) throws OHServiceException {
+	public boolean deleteAllTherapies(Integer code) throws OHServiceException {
 		Patient patient = patientManager.getPatientById(code);
-		ioOperations.deleteAllTherapies(patient);
+		return ioOperations.deleteAllTherapies(patient);
 	}
 
 	/**
@@ -254,26 +258,29 @@ public class TherapyManager {
 	 * @throws OHServiceException
 	 */
 	@Transactional(rollbackFor = OHServiceException.class)
-	@TranslateOHServiceException
 	public List<Medical> getMedicalsOutOfStock(List<Therapy> therapies) throws OHServiceException {
-		List<Medical> medOutStock = new ArrayList<>();
+		ArrayList<Medical> medOutStock = new ArrayList<>();
+
 		List<Medical> medArray = medManager.getMedicals();
 
-		double neededQty;
-		double actualQty;
+		double neededQty = 0.;
+		double actualQty = 0.;
 
 		for (Therapy th : therapies) {
 
 			// CALCULATING NEEDINGS
 			Double qty = th.getQty();
 			int freq = th.getFreqInDay();
-			LocalDateTime todayDate = TimeTools.getDateToday0();
+			GregorianCalendar now = new GregorianCalendar();
+			GregorianCalendar todayDate = new GregorianCalendar(now
+					.get(GregorianCalendar.YEAR), now
+					.get(GregorianCalendar.MONTH), now
+					.get(GregorianCalendar.DAY_OF_MONTH));
 
 			int dayCount = 0;
-			for (LocalDateTime date : th.getDates()) {
-				if (date.isAfter(todayDate) || date.equals(todayDate)) {
+			for (GregorianCalendar date : th.getDates()) {
+				if (date.after(todayDate) || date.equals(todayDate))
 					dayCount++;
-				}
 			}
 
 			if (dayCount != 0) {
@@ -286,8 +293,10 @@ public class TherapyManager {
 				int currentQuantity = wardManager.getCurrentQuantityInWard(null, med);
 				actualQty += currentQuantity;
 
-				if (neededQty > actualQty && !medOutStock.contains(med)) {
-					medOutStock.add(med);
+				if (neededQty > actualQty) {
+					if (!medOutStock.contains(med)) {
+						medOutStock.add(med);
+					}
 				}
 			}
 		}
@@ -312,8 +321,10 @@ public class TherapyManager {
 	 * @return 
 	 * @throws OHServiceException
 	 */
-	public TherapyRow newTherapy(int therapyID, int patID, LocalDateTime startDate, LocalDateTime endDate, Medical medical, Double qty, int unitID,
-			int freqInDay, int freqInPeriod, String note, boolean notify, boolean sms) throws OHServiceException {
+	public TherapyRow newTherapy(int therapyID, int patID, GregorianCalendar startDate, GregorianCalendar endDate,
+			Medical medical, Double qty, int unitID, int freqInDay, int freqInPeriod, String note, boolean notify,
+			boolean sms) throws OHServiceException {
+
 		Patient patient = patientManager.getPatientById(patID);
 		TherapyRow thRow = new TherapyRow(therapyID, patient, startDate, endDate, medical, qty, unitID, freqInDay, freqInPeriod, note, notify, sms);
 		return newTherapy(thRow);
@@ -337,8 +348,10 @@ public class TherapyManager {
 	 * @return the {@link TherapyRow}
 	 * @throws OHServiceException
 	 */
-	public TherapyRow getTherapyRow(int therapyID, int patID, LocalDateTime startDate, LocalDateTime endDate, Medical medical, Double qty, int unitID,
-			int freqInDay, int freqInPeriod, String note, boolean notify, boolean sms) throws OHServiceException {
+	public TherapyRow getTherapyRow(int therapyID, int patID, GregorianCalendar startDate, GregorianCalendar endDate,
+					Medical medical, Double qty, int unitID, int freqInDay, int freqInPeriod, String note, boolean notify,
+					boolean sms) throws OHServiceException {
+
 		Patient patient = patientManager.getPatientById(patID);
 		return new TherapyRow(therapyID, patient, startDate, endDate, medical, qty, unitID, freqInDay, freqInPeriod, note, notify, sms);
 	}

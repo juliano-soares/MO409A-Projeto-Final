@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.pregtreattype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.pregtreattype.model.PregnantTreatmentType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,14 +35,12 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class PregnantTreatmentTypeIoOperation {
 
+	@Autowired
 	private PregnantTreatmentTypeIoOperationRepository repository;
-
-	public PregnantTreatmentTypeIoOperation(PregnantTreatmentTypeIoOperationRepository pregnantTreatmentTypeIoOperationRepository) {
-		this.repository = pregnantTreatmentTypeIoOperationRepository;
-	}
+	
 	
 	/**
-	 * Return the list of {@link PregnantTreatmentType}s.
+	 * Return the list of {@link PregnantTreatmentType}s
 	 * 
 	 * @return the list of {@link PregnantTreatmentType}s
 	 * @throws OHServiceException 
@@ -51,46 +50,76 @@ public class PregnantTreatmentTypeIoOperation {
 	}
 	
 	/**
-	 * Insert a {@link PregnantTreatmentType} into the DB.
+	 * Insert a {@link PregnantTreatmentType} in the DB
 	 * 
 	 * @param pregnantTreatmentType - the {@link PregnantTreatmentType} to insert
-	 * @return the newly inserted {@link PregnantTreatmentType} object.
+	 * @return <code>true</code> if the item has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public PregnantTreatmentType newPregnantTreatmentType(PregnantTreatmentType pregnantTreatmentType) throws OHServiceException {
-		return repository.save(pregnantTreatmentType);
+	public boolean newPregnantTreatmentType(
+			PregnantTreatmentType pregnantTreatmentType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		PregnantTreatmentType savedPregnantTreatmentType = repository.save(pregnantTreatmentType);
+		result = (savedPregnantTreatmentType != null);
+		
+		return result;
 	}
 	
 	/**
-	 * Update a {@link PregnantTreatmentType} in the DB.
+	 * Update a {@link PregnantTreatmentType} in the DB
 	 * 
 	 * @param pregnantTreatmentType - the {@link PregnantTreatmentType} to update
-	 * @return the updated {@link PregnantTreatmentType} object.
+	 * @return <code>true</code> if the item has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public PregnantTreatmentType updatePregnantTreatmentType(PregnantTreatmentType pregnantTreatmentType) throws OHServiceException {
-		return repository.save(pregnantTreatmentType);
+	public boolean updatePregnantTreatmentType(
+			PregnantTreatmentType pregnantTreatmentType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		PregnantTreatmentType savedPregnantTreatmentType = repository.save(pregnantTreatmentType);
+		result = (savedPregnantTreatmentType != null);
+		
+		return result;
 	}
 	
 	/**
 	 * Delete a {@link PregnantTreatmentType} in the DB
 	 * 
 	 * @param pregnantTreatmentType - the {@link PregnantTreatmentType} to delete
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the item has been deleted, <code>false</code> otherwise
+	 * @throws OHServiceException 
 	 */
-	public void deletePregnantTreatmentType(PregnantTreatmentType pregnantTreatmentType) throws OHServiceException {
+	public boolean deletePregnantTreatmentType(
+			PregnantTreatmentType pregnantTreatmentType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(pregnantTreatmentType);
+		
+		return result;
 	}
 	
 	/**
-	 * Check if the code is already in use.
+	 * Check if the code is already in use
 	 * 
 	 * @param code - the code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
-
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,25 +17,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstockward.model;
 
 import java.io.Serializable;
 
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.Embeddable;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotNull;
 
 import org.isf.medicals.model.Medical;
 import org.isf.medicalstock.model.Lot;
 import org.isf.ward.model.Ward;
 
+/**
+ * ------------------------------------------
+ * Medical Ward - model for the medical ward ID entity
+ * -----------------------------------------
+ * modification history
+ * ? - ?
+ * 17/01/2015 - Antonio - ported to JPA
+ * 29/01/2020 - Mwithi - redefined embeddable entity
+ * ------------------------------------------
+ */
 @SuppressWarnings("serial")
 @Embeddable
-public class MedicalWardId implements Serializable {
-
+public class MedicalWardId implements Serializable 
+{	
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name="MDSRWRD_WRD_ID_A")
@@ -49,11 +59,13 @@ public class MedicalWardId implements Serializable {
 	@ManyToOne
 	@JoinColumn(name="MDSRWRD_LT_ID_A")
 	private Lot lot;
-
-	public MedicalWardId() {
+	
+	public MedicalWardId() 
+	{
 	}
-
-	public MedicalWardId(Ward ward, Medical medical, Lot lot) {
+	
+	public MedicalWardId(Ward ward, Medical medical, Lot lot) 
+	{
 		this.ward = ward;
 		this.medical = medical;
 		this.lot = lot;
@@ -109,6 +121,9 @@ public class MedicalWardId implements Serializable {
 		if (ward != other.ward) {
 			return false;
 		}
-		return lot == other.lot;
+		if (lot != other.lot) {
+			return false;
+		}
+		return true;
 	}
 }

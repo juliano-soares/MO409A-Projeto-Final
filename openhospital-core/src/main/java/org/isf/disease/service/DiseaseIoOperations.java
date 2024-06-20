@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,115 +17,98 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.disease.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.disease.model.Disease;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * -----------------------------------------
+ * This class offers the io operations for recovering and managing
+ * diseases records from the database
+ * 
+ * @author Rick, Vero
+ *
+ * modification history
+ * 25/01/2006 - Rick, Vero, Pupo  - first beta version
+ * 08/11/2006 - ross - added support for OPD and IPD flags
+ * 09/06/2007 - ross - when updating, now the user can change the "dis type" also
+ * 02/09/2008 - alex - added method for getting a Disease by his code
+ * 					   added method for getting a DiseaseType by his code
+ * 13/02/2009 - alex - modified query for ordering resultset
+ *                     by description only
+ * ------------------------------------------
+ */
 @Service
-@Transactional(rollbackFor = OHServiceException.class)
+@Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class DiseaseIoOperations {
 
-	private final DiseaseIoOperationRepository repository;
-
-	public DiseaseIoOperations(DiseaseIoOperationRepository repository) {
-		this.repository = repository;
-	}
-
+	@Autowired
+	private DiseaseIoOperationRepository repository;
+	
 	/**
 	 * Gets a {@link Disease} with the specified code.
 	 * @param code the disease code.
-	 * @return the found disease, {@code null} if no disease has found.
+	 * @return the found disease, <code>null</code> if no disease has found.
 	 * @throws OHServiceException if an error occurred getting the disease.
 	 */
 	public Disease getDiseaseByCode(String code) throws OHServiceException {
 		return repository.findOneByCode(code);
 	}
-
-	/**
-	 * Determine if the disease is one of the OPD diseases
-	 *
-	 * @param code the disease code
-	 * @return the Disease if it is an OPD release disease, {@code null} otherwise
-	 * @throws OHServiceException
-	 */
-	public Disease getOPDDiseaseByCode(String code) throws OHServiceException {
-		return repository.findOpdByCode(code);
-	}
-
-	/**
-	 * Determine if the disease is one of the {@code includeIpdIn} diseases
-	 *
-	 * @param code the disease code
-	 * @return the Disease if it is a disease with {@code includeIpdIn=true}, {@code null} otherwise
-	 * @throws OHServiceException
-	 */
-	public Disease getIpdInDiseaseByCode(String code) throws OHServiceException {
-		return repository.findIpdInByCode(code);
-	}
-
-	/**
-	 * Determine if the disease is one of the {@code includeIpdOut} diseases
-	 *
-	 * @param code the disease code
-	 * @return the Disease if it is a disease with {@code includeIpdOut=true}, {@code null} otherwise
-	 * @throws OHServiceException
-	 */
-	public Disease getIpdOutDiseaseByCode(String code) throws OHServiceException {
-		return repository.findIpdOutByCode(code);
-	}
-
+	
 	/**
 	 * Retrieves stored disease with the specified search parameters. 
-	 * Booleans {@code opd}, {@code ipdIn} and {@code ipdOut} in AND logic between
-	 * each other only when {@code true}, ignored otherwise
-	 * @param disTypeCode - not {@code null} apply to disease type
-	 * @param opd - if {@code true} retrieves diseases related to outpatients
-	 * @param ipdIn - if {@code true} retrieves diseases related to inpatients' admissions
-	 * @param ipdOut - if {@code true} retrieves diseases related to inpatients' discharges
+	 * Booleans <code>opd</code>, <code>ipdIn</code> and <code>ipdOut</code> in AND logic between 
+	 * each other only when <code>true</code>, ignored otherwise
+	 * @param disTypeCode - not <code>null</code> apply to disease type
+	 * @param opd - if <code>true</code> retrieves diseases related to outpatients
+	 * @param ipdIn - if <code>true</code> retrieves diseases related to inpatients' admissions
+	 * @param ipdOut - if <code>true</code> retrieves diseases related to inpatients' discharges
 	 * @return the retrieved diseases.
 	 * @throws OHServiceException if an error occurs retrieving the diseases.
 	 */
 	public List<Disease> getDiseases(String disTypeCode, boolean opd, boolean ipdIn, boolean ipdOut) throws OHServiceException {
-		List<Disease> diseases;
+		List<Disease> diseases = null;
 
 		if (disTypeCode != null) {
 			if (opd) {
 				if (ipdIn) {
 					if (ipdOut) {
-						diseases = repository.findAllByDiseaseTypeCodeAndOpdAndIpdInAndIpdOut(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndOpdAndIpdInAndIpdOut(disTypeCode));
 					} else {
-						diseases = repository.findAllByDiseaseTypeCodeAndOpdAndIpdIn(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndOpdAndIpdIn(disTypeCode));
 					}
 				} else {
 					if (ipdOut) {
-						diseases = repository.findAllByDiseaseTypeCodeAndOpdAndIpdOut(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndOpdAndIpdOut(disTypeCode));
 					} else {
-						diseases = repository.findAllByDiseaseTypeCodeAndOpd(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndOpd(disTypeCode));
 					}
 				}
 			} else {
 
 				if (ipdIn) {
 					if (ipdOut) {
-						diseases = repository.findAllByDiseaseTypeCodeAndIpdInAndIpdOut(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndIpdInAndIpdOut(disTypeCode));
 
 					} else {
-						diseases = repository.findAllByDiseaseTypeCodeAndIpdIn(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndIpdIn(disTypeCode));
 					}
 				} else {
 					if (ipdOut) {
-						diseases = repository.findAllByDiseaseTypeCodeAndIpdOut(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCodeAndIpdOut(disTypeCode));
 					} else {
-						diseases = repository.findAllByDiseaseTypeCode(disTypeCode);
+						diseases = (ArrayList<Disease>) (repository.findAllByDiseaseTypeCode(disTypeCode));
 					}
 				}
 			}
@@ -133,44 +116,48 @@ public class DiseaseIoOperations {
 			if (opd) {
 				if (ipdIn) {
 					if (ipdOut) {
-						diseases = repository.findAllByOpdAndIpdInAndIpdOut();
+						diseases = (ArrayList<Disease>) (repository.findAllByOpdAndIpdInAndIpdOut());
 					} else {
-						diseases = repository.findAllByOpdAndIpdIn();
+						diseases = (ArrayList<Disease>) (repository.findAllByOpdAndIpdIn());
 					}
 				} else {
 					if (ipdOut) {
-						diseases = repository.findAllByOpdAndIpdOut();
+						diseases = (ArrayList<Disease>) (repository.findAllByOpdAndIpdOut());
 					} else {
-						diseases = repository.findAllByOpd();
+						diseases = (ArrayList<Disease>) (repository.findAllByOpd());
 					}
 				}
 			} else {
 
 				if (ipdIn) {
 					if (ipdOut) {
-						diseases = repository.findAllByIpdInAndIpdOut();
+						diseases = (ArrayList<Disease>) (repository.findAllByIpdInAndIpdOut());
+
 					} else {
-						diseases = repository.findAllByIpdIn();
+						diseases = (ArrayList<Disease>) (repository.findAllByIpdIn());
 					}
 				} else {
 					if (ipdOut) {
-						diseases = repository.findAllByIpdOut();
+						diseases = (ArrayList<Disease>) (repository.findAllByIpdOut());
 					} else {
-						diseases = repository.findAll();
+						diseases = (ArrayList<Disease>) (repository.findAll());
 					}
 				}
 			}
 		}
+
 		return diseases;
 	}
-
+	
 	/**
 	 * Stores the specified {@link Disease}. 
 	 * @param disease the disease to store.
 	 * @return disease that has been stored
 	 * @throws OHServiceException if an error occurs storing the disease.
 	 */
-	public Disease newDisease(Disease disease) throws OHServiceException {
+	public Disease newDisease(
+			Disease disease) throws OHServiceException
+	{
 		return repository.save(disease);
 	}
 
@@ -180,41 +167,69 @@ public class DiseaseIoOperations {
 	 * @return disease that has been updated
 	 * @throws OHServiceException if an error occurs during the update.
 	 */
-	public Disease updateDisease(Disease disease) throws OHServiceException {
+	public Disease updateDisease(
+			Disease disease) throws OHServiceException 
+	{
 		return repository.save(disease);
 	}
 
 	/**
 	 * Mark as deleted the specified {@link Disease}.
 	 * @param disease the disease to make delete.
+	 * @return <code>true</code> if the disease has been marked, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurred during the delete operation.
 	 */
-	public void deleteDisease(Disease disease) throws OHServiceException {
+	public boolean deleteDisease(
+			Disease disease) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
 		disease.setOpdInclude(false);
 		disease.setIpdInInclude(false);
 		disease.setIpdOutInclude(false);
 		repository.save(disease);
+		
+		return result;
 	}
 
 	/**
 	 * Check if the specified code is used by other {@link Disease}s.
 	 * @param code the code to check.
-	 * @return {@code true} if it is already used, {@code false} otherwise.
+	 * @return <code>true</code> if it is already used, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 
 	/**
 	 * Checks if the specified description is used by a disease with the specified type code.
 	 * @param description the description to check.
 	 * @param typeCode the disease type code.
-	 * @return {@code true} if is used, {@code false} otherwise.
+	 * @return <code>true</code> if is used, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isDescriptionPresent(String description, String typeCode) throws OHServiceException {
-		Disease foundDisease = repository.findOneByDescriptionAndTypeCode(description, typeCode);
-		return foundDisease != null && foundDisease.getDescription().compareTo(description) == 0;
+	public boolean isDescriptionPresent(
+			String description, 
+			String typeCode) throws OHServiceException
+	{
+		boolean present = false;
+		
+		
+		Disease foundDisease = repository.findOneByDescriptionAndTypeCode(description, typeCode);			
+		if (foundDisease != null && foundDisease.getDescription().compareTo(description) == 0)
+		{
+			present = true;
+		}
+		
+		return present;
 	}
 }

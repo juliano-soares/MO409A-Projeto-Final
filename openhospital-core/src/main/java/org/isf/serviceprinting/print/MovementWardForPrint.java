@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,13 +17,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.serviceprinting.print;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import org.isf.medicalstockward.model.MovementWard;
 
@@ -50,37 +49,35 @@ public class MovementWardForPrint implements Comparable<MovementWardForPrint>{
 		this.quantity = mov.getQuantity();
 		this.units = mov.getUnits();
 		this.patient = mov.isPatient() || mov.getWardTo() == null || mov.getWardFrom() == null;
-		this.lot = mov.getLot().getCode();
+		this.lot=mov.getLot().getCode();
 	}
 
-	public int getCode() {
+	public int getCode(){
 		return code;
 	}
-
-	public String getMedical() {
+	
+	public String getMedical(){
 		return medical;
 	}
-
-	public Date getDate() {
+	
+	public Date getDate(){
 		return date;
 	}
-
-	public Double getQuantity() {
+	
+	public Double getQuantity(){
 		return quantity;
 	}
-
+	
 	public String getWard() {
 		return ward;
 	}
-
 	public String getLot() {
 		return lot;
 	}
-
 	public String getUnits() {
 		return units;
 	}
-
+	
 	public boolean getPatient() {
 		return patient;
 	}
@@ -89,9 +86,12 @@ public class MovementWardForPrint implements Comparable<MovementWardForPrint>{
 	public int compareTo(MovementWardForPrint o) {
 		return this.date.compareTo(o.getDate());
 	}
-
-	private Date removeTime(LocalDateTime date) {
-		return Timestamp.valueOf(date);
+	
+	private Date removeTime(GregorianCalendar date) {
+		GregorianCalendar newDate = date;
+		date.set(GregorianCalendar.HOUR_OF_DAY, 0);
+		date.set(GregorianCalendar.MINUTE, 0);
+		date.set(GregorianCalendar.SECOND, 0);
+		return newDate.getTime();
 	}
-
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.exatype.manager;
 
@@ -31,22 +31,21 @@ import org.isf.utils.exception.OHDataIntegrityViolationException;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExamTypeBrowserManager {
 
+	@Autowired
 	private ExamTypeIoOperation ioOperations;
-
-	public ExamTypeBrowserManager(ExamTypeIoOperation examTypeIoOperation) {
-		this.ioOperations = examTypeIoOperation;
-	}
 
 	/**
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param examType
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHServiceException
 	 */
 	protected void validateExamType(ExamType examType, boolean insert) throws OHServiceException {
@@ -54,16 +53,26 @@ public class ExamTypeBrowserManager {
 		String description = examType.getDescription();
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		if (key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (key.length() > 2) {
-			errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 2)));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 2),
+					OHSeverityLevel.ERROR));
 		}
 		if (description.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (insert && isCodePresent(examType.getCode())) {
-			throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(examType.getCode())) {
+				throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -73,7 +82,7 @@ public class ExamTypeBrowserManager {
 	/**
 	 * Return the list of {@link ExamType}s.
 	 *
-	 * @return the list of {@link ExamType}s. It could be {@code null}
+	 * @return the list of {@link ExamType}s. It could be <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public List<ExamType> getExamType() throws OHServiceException {
@@ -81,13 +90,13 @@ public class ExamTypeBrowserManager {
 	}
 
 	/**
-	 * Insert a new {@link ExamType} into the DB.
+	 * Insert a new {@link ExamType} in the DB.
 	 *
 	 * @param examType - the {@link ExamType} to insert.
-	 * @return the newly inserted {@link ExamType}.
+	 * @return <code>true</code> if the examType has been inserted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public ExamType newExamType(ExamType examType) throws OHServiceException {
+	public boolean newExamType(ExamType examType) throws OHServiceException {
 		validateExamType(examType, true);
 		return ioOperations.newExamType(examType);
 	}
@@ -96,20 +105,20 @@ public class ExamTypeBrowserManager {
 	 * Update an already existing {@link ExamType}.
 	 *
 	 * @param examType - the {@link ExamType} to update
-	 * @return the updated {@link ExamType}.
+	 * @return <code>true</code> if the examType has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public ExamType updateExamType(ExamType examType) throws OHServiceException {
+	public boolean updateExamType(ExamType examType) throws OHServiceException {
 		validateExamType(examType, false);
 		return ioOperations.updateExamType(examType);
 	}
 
 	/**
-	 * This checks for the presence of a record with the same code as in
+	 * This function controls the presence of a record with the same code as in
 	 * the parameter.
 	 *
 	 * @param code - the code
-	 * @return {@code true} if the code is present, {@code false} otherwise.
+	 * @return <code>true</code> if the code is present, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
@@ -120,9 +129,10 @@ public class ExamTypeBrowserManager {
 	 * Delete the passed {@link ExamType}.
 	 *
 	 * @param examType - the {@link ExamType} to delete.
+	 * @return <code>true</code> if the examType has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteExamType(ExamType examType) throws OHServiceException {
-		ioOperations.deleteExamType(examType);
+	public boolean deleteExamType(ExamType examType) throws OHServiceException {
+		return ioOperations.deleteExamType(examType);
 	}
 }

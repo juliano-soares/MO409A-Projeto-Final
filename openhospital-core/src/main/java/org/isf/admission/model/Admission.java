@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,172 +17,195 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.admission.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EntityResult;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SqlResultSetMapping;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.persistence.Version;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.EntityResult;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
 
 import org.isf.admtype.model.AdmissionType;
 import org.isf.disctype.model.DischargeType;
 import org.isf.disease.model.Disease;
 import org.isf.dlvrrestype.model.DeliveryResultType;
 import org.isf.dlvrtype.model.DeliveryType;
+import org.isf.operation.model.Operation;
 import org.isf.patient.model.Patient;
 import org.isf.pregtreattype.model.PregnantTreatmentType;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.isf.ward.model.Ward;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Admission - model for a patient admission
+ * -----------------------------------------
+ * modification history
+ * ? - ? - first version
+ * 30/09/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_ADMISSION")
+@Table(name="ADMISSION")
 @SqlResultSetMapping(name="AdmittedPatient",
 entities={
-		@EntityResult(entityClass=Patient.class),
-		@EntityResult(entityClass=Admission.class)}
+		@EntityResult(entityClass=org.isf.patient.model.Patient.class),
+		@EntityResult(entityClass=org.isf.admission.model.Admission.class)}
 )
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name="createdBy", column=@Column(name="ADM_CREATED_BY", updatable = false))
-@AttributeOverride(name="createdDate", column=@Column(name="ADM_CREATED_DATE", updatable = false))
-@AttributeOverride(name="lastModifiedBy", column=@Column(name="ADM_LAST_MODIFIED_BY"))
-@AttributeOverride(name="active", column=@Column(name="ADM_ACTIVE"))
-@AttributeOverride(name="lastModifiedDate", column=@Column(name="ADM_LAST_MODIFIED_DATE"))
-public class Admission extends Auditable<String> implements Comparable<Admission> {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "ADM_ID")
-	private int id;                            // admission key
-
-	@NotNull
-	@Column(name = "ADM_IN")
-	private int admitted;                    // values are 0 or 1, default 0 (not admitted)
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="ADM_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="ADM_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="ADM_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="ADM_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="ADM_LAST_MODIFIED_DATE"))
+})
+public class Admission extends Auditable<String> implements Comparable<Admission> 
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(name="ADM_ID")	
+	private int id;							// admission key
 
 	@NotNull
-	@Column(name = "ADM_TYPE")
-	private String type;                    // values are 'N'(normal)  or 'M' (malnutrition)  default 'N'
+	@Column(name="ADM_IN")
+	private int admitted;					// values are 0 or 1, default 0 (not admitted)
 
 	@NotNull
-	@ManyToOne
-	@JoinColumn(name = "ADM_WRD_ID_A")
-	private Ward ward;                        // ward key
-
-	@NotNull
-	@Column(name = "ADM_YPROG")
-	private int yProg;                        // a progr. in year for each ward
+	@Column(name="ADM_TYPE")
+	private String type;	   				// values are 'N'(normal)  or 'M' (malnutrition)  default 'N' 
 
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "ADM_PAT_ID")
-	private Patient patient;                // patient key
+	@JoinColumn(name="ADM_WRD_ID_A")
+	private Ward ward; 						// ward key
 
 	@NotNull
-	@Column(name = "ADM_DATE_ADM")        // SQL type: datetime
-	private LocalDateTime admDate;        // admission date
+	@Column(name="ADM_YPROG")
+	private int yProg;						// a progr. in year for each ward
 
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "ADM_ADMT_ID_A_ADM")
-	private AdmissionType admissionType;    // admissionType key
+	@JoinColumn(name="ADM_PAT_ID")
+	private Patient patient;				// patient key
 
-	@Column(name = "ADM_FHU")
-	private String fHU;                        // FromHealthUnit (null)
+	@NotNull
+	@Column(name="ADM_DATE_ADM")
+	private GregorianCalendar admDate;		// admission date
 
+	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "ADM_IN_DIS_ID_A")
-	private Disease diseaseIn;                // disease in key  (null)
+	@JoinColumn(name="ADM_ADMT_ID_A_ADM")
+	private AdmissionType admissionType;	// admissionType key
 
+	@Column(name="ADM_FHU")
+	private String FHU;						// FromHealthUnit (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_OUT_DIS_ID_A")
-	private Disease diseaseOut1;            // disease out key  (null)
-
+	@JoinColumn(name="ADM_IN_DIS_ID_A")
+	private Disease diseaseIn;				// disease in key  (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_OUT_DIS_ID_A_2")
-	private Disease diseaseOut2;            // disease out key (null)
-
+	@JoinColumn(name="ADM_OUT_DIS_ID_A")
+	private Disease diseaseOut1;			// disease out key  (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_OUT_DIS_ID_A_3")
-	private Disease diseaseOut3;            // disease out key (null)
-
-	@Column(name = "ADM_DATE_DIS")        // SQL type: datetime
-	private LocalDateTime disDate;        // discharge date (null)
-
+	@JoinColumn(name="ADM_OUT_DIS_ID_A_2")
+	private Disease diseaseOut2; 			// disease out key (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_DIST_ID_A")
-	private DischargeType disType;            // disChargeType key (null)
-
-	@Column(name = "ADM_NOTE")
-	private String note;                    // free notes (null)
-
-	@Column(name = "ADM_TRANS")
-	private Float transUnit;                // transfusional unit
-
-	@Column(name = "ADM_PRG_DATE_VIS")        // SQL type: datetime
-	private LocalDateTime visitDate;    // ADM_PRG_DATE_VIS
-
+	@JoinColumn(name="ADM_OUT_DIS_ID_A_3")
+	private Disease diseaseOut3; 			// disease out key (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_PRG_PTT_ID_A")
-	private PregnantTreatmentType pregTreatmentType;        // ADM_PRG_PTT_ID_A treatmentType key
+	@JoinColumn(name="ADM_OPE_ID_A")
+	private Operation operation;				// operation key (null)
 
-	@Column(name = "ADM_PRG_DATE_DEL")        // SQL type: datetime
-	private LocalDateTime deliveryDate;    // ADM_PRG_DATE_DEL delivery date
+	@Column(name="ADM_DATE_OP")
+	private GregorianCalendar opDate; 		// operation date (null)
 
+	@Column(name="ADM_RESOP")
+	private String opResult;				// value is 'P' or 'N' (null)
+
+	@Column(name="ADM_DATE_DIS")
+	private GregorianCalendar disDate; 		// discharge date (null)
+	
 	@ManyToOne
-	@JoinColumn(name = "ADM_PRG_DLT_ID_A")
-	private DeliveryType deliveryType;        // ADM_PRG_DLT_ID_A delivery type key
+	@JoinColumn(name="ADM_DIST_ID_A")
+	private DischargeType disType;			// disChargeType key (null)
 
+	@Column(name="ADM_NOTE")
+	private String note;					// free notes (null)
+
+	@Column(name="ADM_TRANS")
+	private Float transUnit;				// transfusional unit
+
+	@Column(name="ADM_PRG_DATE_VIS")
+	private GregorianCalendar visitDate;	// ADM_PRG_DATE_VIS	
+		
 	@ManyToOne
-	@JoinColumn(name = "ADM_PRG_DRT_ID_A")
-	private DeliveryResultType deliveryResult;        // ADM_PRG_DRT_ID_A	delivery res. key
-
-	@Column(name = "ADM_PRG_WEIGHT")
-	private Float weight;                    // ADM_PRG_WEIGHT	weight
-
-	@Column(name = "ADM_PRG_DATE_CTRL1")        // SQL type: datetime
-	private LocalDateTime ctrlDate1;    // ADM_PRG_DATE_CTRL1
-
-	@Column(name = "ADM_PRG_DATE_CTRL2")        // SQL type: datetime
-	private LocalDateTime ctrlDate2;    // ADM_PRG_DATE_CTRL2
-
-	@Column(name = "ADM_PRG_DATE_ABORT")        // SQL type: datetime
-	private LocalDateTime abortDate;    // ADM_PRG_DATE_ABORT
-
-	@Column(name = "ADM_USR_ID_A")
-	private String userID;                    // the user ID
+	@JoinColumn(name="ADM_PRG_PTT_ID_A")
+	private PregnantTreatmentType pregTreatmentType;		// ADM_PRG_PTT_ID_A treatmentType key
+	
+	@Column(name="ADM_PRG_DATE_DEL")
+	private GregorianCalendar deliveryDate;	// ADM_PRG_DATE_DEL delivery date	
+		
+	@ManyToOne
+	@JoinColumn(name="ADM_PRG_DLT_ID_A")	
+	private DeliveryType deliveryType;		// ADM_PRG_DLT_ID_A delivery type key
+		
+	@ManyToOne
+	@JoinColumn(name="ADM_PRG_DRT_ID_A")
+	private DeliveryResultType deliveryResult;		// ADM_PRG_DRT_ID_A	delivery res. key
+	
+	@Column(name="ADM_PRG_WEIGHT")
+	private Float weight;					// ADM_PRG_WEIGHT	weight
+	
+	@Column(name="ADM_PRG_DATE_CTRL1")
+	private GregorianCalendar ctrlDate1;	// ADM_PRG_DATE_CTRL1
+	
+	@Column(name="ADM_PRG_DATE_CTRL2")
+	private GregorianCalendar ctrlDate2;	// ADM_PRG_DATE_CTRL2
+	
+	@Column(name="ADM_PRG_DATE_ABORT")
+	private GregorianCalendar abortDate;	// ADM_PRG_DATE_ABORT
+	
+	@Column(name="ADM_USR_ID_A")
+	private String userID;					// the user ID
 
 	@Version
-	@Column(name = "ADM_LOCK")
-	private int lock;                        // default 0
+	@Column(name="ADM_LOCK")
+	private int lock;						// default 0
 
 	@NotNull
-	@Column(name = "ADM_DELETED", columnDefinition = "char(1) default 'N'")
-	private char deleted = 'N';                // flag record deleted ; values are 'Y' OR 'N' default is 'N'
-
+	@Column(name="ADM_DELETED")
+	private String deleted;					// flag record deleted ; values are 'Y' OR 'N' default is 'N'
+	
 	@Transient
-	private volatile int hashCode;
-
+	private volatile int hashCode = 0;
+	
 	public Admission() {
 		super();
 	}
 
 	/**
+	 * 
 	 * @param id
 	 * @param admitted
 	 * @param type
@@ -196,6 +219,9 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 	 * @param diseaseOut1
 	 * @param diseaseOut2
 	 * @param diseaseOut3
+	 * @param operation
+	 * @param opResult
+	 * @param opDate
 	 * @param disDate
 	 * @param disType
 	 * @param note
@@ -212,12 +238,11 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 	 * @param userID
 	 * @param deleted
 	 */
-	public Admission(int id, int admitted, String type, Ward ward, int prog, Patient patient, LocalDateTime admDate, AdmissionType admType, String fhu,
-			Disease diseaseIn, Disease diseaseOut1, Disease diseaseOut2, Disease diseaseOut3,
-			LocalDateTime disDate, DischargeType disType, String note, Float transUnit, LocalDateTime visitDate,
-			PregnantTreatmentType pregTreatmentType, LocalDateTime deliveryDate, DeliveryType deliveryType, DeliveryResultType deliveryResult, Float weight,
-			LocalDateTime ctrlDate1, LocalDateTime ctrlDate2,
-			LocalDateTime abortDate, String userID, char deleted) {
+	public Admission(int id, int admitted, String type, Ward ward, int prog, Patient patient, GregorianCalendar admDate, AdmissionType admType, String fhu, Disease diseaseIn, Disease diseaseOut1, Disease diseaseOut2, Disease diseaseOut3,
+			Operation operation, String opResult, GregorianCalendar opDate, GregorianCalendar disDate, DischargeType disType, String note, Float transUnit, GregorianCalendar visitDate,
+			PregnantTreatmentType pregTreatmentType, GregorianCalendar deliveryDate, DeliveryType deliveryType, DeliveryResultType deliveryResult, Float weight, GregorianCalendar ctrlDate1, GregorianCalendar ctrlDate2,
+			GregorianCalendar abortDate, String userID, String deleted) 
+	{
 		super();
 		this.id = id;
 		this.admitted = admitted;
@@ -225,28 +250,39 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.ward = ward;
 		this.yProg = prog;
 		this.patient = patient;
-		this.admDate = TimeTools.truncateToSeconds(admDate);
+		this.admDate = admDate;
 		this.admissionType = admType;
-		this.fHU = fhu;
+		this.FHU = fhu;
 		this.diseaseIn = diseaseIn;
 		this.diseaseOut1 = diseaseOut1;
 		this.diseaseOut2 = diseaseOut2;
 		this.diseaseOut3 = diseaseOut3;
-		this.disDate = TimeTools.truncateToSeconds(disDate);
+		this.operation = operation;
+		this.opResult = opResult;
+		this.opDate = opDate;
+		this.disDate = disDate;
 		this.disType = disType;
 		this.note = note;
 		this.transUnit = transUnit;
-		this.visitDate = TimeTools.truncateToSeconds(visitDate);
+		this.visitDate = visitDate;
 		this.pregTreatmentType = pregTreatmentType;
-		this.deliveryDate = TimeTools.truncateToSeconds(deliveryDate);
+		this.deliveryDate = deliveryDate;
 		this.deliveryType = deliveryType;
 		this.deliveryResult = deliveryResult;
 		this.weight = weight;
-		this.ctrlDate1 = TimeTools.truncateToSeconds(ctrlDate1);
-		this.ctrlDate2 = TimeTools.truncateToSeconds(ctrlDate2);
-		this.abortDate = TimeTools.truncateToSeconds(abortDate);
+		this.ctrlDate1 = ctrlDate1;
+		this.ctrlDate2 = ctrlDate2;
+		this.abortDate = abortDate;
 		this.userID = userID;
 		this.deleted = deleted;
+	}
+	
+	public GregorianCalendar getOpDate() {
+		return opDate;
+	}
+
+	public void setOpDate(GregorianCalendar opDate) {
+		this.opDate = opDate;
 	}
 
 	public Float getTransUnit() {
@@ -265,20 +301,20 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.userID = string;
 	}
 
-	public LocalDateTime getAbortDate() {
+	public GregorianCalendar getAbortDate() {
 		return abortDate;
 	}
 
-	public void setAbortDate(LocalDateTime abortDate) {
-		this.abortDate = TimeTools.truncateToSeconds(abortDate);
+	public void setAbortDate(GregorianCalendar abortDate) {
+		this.abortDate = abortDate;
 	}
 
-	public LocalDateTime getAdmDate() {
+	public GregorianCalendar getAdmDate() {
 		return admDate;
 	}
 
-	public void setAdmDate(LocalDateTime admDate) {
-		this.admDate = TimeTools.truncateToSeconds(admDate);
+	public void setAdmDate(GregorianCalendar admDate) {
+		this.admDate = admDate;
 	}
 
 	public int getAdmitted() {
@@ -297,36 +333,36 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.admissionType = admType;
 	}
 
-	public LocalDateTime getCtrlDate1() {
+	public GregorianCalendar getCtrlDate1() {
 		return ctrlDate1;
 	}
 
-	public void setCtrlDate1(LocalDateTime ctrlDate1) {
-		this.ctrlDate1 = TimeTools.truncateToSeconds(ctrlDate1);
+	public void setCtrlDate1(GregorianCalendar ctrlDate1) {
+		this.ctrlDate1 = ctrlDate1;
 	}
 
-	public LocalDateTime getCtrlDate2() {
+	public GregorianCalendar getCtrlDate2() {
 		return ctrlDate2;
 	}
 
-	public void setCtrlDate2(LocalDateTime ctrlDate2) {
-		this.ctrlDate2 = TimeTools.truncateToSeconds(ctrlDate2);
+	public void setCtrlDate2(GregorianCalendar ctrlDate2) {
+		this.ctrlDate2 = ctrlDate2;
 	}
 
-	public char getDeleted() {
+	public String getDeleted() {
 		return deleted;
 	}
 
-	public void setDeleted(char deleted) {
+	public void setDeleted(String deleted) {
 		this.deleted = deleted;
 	}
 
-	public LocalDateTime getDeliveryDate() {
+	public GregorianCalendar getDeliveryDate() {
 		return deliveryDate;
 	}
 
-	public void setDeliveryDate(LocalDateTime deliveryDate) {
-		this.deliveryDate = TimeTools.truncateToSeconds(deliveryDate);
+	public void setDeliveryDate(GregorianCalendar deliveryDate) {
+		this.deliveryDate = deliveryDate;
 	}
 
 	public DeliveryResultType getDeliveryResult() {
@@ -345,12 +381,12 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.deliveryType = deliveryTypeId;
 	}
 
-	public LocalDateTime getDisDate() {
+	public GregorianCalendar getDisDate() {
 		return disDate;
 	}
 
-	public void setDisDate(LocalDateTime disDate) {
-		this.disDate = TimeTools.truncateToSeconds(disDate);
+	public void setDisDate(GregorianCalendar disDate) {
+		this.disDate = disDate;
 	}
 
 	public Disease getDiseaseIn() {
@@ -394,11 +430,11 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 	}
 
 	public String getFHU() {
-		return fHU;
+		return FHU;
 	}
 
 	public void setFHU(String fhu) {
-		this.fHU = fhu;
+		this.FHU = fhu;
 	}
 
 	public int getId() {
@@ -425,6 +461,22 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.note = note;
 	}
 
+	public Operation getOperation() {
+		return operation;
+	}
+
+	public void setOperation(Operation operation) {
+		this.operation = operation;
+	}
+
+	public String getOpResult() {
+		return opResult;
+	}
+
+	public void setOpResult(String opResult) {
+		this.opResult = opResult;
+	}
+
 	public Patient getPatient() {
 		return patient;
 	}
@@ -449,12 +501,12 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 		this.type = type;
 	}
 
-	public LocalDateTime getVisitDate() {
+	public GregorianCalendar getVisitDate() {
 		return visitDate;
 	}
 
-	public void setVisitDate(LocalDateTime visitDate) {
-		this.visitDate = TimeTools.truncateToSeconds(visitDate);
+	public void setVisitDate(GregorianCalendar visitDate) {
+		this.visitDate = visitDate;
 	}
 
 	public Ward getWard() {
@@ -485,32 +537,32 @@ public class Admission extends Auditable<String> implements Comparable<Admission
 	public int compareTo(Admission anAdmission) {
 		return this.id - anAdmission.getId();
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
 		}
-
+		
 		if (!(obj instanceof Admission)) {
 			return false;
 		}
-
-		Admission admission = (Admission) obj;
+		
+		Admission admission = (Admission)obj;
 		return (this.getId() == admission.getId());
 	}
-
+	
 	@Override
 	public int hashCode() {
-		if (this.hashCode == 0) {
-			final int m = 23;
-			int c = 133;
-
-			c = m * c + id;
-
-			this.hashCode = c;
-		}
-
-		return this.hashCode;
-	}
+	    if (this.hashCode == 0) {
+	        final int m = 23;
+	        int c = 133;
+	        
+	        c = m * c + id;
+	        
+	        this.hashCode = c;
+	    }
+	  
+	    return this.hashCode;
+	}	
 }

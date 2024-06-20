@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,15 +17,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.dlvrrestype.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.isf.dlvrrestype.model.DeliveryResultType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class DeliveryResultTypeIoOperation {
-
+	
+	@Autowired
 	private DeliveryResultIoOperationRepository repository;
-
-	public DeliveryResultTypeIoOperation(DeliveryResultIoOperationRepository deliveryResultIoOperationRepository) {
-		this.repository = deliveryResultIoOperationRepository;
-	}
 
 	/**
 	 * Returns all stored {@link DeliveryResultType}s.
@@ -49,45 +48,76 @@ public class DeliveryResultTypeIoOperation {
 	 * @throws OHServiceException if an error occurs retrieving the stored delivery result types.
 	 */
 	public List<DeliveryResultType> getDeliveryResultType() throws OHServiceException {
-		return repository.findAllByOrderByDescriptionAsc();
+		return new ArrayList<>(repository.findAllByOrderByDescriptionAsc());
 	}
 
 	/**
 	 * Updates the specified {@link DeliveryResultType}.
 	 * @param deliveryResultType the delivery result type to update.
-	 * @return the updated {@link DeliveryResultType}.
+	 * @return <code>true</code> if the delivery result type has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the update.
 	 */
-	public DeliveryResultType updateDeliveryResultType(DeliveryResultType deliveryResultType) throws OHServiceException {
-		return repository.save(deliveryResultType);
+	public boolean updateDeliveryResultType(
+			DeliveryResultType deliveryResultType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		DeliveryResultType savedDeliveryResultType = repository.save(deliveryResultType);
+		result = (savedDeliveryResultType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Stores the specified {@link DeliveryResultType}.
 	 * @param deliveryResultType the delivery result type to store.
-	 * @return the new {@link DeliveryResultType}.
+	 * @return <code>true</code> if the delivery result type has been stored. 
 	 * @throws OHServiceException if an error occurs during the store operation.
 	 */
-	public DeliveryResultType newDeliveryResultType(DeliveryResultType deliveryResultType) throws OHServiceException {
-		return repository.save(deliveryResultType);
+	public boolean newDeliveryResultType(
+			DeliveryResultType deliveryResultType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		DeliveryResultType savedDeliveryResultType = repository.save(deliveryResultType);
+		result = (savedDeliveryResultType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Deletes the specified {@link DeliveryResultType}.
 	 * @param deliveryResultType the delivery result type to delete.
+	 * @return <code>true</code> if the delivery result type has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the delete operation.
 	 */
-	public void deleteDeliveryResultType(DeliveryResultType deliveryResultType) throws OHServiceException {
+	public boolean deleteDeliveryResultType(
+			DeliveryResultType deliveryResultType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(deliveryResultType);
+		
+		return result;
 	}
 
 	/**
-	 * Checks if the specified code is already used by other {@link DeliveryResultType}s.
+	 * Checks if the specified code is already used by others {@link DeliveryResultType}s.
 	 * @param code the code to check.
-	 * @return {@code true} if the code is used, {@code false} otherwise.
+	 * @return <code>true</code> if the code is used, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 }

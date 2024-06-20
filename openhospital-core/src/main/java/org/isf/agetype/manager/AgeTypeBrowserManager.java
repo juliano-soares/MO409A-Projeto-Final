@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.agetype.manager;
 
@@ -30,21 +30,20 @@ import org.isf.generaldata.MessageBundle;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AgeTypeBrowserManager {
 
+	@Autowired
 	private AgeTypeIoOperations ioOperations;
-
-	public AgeTypeBrowserManager(AgeTypeIoOperations ageTypeIoOperations) {
-		this.ioOperations = ageTypeIoOperations;
-	}
 
 	/**
 	 * Returns all available age types.
 	 *
-	 * @return a list of {@link AgeType} or {@code null} if the operation fails.
+	 * @return a list of {@link AgeType} or <code>null</code> if the operation fails.
 	 * @throws OHServiceException
 	 */
 	public List<AgeType> getAgeType() throws OHServiceException {
@@ -55,10 +54,10 @@ public class AgeTypeBrowserManager {
 	 * Updates the list of {@link AgeType}s.
 	 *
 	 * @param ageTypes the {@link AgeType}s to update.
-	 * @return the updated list of {@link AgeType}s.
+	 * @return <code>true</code> if the list has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public List<AgeType> updateAgeType(List<AgeType> ageTypes) throws OHServiceException {
+	public boolean updateAgeType(List<AgeType> ageTypes) throws OHServiceException {
 		validateAgeTypes(ageTypes);
 		return ioOperations.updateAgeType(ageTypes);
 	}
@@ -67,7 +66,7 @@ public class AgeTypeBrowserManager {
 	 * Retrieves the {@link AgeType} code using the age value.
 	 *
 	 * @param age the age value.
-	 * @return the retrieved code, {@code null} if age value is out of any range.
+	 * @return the retrieved code, <code>null</code> if age value is out of any range.
 	 * @throws OHServiceException
 	 */
 	public String getTypeByAge(int age) throws OHServiceException {
@@ -86,22 +85,11 @@ public class AgeTypeBrowserManager {
 	 * Gets the {@link AgeType} from the code index.
 	 *
 	 * @param index the code index.
-	 * @return the retrieved element, {@code null} otherwise.
+	 * @return the retrieved element, <code>null</code> otherwise.
 	 * @throws OHServiceException
 	 */
 	public AgeType getTypeByCode(int index) throws OHServiceException {
 		return ioOperations.getAgeTypeByCode(index);
-	}
-	
-	/**
-	 * Gets the {@link AgeType} from the code.
-	 *
-	 * @param code of agetype.
-	 * @return the retrieved element, {@code null} otherwise.
-	 * @throws OHServiceException
-	 */
-	public AgeType getTypeByCode(String code) throws OHServiceException {
-		return ioOperations.getAgeTypeByCode(code);
 	}
 
 	/**
@@ -114,10 +102,15 @@ public class AgeTypeBrowserManager {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		for (int i = 1; i < ageTypes.size(); i++) {
 			if (ageTypes.get(i).getFrom() <= ageTypes.get(i - 1).getTo()) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.agetype.overlappedrangespleasecheckthevalues.msg")));
+				errors.add(
+						new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+								MessageBundle.getMessage("angal.agetype.overlappedrangespleasecheckthevalues.msg"),
+								OHSeverityLevel.ERROR));
 			}
 			if (ageTypes.get(i).getFrom() - ageTypes.get(i - 1).getTo() > 1) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.agetype.somerangesarenotdefinedpleasecheckthevalues.msg")));
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.agetype.somerangesarenotdefinedpleasecheckthevalues.msg"),
+						OHSeverityLevel.ERROR));
 			}
 		}
 		if (!errors.isEmpty()) {

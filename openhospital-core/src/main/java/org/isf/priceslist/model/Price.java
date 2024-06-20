@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,38 +17,50 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.priceslist.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Price - model for the price entity
+ * -----------------------------------------
+ * modification history
+ * ? - Mwithi - first version
+ * 10/09/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_PRICES")
+@Table(name="PRICES")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "PRC_CREATED_BY"))
-@AttributeOverride(name = "createdDate", column = @Column(name = "PRC_CREATED_DATE"))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "PRC_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "PRC_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "PRC_LAST_MODIFIED_DATE"))
-public class Price extends Auditable<String> {
-
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="PRC_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="PRC_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="PRC_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="PRC_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="PRC_LAST_MODIFIED_DATE"))
+})
+public class Price extends Auditable<String>
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="PRC_ID")
 	private int id;
 
@@ -77,7 +89,7 @@ public class Price extends Auditable<String> {
     private boolean editable;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
     
     public Price() {
 		super();
@@ -91,15 +103,16 @@ public class Price extends Auditable<String> {
      * @param price
      * @param editable
      */
-    public Price(PriceList list, String group, String item, String desc, Double price, boolean editable) {
-	    super();
-	    this.list = list;
-	    this.group = group;
-	    this.item = item;
-	    this.description = desc;
-	    this.price = price;
-	    this.editable = editable;
-    }
+    public Price(PriceList list, String group, String item, String desc,
+			Double price, boolean editable) {
+		super();
+		this.list = list;
+		this.group = group;
+		this.item = item;
+		this.description = desc;
+		this.price = price;
+		this.editable = editable;
+	}
     
     /**
      * 
@@ -110,16 +123,17 @@ public class Price extends Auditable<String> {
      * @param desc
      * @param price
      */
-    public Price(int id, PriceList list, String group, String item, String desc, Double price) {
-	    super();
-	    this.id = id;
-	    this.list = list;
-	    this.group = group;
-	    this.item = item;
-	    this.description = desc;
-	    this.price = price;
-	    this.editable = true;
-    }
+	public Price(int id, PriceList list, String group, String item, String desc,
+			Double price) {
+		super();
+		this.id = id;
+		this.list = list;
+		this.group = group;
+		this.item = item;
+		this.description = desc;
+		this.price = price;
+		this.editable = true;
+	}
 
 	/**
 	 * 
@@ -130,6 +144,7 @@ public class Price extends Auditable<String> {
 	 * @param price
 	 */
 	public Price(PriceList list, String group, String item, String desc, Double price) {
+		
 		this.list = list;
 		this.group = group;
 		this.item = item;

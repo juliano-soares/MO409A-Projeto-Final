@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.supplier.service;
 
@@ -27,6 +27,7 @@ import org.isf.generaldata.ExaminationParameters;
 import org.isf.supplier.model.Supplier;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,31 +39,31 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class SupplierOperations {
 
+	@Autowired
 	private SupplierIoOperationRepository repository;
 	
-	public SupplierOperations(SupplierIoOperationRepository supplierIoOperationRepository) {
-		this.repository = supplierIoOperationRepository;
+	public SupplierOperations() {
 		ExaminationParameters.initialize();
 	}
 
 	/**
-	 * Save or update a {@link Supplier}.
+	 * Save or Update a {@link Supplier}
 	 * @param supplier - the {@link Supplier} to save or update
-	 * return the recently saved or updated {@link Supplier} object.
+	 * return <code>true</code> if data has been saved, <code>false</code> otherwise. 
 	 * @throws OHServiceException 
 	 */
-	public Supplier saveOrUpdate(Supplier supplier) throws OHServiceException {
-		return repository.save(supplier);
+	public boolean saveOrUpdate(Supplier supplier) throws OHServiceException {
+		return repository.save(supplier) != null;
 	}
 
 	/**
 	 * Returns a {@link Supplier} with specified ID
-	 * @param id - supplier ID
-	 * @return supplier - the {@link Supplier} object with specified ID or {@code null} if not found
+	 * @param ID - supplier ID
+	 * @return supplier - the supplier with specified ID
 	 * @throws OHServiceException 
 	 */
-	public Supplier getByID(int id) throws OHServiceException {
-		return repository.findById(id).orElse(null);
+	public Supplier getByID(int ID) throws OHServiceException {
+		return repository.findOne(ID);
 	}
 	
 	/**

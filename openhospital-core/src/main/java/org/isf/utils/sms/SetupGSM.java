@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.sms;
 
@@ -25,40 +25,40 @@ import java.awt.HeadlessException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.FileBasedConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.Parameters;
-import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
-import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.isf.generaldata.ConfigurationProperties;
 import org.isf.sms.providers.gsm.GSMGatewayService;
 import org.isf.sms.providers.gsm.GSMParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.web.server.PortInUseException;
 
-import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortDataListener;
-import com.fazecast.jSerialComm.SerialPortEvent;
+import gnu.io.CommPortIdentifier;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import gnu.io.SerialPortEvent;
+import gnu.io.SerialPortEventListener;
 
 /**
  * @author Mwithi
  */
-public class SetupGSM extends JFrame implements SerialPortDataListener {
+public class SetupGSM extends JFrame implements SerialPortEventListener {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(SetupGSM.class);
-
+	
 	private Properties props;
+	private CommPortIdentifier portId = null;
+	private Enumeration<?> portList = null;
+	private SerialPort serialPort = null;
 	private InputStream inputStream;
-
+	
 	/**
 	 * @param args
 	 */
@@ -66,62 +66,66 @@ public class SetupGSM extends JFrame implements SerialPortDataListener {
 		new SetupGSM();
 		System.exit(0);
 	}
-
-	public SetupGSM() {
+	
+	public SetupGSM() {	
+		
 		props = ConfigurationProperties.loadPropertiesFile(GSMParameters.FILE_PROPERTIES, LOGGER);
-
+		
 		String model = props.getProperty(GSMGatewayService.SERVICE_NAME + ".gmm");
+		
+		portList = CommPortIdentifier.getPortIdentifiers();
+		
+		while (portList.hasMoreElements()) {
+			
+			portId = (CommPortIdentifier) portList.nextElement();
 
-		SerialPort[] portList = SerialPort.getCommPorts();
-		LOGGER.info("Found {} ports: {}", portList.length, portList.toString());
-
-		for (SerialPort comPort : portList) {
-
-			// LOGGER.info("Port {}", comPort.getDescriptivePortName());
-
-			try {
-				LOGGER.info("Opening port...");
-				comPort.openPort();
-				comPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
-				comPort.addDataListener(this);
-
-				OutputStream outputStream = comPort.getOutputStream();
-				if (outputStream != null) {
-					LOGGER.info("Output stream OK");
-				} else {
-					LOGGER.info("Output stream not found");
+			if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
+			//if (portId.getName().equals("COM25")) {
+				
+				System.out.println("Port found: " + portId.getName() + " " + (portId.getPortType() == CommPortIdentifier.PORT_SERIAL ? "SERIAL" : "PARALLEL"));
+			
+				try {
+					serialPort = (SerialPort) portId.open("SmsSender", 10);
+					serialPort.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+					serialPort.addEventListener(this);
+			        serialPort.notifyOnDataAvailable(true);
+					
+					OutputStream outputStream = serialPort.getOutputStream();
+					if (outputStream != null) {
+						System.out.println("Output stream OK");
+					} else {
+						System.out.println("Output stream not found");
+					}
+					
+					inputStream = serialPort.getInputStream(); 
+					byte[] command = model.getBytes();
+			        outputStream.write(command);
+			        
+			        Thread.sleep(5000);
+			        
+				} catch (PortInUseException e) {
+					LOGGER.error("Port in use.");
+				} catch (Exception exception) {
+					LOGGER.error("Failed to open port '{}'", portId.getName());
+					LOGGER.error(exception.getMessage(), exception);
+				} finally {
+					serialPort.close();
 				}
-
-				inputStream = comPort.getInputStream();
-				byte[] command = model.getBytes();
-				outputStream.write(command);
-
-				Thread.sleep(5000);
-
-			} catch (PortInUseException e) {
-				LOGGER.error("Port in use.");
-			} catch (RuntimeException re) {
-				LOGGER.error("Something strange happened.", re);
-			} catch (Exception exception) {
-				LOGGER.error("Failed to open port '{}'", comPort);
-				LOGGER.error(exception.getMessage(), exception);
-			} finally {
-				LOGGER.info("Closing port...");
-				comPort.closePort();
 			}
 		}
-		LOGGER.info("End.");
+		System.out.println("End.");
 	}
 
 	@Override
-	public void serialEvent(SerialPortEvent event) {
+    public void serialEvent(SerialPortEvent event) {
 		SerialPort serialPort = (SerialPort) event.getSource();
-		String port = serialPort.getSystemPortName();
+		String port = serialPort.getName();
 		StringBuilder sb = new StringBuilder();
-		byte[] buffer = new byte[1];
-		try {
-			while (inputStream.available() > 0) {
-				sb.append(new String(buffer));
+        byte[] buffer = new byte[1];
+        try {
+			while(inputStream.available() > 0){
+			  int len = inputStream.read(buffer);
+			  sb.append(new String(buffer));
 			}
 			String answer = sb.toString();
 			if (confirm(port, answer) == JOptionPane.YES_OPTION) {
@@ -131,7 +135,7 @@ public class SetupGSM extends JFrame implements SerialPortDataListener {
 		} catch (IOException ioException) {
 			LOGGER.error(ioException.getMessage(), ioException);
 		}
-	}
+    }
 
 	/**
 	 * @param port
@@ -151,34 +155,24 @@ public class SetupGSM extends JFrame implements SerialPortDataListener {
 			LOGGER.error(exception.getMessage(), exception);
 			LOGGER.error("outofbound: '{}'", answer);
 		}
-		LOGGER.info(answer.trim());
-
-		return JOptionPane.showConfirmDialog(this, "Found modem: " + answer + " on port " + port + "\nConfirm?");
+		System.out.println(answer.trim());
+		
+		int option = JOptionPane.showConfirmDialog(this, "Found modem: "+answer+" on port " + port + "\nConfirm?");
+		return option;
 	}
 
 	/**
 	 * @param port
 	 */
 	private void save(String port) {
+		PropertiesConfiguration config;
 		try {
-			Parameters params = new Parameters();
-			FileBasedConfigurationBuilder<FileBasedConfiguration> builder =
-				new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
-					.configure(params.properties()
-						.setFileName(GSMParameters.FILE_PROPERTIES)
-						.setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
-			Configuration config = builder.getConfiguration();
+			config = new PropertiesConfiguration(GSMParameters.FILE_PROPERTIES);
 			config.setProperty(GSMGatewayService.SERVICE_NAME + ".port", port);
-			builder.save();
-			LOGGER.error("Port saved in {}", GSMParameters.FILE_PROPERTIES);
+			config.save();
+			System.out.println("Port saved in " + GSMParameters.FILE_PROPERTIES);
 		} catch (ConfigurationException ce) {
 			LOGGER.error(ce.getMessage(), ce);
 		}
 	}
-
-	@Override
-	public int getListeningEvents() {
-		return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
-	}
-
 }

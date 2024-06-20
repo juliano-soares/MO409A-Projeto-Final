@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,119 +17,126 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.accounting.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
-import org.isf.admission.model.Admission;
 import org.isf.patient.model.Patient;
 import org.isf.priceslist.model.PriceList;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Bill - model for the bill entity
+ * -----------------------------------------
+ * modification history
+ * ? - Mwithi - first version
+ * 25/08/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name = "OH_BILLS")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "BLL_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "BLL_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "BLL_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "BLL_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "BLL_LAST_MODIFIED_DATE"))
-public class Bill extends Auditable<String> implements Cloneable, Comparable<Bill> {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "BLL_ID")
+@Table(name="BILLS")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="BLL_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="BLL_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="BLL_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="BLL_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="BLL_LAST_MODIFIED_DATE"))
+})
+public class Bill extends Auditable<String> implements Comparable<Bill> 
+{	
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(name="BLL_ID")
 	private int id;
+	
+	@NotNull
+	@Column(name="BLL_DATE")
+	private GregorianCalendar date;
 
 	@NotNull
-	@Column(name = "BLL_DATE") // SQL type: datetime
-	private LocalDateTime date;
+	@Column(name="BLL_UPDATE")
+	private GregorianCalendar update;
 
 	@NotNull
-	@Column(name = "BLL_UPDATE") // SQL type: datetime
-	private LocalDateTime update;
-
-	@NotNull
-	@Column(name = "BLL_IS_LST")
+	@Column(name="BLL_IS_LST")
 	private boolean isList;
-
+	
 	@ManyToOne
-	@JoinColumn(name = "BLL_ID_LST")
+	@JoinColumn(name="BLL_ID_LST")
 	private PriceList list;
-
-	@Column(name = "BLL_LST_NAME")
+	
+	@Column(name="BLL_LST_NAME")
 	private String listName;
 
 	@NotNull
-	@Column(name = "BLL_IS_PAT")
+	@Column(name="BLL_IS_PAT")
 	private boolean isPatient;
-
+	
 	@ManyToOne
-	@JoinColumn(name = "BLL_ID_PAT")
+	@JoinColumn(name="BLL_ID_PAT")
 	private Patient billPatient;
-
-	@Column(name = "BLL_PAT_NAME")
+		
+	@Column(name="BLL_PAT_NAME")
 	private String patName;
-
-	@Column(name = "BLL_STATUS")
+	
+	@Column(name="BLL_STATUS")
 	private String status;
-
-	@Column(name = "BLL_AMOUNT")
+	
+	@Column(name="BLL_AMOUNT")
 	private Double amount;
-
-	@Column(name = "BLL_BALANCE")
+	
+	@Column(name="BLL_BALANCE")
 	private Double balance;
 
 	@NotNull
-	@Column(name = "BLL_USR_ID_A")
+	@Column(name="BLL_USR_ID_A")
 	private String user;
 
-	@ManyToOne
-	@JoinColumn(name = "BLL_ADM_ID")
-	private Admission admission;
-
 	@Transient
-	private volatile int hashCode;
-
+	private volatile int hashCode = 0;
+	
+	
 	public Bill() {
 		super();
 		this.id = 0;
-		this.date = TimeTools.getNow();
-		this.update = TimeTools.getNow();
+		this.date = new GregorianCalendar();
+		this.update = new GregorianCalendar();
 		this.isList = true;
 		this.listName = "";
 		this.isPatient = false;
 		this.patName = "";
 		this.status = "";
-		this.amount = 0.0;
-		this.balance = 0.0;
+		this.amount = 0.;
+		this.balance = 0.;
 		this.user = "admin";
 	}
 
-	public Bill(int id, LocalDateTime date, LocalDateTime update,
-					boolean isList, PriceList list, String listName, boolean isPatient,
-					Patient billPatient, String patName, String status, Double amount, Double balance, String user, Admission admission) {
+	public Bill(int id, GregorianCalendar date, GregorianCalendar update,
+			boolean isList, PriceList list, String listName, boolean isPatient,
+			Patient billPatient, String patName, String status, Double amount, Double balance, String user) {
 		super();
 		this.id = id;
-		this.date = TimeTools.truncateToSeconds(date);
-		this.update = TimeTools.truncateToSeconds(update);
+		this.date = date;
+		this.update = update;
 		this.isList = isList;
 		this.list = list;
 		this.listName = listName;
@@ -140,27 +147,26 @@ public class Bill extends Auditable<String> implements Cloneable, Comparable<Bil
 		this.amount = amount;
 		this.balance = balance;
 		this.user = user;
-		this.admission = admission;
 	}
 
 	public int getId() {
 		return id;
 	}
-
+	
 	public void setId(int id) {
 		this.id = id;
 	}
-	public LocalDateTime getDate() {
+	public GregorianCalendar getDate() {
 		return date;
 	}
-	public void setDate(LocalDateTime date) {
-		this.date = TimeTools.truncateToSeconds(date);
+	public void setDate(GregorianCalendar date) {
+		this.date = date;
 	}
-	public LocalDateTime getUpdate() {
+	public GregorianCalendar getUpdate() {
 		return update;
 	}
-	public void setUpdate(LocalDateTime update) {
-		this.update = TimeTools.truncateToSeconds(update);
+	public void setUpdate(GregorianCalendar update) {
+		this.update = update;
 	}
 	public boolean isList() {
 		return isList;
@@ -229,49 +235,36 @@ public class Bill extends Auditable<String> implements Cloneable, Comparable<Bil
 		this.user = user;
 	}
 
-	public Admission getAdmission() {
-		return admission;
-	}
-
-	public void setAdmission(Admission admission) {
-		this.admission = admission;
-	}
-
 	@Override
 	public int compareTo(Bill obj) {
 		return this.id - obj.getId();
 	}
-
+		
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
 		}
-
+		
 		if (!(obj instanceof Bill)) {
 			return false;
 		}
-
-		Bill bill = (Bill) obj;
+		
+		Bill bill = (Bill)obj;
 		return (id == bill.getId());
 	}
-
+	
 	@Override
 	public int hashCode() {
-		if (this.hashCode == 0) {
-			final int m = 23;
-			int c = 133;
-
-			c = m * c + id;
-
-			this.hashCode = c;
-		}
-
-		return this.hashCode;
-	}
-
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
-	}
+	    if (this.hashCode == 0) {
+	        final int m = 23;
+	        int c = 133;
+	        
+	        c = m * c + id;
+	        
+	        this.hashCode = c;
+	    }
+	  
+	    return this.hashCode;
+	}	
 }

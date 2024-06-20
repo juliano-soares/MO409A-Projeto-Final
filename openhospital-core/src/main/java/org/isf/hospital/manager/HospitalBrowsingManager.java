@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,13 +17,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.hospital.manager;
 
 import org.isf.hospital.model.Hospital;
 import org.isf.hospital.service.HospitalIoOperations;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,16 +36,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class HospitalBrowsingManager {
 
+	@Autowired
 	private HospitalIoOperations ioOperations;
 
-	public HospitalBrowsingManager(HospitalIoOperations hospitalIoOperations) {
-		this.ioOperations = hospitalIoOperations;
-	}
-
 	/**
-	 * Reads from the database the {@link Hospital} information.
+	 * Reads from database hospital information
 	 *
-	 * @return the {@link Hospital} object
+	 * @return {@link Hospital} object
 	 * @throws OHServiceException
 	 */
 	public Hospital getHospital() throws OHServiceException {
@@ -52,9 +50,9 @@ public class HospitalBrowsingManager {
 	}
 
 	/**
-	 * Reads from the database the currency code.
+	 * Reads from database currency cod
 	 *
-	 * @return the currency code
+	 * @return currency cod
 	 * @throws OHServiceException
 	 */
 	public String getHospitalCurrencyCod() throws OHServiceException {
@@ -62,9 +60,9 @@ public class HospitalBrowsingManager {
 	}
 
 	/**
-	 * Updates the {@link Hospital} information.
+	 * Updates hospital information
 	 *
-	 * @return return the updated {@link Hospital} object.
+	 * @return <code>true</code> if the hospital informations have been updated, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
 	public Hospital updateHospital(Hospital hospital) throws OHServiceException {

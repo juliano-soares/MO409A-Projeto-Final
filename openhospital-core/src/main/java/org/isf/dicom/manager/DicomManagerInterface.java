@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.dicom.manager;
 
@@ -40,16 +40,17 @@ public interface DicomManagerInterface {
 	 * @return
 	 * @throws OHServiceException
 	 */
-	Long[] getSeriesDetail(int patientID, String seriesNumber) throws OHServiceException;
+	Long[] getSerieDetail(int patientID, String seriesNumber) throws OHServiceException;
 
 	/**
 	 * Delete series
 	 *
 	 * @param patientID, the id of patient
 	 * @param seriesNumber, the series number to delete
+	 * @return true if success
 	 * @throws OHServiceException
 	 */
-	void deleteSeries(int patientID, String seriesNumber) throws OHServiceException;
+	boolean deleteSerie(int patientID, String seriesNumber) throws OHServiceException;
 
 	/**
 	 * Check if dicom is loaded

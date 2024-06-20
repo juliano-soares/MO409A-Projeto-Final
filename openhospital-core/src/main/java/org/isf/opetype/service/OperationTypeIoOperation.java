@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.opetype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.opetype.model.OperationType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,16 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class OperationTypeIoOperation {
 
+	@Autowired
 	private OperationTypeIoOperationRepository repository;
-
-	public OperationTypeIoOperation(OperationTypeIoOperationRepository operationTypeIoOperationRepository) {
-		this.repository = operationTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Return the list of {@link OperationType}s
 	 * 
-	 * @return the list of {@link OperationType}s. It could be {@code empty} or {@code null}.
+	 * @return the list of {@link OperationType}s. It could be <code>empty</code> or <code>null</code>.
 	 * @throws OHServiceException 
 	 */
 	public List<OperationType> getOperationType() throws OHServiceException {
@@ -54,43 +52,72 @@ public class OperationTypeIoOperation {
 	 * Insert an {@link OperationType} in the DB
 	 * 
 	 * @param operationType - the {@link OperationType} to insert
-	 * @return {@code true} if the {@link OperationType} has been inserted, {@code false} otherwise.
+	 * @return <code>true</code> if the {@link OperationType} has been inserted, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
-	public OperationType newOperationType(OperationType operationType) throws OHServiceException {
-		return repository.save(operationType);
+	public boolean newOperationType(
+			OperationType operationType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		OperationType savedOperationType = repository.save(operationType);
+		result = (savedOperationType != null);
+		
+		return result;
 	}
 	
 	/**
 	 * Update an {@link OperationType}
 	 * 
 	 * @param operationType - the {@link OperationType} to update
-	 * @return {@code true} if the {@link OperationType} has been updated, {@code false} otherwise.
+	 * @return <code>true</code> if the {@link OperationType} has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
-	public OperationType updateOperationType(OperationType operationType) throws OHServiceException {
-		return repository.save(operationType);
+	public boolean updateOperationType(
+			OperationType operationType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		OperationType savedOperationType = repository.save(operationType);
+		result = (savedOperationType != null);
+		
+		return result;
 	}
 	
 	/**
-	 * Delete an {@link OperationType} object. If the object does not exist it is silently ignored.  If the
-	 * object is null a {@link OHServiceException} is thrown.
+	 * Delete an {@link OperationType}
 	 * 
 	 * @param operationType - the {@link OperationType} to delete
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the {@link OperationType} has been delete, <code>false</code> otherwise.
+	 * @throws OHServiceException 
 	 */
-	public void deleteOperationType(OperationType operationType) throws OHServiceException {
+	public boolean deleteOperationType(
+			OperationType operationType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(operationType);
+		
+		return result;
 	}
 	
 	/**
 	 * Checks if an {@link OperationType} code has already been used
 	 * @param code - the code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise.
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise.
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
-
 }

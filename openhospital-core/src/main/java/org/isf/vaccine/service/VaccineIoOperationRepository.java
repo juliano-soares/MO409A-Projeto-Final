@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.vaccine.service;
 
@@ -25,17 +25,10 @@ import java.util.List;
 
 import org.isf.vaccine.model.Vaccine;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VaccineIoOperationRepository extends JpaRepository<Vaccine, String> {
-
-	List<Vaccine> findAllByOrderByDescriptionAsc();
-
-	List<Vaccine> findByVaccineType_CodeOrderByDescriptionAsc(String code);
-
-	@Query("select count(v) from Vaccine v where active=1")
-	long countAllActiveVaccinations();
-
+    List<Vaccine> findAllByOrderByDescriptionAsc();
+    List<Vaccine> findByVaccineType_CodeOrderByDescriptionAsc(String code);
 }

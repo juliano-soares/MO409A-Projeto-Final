@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.dicomtype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.dicomtype.model.DicomType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,52 +35,74 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class DicomTypeIoOperation {
 
+	@Autowired
 	private DicomTypeIoOperationRepository repository;
-
-	public DicomTypeIoOperation(DicomTypeIoOperationRepository dicomTypeIoOperationRepository) {
-		this.repository = dicomTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Method that returns all DicomTypes in a list
 	 * 
 	 * @return the list of all DicomTypes
 	 * @throws OHServiceException
 	 */
-	public List<DicomType> getDicomType() throws OHServiceException {
+	public List<DicomType> getDicomType() throws OHServiceException
+	{
 		return repository.findAllByOrderByDicomTypeDescriptionAsc();
 	}
 
 	/**
 	 * Method that updates an already existing DicomType
 	 * 
-	 * @param dicomType
-	 * @return returns the saved DicomType object.
+	 * @param DicomType
+	 * @return true - if the existing DicomType has been updated
 	 * @throws OHServiceException
 	 */
-	public DicomType updateDicomType(DicomType dicomType) throws OHServiceException {
-		return repository.save(dicomType);
+	public boolean updateDicomType(
+			DicomType DicomType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		DicomType savedDicomType = repository.save(DicomType);
+		result = (savedDicomType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Method that create a new DicomType
 	 * 
-	 * @param dicomType
-	 * @return returns the updated DicomType object.
+	 * @param DicomType
+	 * @return true - if the new DicomType has been inserted
 	 * @throws OHServiceException
 	 */
-	public DicomType newDicomType(DicomType dicomType) throws OHServiceException {
-		return repository.save(dicomType);
+	public boolean newDicomType(
+			DicomType DicomType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		DicomType savedDicomType = repository.save(DicomType);
+		result = (savedDicomType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Method that delete a DicomType
 	 * 
-	 * @param dicomType
+	 * @param DicomType
+	 * @return true - if the DicomType has been deleted
 	 * @throws OHServiceException
 	 */
-	public void deleteDicomType(DicomType dicomType) throws OHServiceException {
-		repository.delete(dicomType);
+	public boolean deleteDicomType(
+			DicomType DicomType) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		repository.delete(DicomType);
+		
+		return result;
 	}
 
 	/**
@@ -89,7 +112,14 @@ public class DicomTypeIoOperation {
 	 * @return true - if the DicomType already exists
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 }

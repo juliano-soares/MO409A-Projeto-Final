@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,55 +17,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.menu.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.isf.menu.model.User;
-import org.isf.menu.model.UserGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Repository
 public interface UserIoOperationRepository extends JpaRepository<User, String> {
+    List<User> findAllByOrderByUserNameAsc();
 
-	List<User> findAllByOrderByUserNameAsc();
+    User findByUserName(String userName);
+    
+    @Query(value = "select user from User user where user.userGroupName.code=:groupId order by user.userName")
+    List<User> findAllWhereUserGroupNameByOrderUserNameAsc(@Param("groupId") String groupId);
 
-	User findByUserName(String userName);
+    @Modifying
+    @Transactional
+    @Query(value = "update User user set user.desc=:description where user.userName=:id")
+    int updateDescription(@Param("description") String description, @Param("id") String id);
 
-	@Query(value = "select user from User user where user.userGroupName.code=:groupId order by user.userName")
-	List<User> findAllWhereUserGroupNameByOrderUserNameAsc(@Param("groupId") String groupId);
-
-	@Modifying
-	@Query(value = "update User user set user.desc=:description, user.userGroupName=:groupName where user.userName=:id")
-	int updateUser(@Param("description") String description, @Param("groupName") UserGroup groupName, @Param("id") String id);
-
-	@Modifying
-	@Query(value = "update User set passwd=:password where userName=:id")
-	int updatePassword(@Param("password") String password, @Param("id") String id);
-
-	@Modifying
-	@Query(value = "update User set failedAttempts=:attempts where userName=:id")
-	void updateFailedAttempts(@Param("attempts") int failAttempts, @Param("id") String id);
-
-	@Modifying
-	@Query(value = "update User set isAccountLocked=:isLocked, lockedTime=:lockTime where userName=:id")
-	void updateUserLocked(@Param("isLocked") boolean isLocked, @Param("lockTime") LocalDateTime lockTime, @Param("id") String id);
-
-	@Modifying
-	@Query(value = "update User set lastLogin=:lastLoggedIn where userName=:id")
-	void setLastLogin(@Param("lastLoggedIn") LocalDateTime lockTime, @Param("id") String id);
-
-	@Query("select count(u) from User u where active=1")
-	long countAllActiveUsers();
-
-	@Query("select count(g) from UserGroup g where active=1")
-	long countAllActiveGroups();
-
+    @Modifying
+    @Transactional
+    @Query(value = "update User set passwd=:password where userName=:id")
+    int updatePassword(@Param("password") String password, @Param("id") String id);
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.db;
 
@@ -34,8 +34,10 @@ public class NormalizeString {
 	 * @return the string normalized
 	 */
 	public static String normalizeString(String string) {
+		
 		String normalizedString = Normalizer.normalize(string, Normalizer.Form.NFD);
-		return normalizedString.replaceAll("[^\\p{ASCII}]", "");
+		String newString = normalizedString.replaceAll("[^\\p{ASCII}]", "");
+		return newString;
 	}
 	
 	/**
@@ -45,8 +47,10 @@ public class NormalizeString {
 	 * @return 
 	 */
 	public static int normalizeCompareTo(String first, String second) {
+		
 		String newFirst = normalizeString(first);
 		String newSecond = normalizeString(second);
+		
 		return newFirst.compareTo(newSecond);
 	}
 	
@@ -57,8 +61,10 @@ public class NormalizeString {
 	 * @return
 	 */
 	public static int normalizeCompareToIgnorecase(String first, String second) {
+		
 		String newFirst = normalizeString(first);
 		String newSecond = normalizeString(second);
+		
 		return newFirst.compareToIgnoreCase(newSecond);
 	}
 	
@@ -69,9 +75,13 @@ public class NormalizeString {
 	 * @return
 	 */
 	public static boolean normalizeContains(String string, String token) {
+		
 		String containingString = normalizeString(string);
 		String tokenString = normalizeString(token);
-		return containingString.contains(tokenString);
+		
+		boolean result = containingString.contains(tokenString);
+		
+		return result;
 	}
 
 }

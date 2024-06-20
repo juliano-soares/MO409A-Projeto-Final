@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,33 +17,32 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.pricesothers.manager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.isf.generaldata.MessageBundle;
 import org.isf.pricesothers.model.PricesOthers;
 import org.isf.pricesothers.service.PriceOthersIoOperations;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class PricesOthersManager {
 
+	@Autowired
 	private PriceOthersIoOperations ioOperations;
 
-	public PricesOthersManager(PriceOthersIoOperations priceOthersIoOperations) {
-		this.ioOperations = priceOthersIoOperations;
-	}
-
 	/**
-	 * Return a list of {@link PricesOthers}s.
+	 * Return the list of {@link PricesOthers}s in the DB
 	 *
 	 * @return the list of {@link PricesOthers}s
 	 * @throws OHServiceException
@@ -53,35 +52,36 @@ public class PricesOthersManager {
 	}
 
 	/**
-	 * Insert a new {@link PricesOthers} object.
+	 * Insert a new {@link PricesOthers} in the DB
 	 *
 	 * @param other - the {@link PricesOthers} to insert
-	 * @return the newly inserted {@link PricesOthers} object.
+	 * @return <code>true</code> if the list has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public PricesOthers newOther(PricesOthers other) throws OHServiceException {
+	public boolean newOther(PricesOthers other) throws OHServiceException {
 		validatePricesOthers(other);
 		return ioOperations.newOthers(other);
 	}
 
 	/**
-	 * Delete a {@link PricesOthers} object.
+	 * Delete a {@link PricesOthers} in the DB
 	 *
 	 * @param other - the {@link PricesOthers} to delete
+	 * @return <code>true</code> if the list has been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deleteOther(PricesOthers other) throws OHServiceException {
-		ioOperations.deleteOthers(other);
+	public boolean deleteOther(PricesOthers other) throws OHServiceException {
+		return ioOperations.deleteOthers(other);
 	}
 
 	/**
-	 * Update a {@link PricesOthers} object.
+	 * Update a {@link PricesOthers} in the DB
 	 *
 	 * @param other - the {@link PricesOthers} to update
-	 * @return the newly updated {@link PricesOthers} object.
+	 * @return <code>true</code> if the list has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public PricesOthers updateOther(PricesOthers other) throws OHServiceException {
+	public boolean updateOther(PricesOthers other) throws OHServiceException {
 		validatePricesOthers(other);
 		return ioOperations.updateOther(other);
 	}
@@ -96,10 +96,14 @@ public class PricesOthersManager {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 
 		if (StringUtils.isEmpty(pricesOthers.getCode())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (StringUtils.isEmpty(pricesOthers.getDescription())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,22 +17,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.db;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
+import javax.persistence.Column;
+import javax.persistence.EntityListeners;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
 
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import static javax.persistence.TemporalType.TIMESTAMP;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * @author uni2grow
@@ -46,16 +47,18 @@ public abstract class Auditable<U> {
     protected U createdBy;
      
     @CreatedDate
+    @Temporal(TIMESTAMP)
     @Column(name="CREATED_DATE")
-    protected LocalDateTime createdDate;
+    protected Date createdDate;
     
     @LastModifiedBy
     @Column(name="LAST_MODIFIED_BY")
     protected U lastModifiedBy;
     
     @LastModifiedDate
+    @Temporal(TIMESTAMP)
     @Column(name="LAST_MODIFIED_DATE")
-    protected LocalDateTime lastModifiedDate;
+    protected Date lastModifiedDate;
    
     @Column(name="ACTIVE")
     protected Integer active = 1;
@@ -68,19 +71,19 @@ public abstract class Auditable<U> {
         this.createdBy = createdBy;
     }
 
-    public LocalDateTime getCreatedDate() {
-        return TimeTools.truncateToSeconds(createdDate);
+    public Date getCreatedDate() {
+        return createdDate;
     }
 
     public int getActive() {
-        return active;
-    }
+		return active;
+	}
 
-    public void setActive(int active) {
-        this.active = active;
-    }
+	public void setActive(int active) {
+		this.active = active;
+	}
 
-    public void setCreatedDate(LocalDateTime createdDate) {
+	public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -92,11 +95,11 @@ public abstract class Auditable<U> {
         this.lastModifiedBy = lastModifiedBy;
     }
 
-    public LocalDateTime getLastModifiedDate() {
+    public Date getLastModifiedDate() {
         return lastModifiedDate;
     }
 
-    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+    public void setLastModifiedDate(Date lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
     }
     

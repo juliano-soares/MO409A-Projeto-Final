@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,16 +17,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.opd.manager;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Optional;
 
-import org.isf.disease.manager.DiseaseBrowserManager;
 import org.isf.disease.model.Disease;
 import org.isf.generaldata.GeneralData;
 import org.isf.generaldata.MessageBundle;
@@ -36,10 +34,8 @@ import org.isf.opd.service.OpdIoOperations;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.pagination.PagedResponse;
-import org.isf.ward.model.Ward;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -48,15 +44,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpdBrowserManager {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OpdBrowserManager.class);
-
+	@Autowired
 	private OpdIoOperations ioOperations;
-	private DiseaseBrowserManager diseaseBrowserManager;
-
-	public OpdBrowserManager(OpdIoOperations opdIoOperations, DiseaseBrowserManager diseaseBrowserManager) {
-		this.ioOperations = opdIoOperations;
-		this.diseaseBrowserManager = diseaseBrowserManager;
-	}
 
 	protected void setPatientConsistency(Opd opd) {
 		if (GeneralData.OPDEXTENDED && opd.getPatient() != null) {
@@ -72,79 +61,63 @@ public class OpdBrowserManager {
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param opd
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHDataValidationException
 	 */
-	public void validateOpd(Opd opd, boolean insert) throws OHDataValidationException {
+	protected void validateOpd(Opd opd, boolean insert) throws OHDataValidationException {
 
 		Disease disease = opd.getDisease();
 		Disease disease2 = opd.getDisease2();
 		Disease disease3 = opd.getDisease3();
-		Ward ward = opd.getWard();
-		if (opd.getUserID() == null) {
+		if (opd.getUserID() == null)
 			opd.setUserID(UserBrowsingManager.getCurrentUser());
-		}
+
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		// Check Visit Date
 		if (opd.getDate() == null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.pleaseinsertattendancedate.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.opd.pleaseinsertattendancedate.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		// Check Patient
 		if (GeneralData.OPDEXTENDED && opd.getPatient() == null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseselectapatient.msg")));
-		}
-		// Check Ward
-		if (ward == null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseselectaward.msg")));
-		} else {
-			if (!ward.isOpd()) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.specifiedwardisnotenabledforopdservice.msg")));
-			}
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseselectapatient.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		// Check Sex and Age
 		if (opd.getAge() < 0) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.pleaseinsertthepatientsage.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.opd.pleaseinsertthepatientsage.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (opd.getSex() == ' ') {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.pleaseselectpatientssex.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.opd.pleaseselectpatientssex.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		// Check Disease n.1
 		if (disease == null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.pleaseselectadisease.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.opd.pleaseselectadisease.msg"),
+					OHSeverityLevel.ERROR));
 		} else {
 			// Check double diseases
 			if (disease2 != null && disease.getCode().equals(disease2.getCode())) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg")));
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg"),
+						OHSeverityLevel.ERROR));
 			}
 			if (disease3 != null && disease.getCode().equals(disease3.getCode())) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg")));
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg"),
+						OHSeverityLevel.ERROR));
 			}
 			if (disease2 != null && disease3 != null && disease2.getCode().equals(disease3.getCode())) {
-				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg")));
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.opd.specifyingduplicatediseasesisnotallowed.msg"),
+						OHSeverityLevel.ERROR));
 			}
-		}
-		try {
-			Disease opdDisease;
-			if (disease != null) {
-				opdDisease = diseaseBrowserManager.getOPDDiseaseByCode(disease.getCode());
-				if (opdDisease == null) {
-					errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.opd.specifieddiseaseisnoenabledforopdservice.fmt.msg", "1")));
-				}
-			}
-			if (disease2 != null) {
-				opdDisease = diseaseBrowserManager.getOPDDiseaseByCode(disease2.getCode());
-				if (opdDisease == null) {
-					errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.opd.specifieddiseaseisnoenabledforopdservice.fmt.msg", "2")));
-				}
-			}
-			if (disease3 != null) {
-				opdDisease = diseaseBrowserManager.getOPDDiseaseByCode(disease3.getCode());
-				if (opdDisease == null) {
-					errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.opd.specifieddiseaseisnoenabledforopdservice.fmt.msg", "3")));
-				}
-			}
-		} catch(OHServiceException serviceException) {
-			LOGGER.error("Unable to validate diseases within OPD diseases.", serviceException);
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -154,8 +127,8 @@ public class OpdBrowserManager {
 	/**
 	 * Return all Opds of today or since one week ago
 	 *
-	 * @param oneWeek - if {@code true} return the last week, only today otherwise.
-	 * @return the list of Opds. It could be {@code null}.
+	 * @param oneWeek - if <code>true</code> return the last week, only today otherwise.
+	 * @return the list of Opds. It could be <code>null</code>.
 	 * @throws OHServiceException
 	 */
 	public List<Opd> getOpd(boolean oneWeek) throws OHServiceException {
@@ -163,9 +136,8 @@ public class OpdBrowserManager {
 	}
 
 	/**
-	 * Return all Opds within specified dates and parameters
-	 * 
-	 * @param ward
+	 * Return all Opds within specified dates
+	 *
 	 * @param diseaseTypeCode
 	 * @param diseaseCode
 	 * @param dateFrom
@@ -174,12 +146,12 @@ public class OpdBrowserManager {
 	 * @param ageTo
 	 * @param sex
 	 * @param newPatient
-	 * @param user
-	 * @return the list of Opds. It could be {@code null}.
+	 * @return the list of Opds. It could be <code>null</code>.
 	 * @throws OHServiceException
 	 */
-	public List<Opd> getOpd(Ward ward, String diseaseTypeCode, String diseaseCode, LocalDate dateFrom, LocalDate dateTo, int ageFrom, int ageTo, char sex, char newPatient, String user) throws OHServiceException {
-		return ioOperations.getOpdList(ward, diseaseTypeCode, diseaseCode, dateFrom, dateTo, ageFrom, ageTo, sex,newPatient, user);
+	public List<Opd> getOpd(String diseaseTypeCode, String diseaseCode, GregorianCalendar dateFrom, GregorianCalendar dateTo, int ageFrom, int ageTo,
+			char sex, char newPatient) throws OHServiceException {
+		return ioOperations.getOpdList(diseaseTypeCode, diseaseCode, dateFrom, dateTo, ageFrom, ageTo, sex, newPatient);
 	}
 
 	/**
@@ -187,7 +159,7 @@ public class OpdBrowserManager {
 	 *
 	 * @param patientcode - the patient ID
 	 * @return the list of {@link Opd}s associated to specified patient ID.
-	 * the whole list of {@link Opd}s if {@code 0} is passed.
+	 * the whole list of {@link Opd}s if <code>0</code> is passed.
 	 * @throws OHServiceException
 	 */
 	public List<Opd> getOpdList(int patientcode) throws OHServiceException {
@@ -198,10 +170,10 @@ public class OpdBrowserManager {
 	 * Insert a new item in the db
 	 *
 	 * @param opd an {@link Opd}
-	 * @return {@code true} if the item has been inserted
+	 * @return <code>true</code> if the item has been inserted
 	 * @throws OHServiceException
 	 */
-	public Opd newOpd(Opd opd) throws OHServiceException {
+	public boolean newOpd(Opd opd) throws OHServiceException {
 		setPatientConsistency(opd);
 		validateOpd(opd, true);
 		return ioOperations.newOpd(opd);
@@ -223,17 +195,18 @@ public class OpdBrowserManager {
 	 * Delete an {@link Opd} from the db
 	 *
 	 * @param opd - the {@link Opd} to delete
+	 * @return <code>true</code> if the item has been deleted. <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteOpd(Opd opd) throws OHServiceException {
-		ioOperations.deleteOpd(opd);
+	public boolean deleteOpd(Opd opd) throws OHServiceException {
+		return ioOperations.deleteOpd(opd);
 	}
 
 	/**
-	 * Returns the max progressive number within specified year or within current year if {@code 0}.
+	 * Returns the max progressive number within specified year or within current year if <code>0</code>.
 	 *
 	 * @param year
-	 * @return {@code int} - the progressive number in the year
+	 * @return <code>int</code> - the progressive number in the year
 	 * @throws OHServiceException
 	 */
 	public int getProgYear(int year) throws OHServiceException {
@@ -244,7 +217,7 @@ public class OpdBrowserManager {
 	 * Return the last {@link Opd} in time associated with specified patient ID.
 	 *
 	 * @param patientcode - the patient ID
-	 * @return last Opd associated with specified patient ID or {@code null}
+	 * @return last Opd associated with specified patient ID or <code>null</code>
 	 * @throws OHServiceException
 	 */
 	public Opd getLastOpd(int patientcode) throws OHServiceException {
@@ -256,51 +229,9 @@ public class OpdBrowserManager {
 	 *
 	 * @param opdNum - the OPD progressive in year
 	 * @param year - the year
-	 * @return {@code true} if the given number exists in year, {@code false} otherwise
+	 * @return <code>true</code> if the given number exists in year, <code>false</code> otherwise
 	 */
-	public boolean isExistOpdNum(int opdNum, int year) throws OHServiceException {
+	public Boolean isExistOpdNum(int opdNum, int year) throws OHServiceException {
 		return ioOperations.isExistOpdNum(opdNum, year);
-	}
-
-	/**
-	 * Get an OPD by its code
-	 * 
-	 * @param code - the OPD code
-	 * @return an OPD or {@code null}
-	 */
-	public Optional<Opd> getOpdById(int code) {
-		return ioOperations.getOpdById(code);
-	}
-
-	/**
-	 * Get a list of OPD with specified Progressive in Year number
-	 * 
-	 * @param code - the OPD code
-	 * @return a list of OPD or an empty list
-	 */
-	public List<Opd> getOpdByProgYear(int code) {
-		return ioOperations.getOpdByProgYear(code);
-	}
-
-	/**
-	 * Returns {@link List} of {@link Opd}s associated to specified patient ID with page info.
-	 *
-	 * @param ward - the ward of opd
-	 * @param diseaseTypeCode - the disease type
-	 * @param diseaseCode - the Code of disease
-	 * @param dateFrom
-	 * @param dateTo
-	 * @param ageFrom
-	 * @param ageTo
-	 * @param sex
-	 * @param newPatient
-	 * @param page
-	 * @param size
-	 * @return the list of {@link Opd}s associated to specified patient ID.
-	 * the whole list of {@link Opd}s if {@code 0} is passed.
-	 * @throws OHServiceException
-	 */
-	public PagedResponse<Opd> getOpdPageable(Ward ward, String diseaseTypeCode, String diseaseCode, LocalDate dateFrom, LocalDate dateTo, int ageFrom, int ageTo, char sex, char newPatient, int page, int size) throws OHServiceException {
-		return ioOperations.getOpdListPageable(ward, diseaseTypeCode, diseaseCode, dateFrom, dateTo, ageFrom, ageTo, sex, newPatient, null, page, size);
 	}
 }

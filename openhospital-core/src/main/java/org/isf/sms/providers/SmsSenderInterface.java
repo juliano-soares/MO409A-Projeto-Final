@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.providers;
 
@@ -32,7 +32,7 @@ public interface SmsSenderInterface {
 	 * 
 	 * @param sms
 	 *            - the {@link Sms} to send
-	 * @return {@code true} if the SMS has been sent, {@code false} otherwise
+	 * @return <code>true</code> if the SMS has been sent, <code>false</code> otherwise
 	 */
 	boolean sendSMS(Sms sms);
 

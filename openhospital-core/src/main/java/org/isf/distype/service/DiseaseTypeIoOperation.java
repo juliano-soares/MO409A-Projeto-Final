@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,16 +17,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.distype.service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.isf.distype.model.DiseaseType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class DiseaseTypeIoOperation {
 
-	private final DiseaseTypeIoOperationRepository repository;
-
-	public DiseaseTypeIoOperation(DiseaseTypeIoOperationRepository repository) {
-		this.repository = repository;
-	}
+	@Autowired
+	private DiseaseTypeIoOperationRepository repository;
 	
 	/**
 	 * Returns all the stored {@link DiseaseType}s.
@@ -50,61 +48,76 @@ public class DiseaseTypeIoOperation {
 	 * @throws OHServiceException if an error occurs retrieving the diseases list.
 	 */
 	public List<DiseaseType> getDiseaseTypes() throws OHServiceException {
-		return repository.findAllByOrderByDescriptionAsc();
+		return new ArrayList<>(repository.findAllByOrderByDescriptionAsc());
 	}
 
 	/**
 	 * Updates the specified {@link DiseaseType}.
 	 * @param diseaseType the disease type to update.
-	 * @return the updated {@link DiseaseType} object.
+	 * @return <code>true</code> if the disease type has been updated, false otherwise.
 	 * @throws OHServiceException if an error occurs during the update operation.
 	 */
-	public DiseaseType updateDiseaseType(DiseaseType diseaseType) throws OHServiceException {
-		return repository.save(diseaseType);
+	public boolean updateDiseaseType(
+			DiseaseType diseaseType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		DiseaseType savedDiseaseType = repository.save(diseaseType);
+		result = (savedDiseaseType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Store the specified {@link DiseaseType}.
 	 * @param diseaseType the disease type to store.
-	 * @return the new stored {@link DiseaseType} object.
+	 * @return <code>true</code> if the {@link DiseaseType} has been stored, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the store operation.
 	 */
-	public DiseaseType newDiseaseType(DiseaseType diseaseType) throws OHServiceException {
-		return repository.save(diseaseType);
+	public boolean newDiseaseType(
+			DiseaseType diseaseType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		DiseaseType savedDiseaseType = repository.save(diseaseType);
+		result = (savedDiseaseType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Deletes the specified {@link DiseaseType}.
 	 * @param diseaseType the disease type to remove.
+	 * @return <code>true</code> if the disease has been removed, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the delete procedure.
 	 */
-	public void deleteDiseaseType(DiseaseType diseaseType) throws OHServiceException {
+	public boolean deleteDiseaseType(
+			DiseaseType diseaseType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(diseaseType);
+		
+		return result;
 	}
 
 	/**
 	 * Checks if the specified code is already used by any {@link DiseaseType}.
 	 * @param code the code to check.
-	 * @return {@code true} if the code is used, false otherwise.
+	 * @return <code>true</code> if the code is used, false otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
-	}
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
 	
-	/**
-	 * Returns {@link DiseaseType}s.
-	 * 
-	 * @Param code
-	 * @return a disease type.
-	 * @throws OHServiceException if an error occurs retrieving the diseases type.
-	 */
-	public DiseaseType getDiseaseTypes(String code) throws OHServiceException {
-		Optional<DiseaseType> diseaseType = repository.findById(code);
-		if ( diseaseType.isPresent()) {
-			return diseaseType.get();
-		}
-		return null;
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
-
 }

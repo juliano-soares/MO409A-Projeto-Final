@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,32 +17,46 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medtype.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Medical Type - model for the medical type entity
+ * Defines a medical type: D: k: S: R:
+ * -----------------------------------------
+ * modification history
+ * 11-dec-2005 - bob - first version
+ * 14-jan-2006
+ * 18/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_MEDICALDSRTYPE")
+@Table(name="MEDICALDSRTYPE")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "MDSRT_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "MDSRT_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "MDSRT_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "MDSRT_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "MDSRT_LAST_MODIFIED_DATE"))
-public class MedicalType extends Auditable<String> {
-
-	@Id
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="MDSRT_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="MDSRT_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="MDSRT_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="MDSRT_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="MDSRT_LAST_MODIFIED_DATE"))
+})
+public class MedicalType extends Auditable<String>
+{
+	@Id 
 	@Column(name="MDSRT_ID_A")	
 	private String code;
 
@@ -50,7 +64,7 @@ public class MedicalType extends Auditable<String> {
 	private String description;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	public MedicalType() 
     {
@@ -81,11 +95,13 @@ public class MedicalType extends Auditable<String> {
 
 	@Override
 	public boolean equals(Object anObject) {
-		return anObject instanceof MedicalType && (getCode().equalsIgnoreCase(((MedicalType) anObject).getCode())
-				&& getDescription().equalsIgnoreCase(((MedicalType) anObject).getDescription()));
+		return !(anObject instanceof MedicalType) ? false
+				: (getCode().equalsIgnoreCase(
+						((MedicalType) anObject).getCode()) && getDescription()
+						.equalsIgnoreCase(
+								((MedicalType) anObject).getDescription()));
 	}
 
-	@Override
 	public String toString() {
 		return getDescription();
 	}

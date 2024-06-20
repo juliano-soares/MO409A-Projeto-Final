@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,28 +17,28 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.examination.model;
 
-import java.time.LocalDateTime;
+import java.io.Serializable;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.patient.model.Patient;
-import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -47,26 +47,28 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author Mwithi
  */
 @Entity
-@Table(name="OH_PATIENTEXAMINATION")
+@Table(name="PATIENTEXAMINATION")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "PEX_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "PEX_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "PEX_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "PEX_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "PEX_LAST_MODIFIED_DATE"))
-public class PatientExamination extends Auditable<String> implements Comparable<PatientExamination> {
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="PEX_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="PEX_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="PEX_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="PEX_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="PEX_LAST_MODIFIED_DATE"))
+})
+public class PatientExamination implements Serializable, Comparable<PatientExamination> {
 
 	private static final long serialVersionUID = 1L;
 	public static final int PEX_NOTE_LENGTH = 2000;
 	
 	@Id 
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="PEX_ID")
 	private int pex_ID;
 
 	@NotNull
-	@Column(name="PEX_DATE")		// SQL type: datetime
-	private LocalDateTime pex_date;
+	@Column(name="PEX_DATE")
+	private GregorianCalendar pex_date;
 
 	@NotNull
 	@ManyToOne
@@ -116,7 +118,7 @@ public class PatientExamination extends Auditable<String> implements Comparable<
 	private String pex_note;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 
 	public PatientExamination() {
 		super();
@@ -141,7 +143,7 @@ public class PatientExamination extends Auditable<String> implements Comparable<
 	 * @param pex_note
 	 */
 	public PatientExamination(
-			LocalDateTime pex_date, 
+			GregorianCalendar pex_date, 
 			Patient patient, 
 			Integer pex_height, 
 			Double pex_weight, 
@@ -158,7 +160,7 @@ public class PatientExamination extends Auditable<String> implements Comparable<
 			String pex_ausc,
 			String pex_note) {
 		super();
-		this.pex_date = TimeTools.truncateToSeconds(pex_date);
+		this.pex_date = pex_date;
 		this.patient = patient;
 		this.pex_height = pex_height;
 		this.pex_weight = pex_weight;
@@ -207,15 +209,15 @@ public class PatientExamination extends Auditable<String> implements Comparable<
 	/**
 	 * @return the pex_date
 	 */
-	public LocalDateTime getPex_date() {
+	public GregorianCalendar getPex_date() {
 		return pex_date;
 	}
 
 	/**
 	 * @param pex_date the pex_date to set
 	 */
-	public void setPex_date(LocalDateTime pex_date) {
-		this.pex_date = TimeTools.truncateToSeconds(pex_date);
+	public void setPex_date(GregorianCalendar pex_date) {
+		this.pex_date = pex_date;
 	}
 
 	/**
@@ -422,12 +424,10 @@ public class PatientExamination extends Auditable<String> implements Comparable<
 	public double getBMI() {
 		if (pex_height != null) {
 			double temp = Math.pow(10, 2); // 2 <-- decimal digits;
-			double height = pex_height * (1.0 / 100); // convert to m
+			double height = pex_height * (1. / 100); // convert to m
 			double weight = pex_weight; // Kg
 			return Math.round(weight / Math.pow(height, 2) * temp) / temp ; //getting Kg/m2
-		} else {
-			return 0;
-		}
+		} else return 0;
 	}
 	
 	@Override

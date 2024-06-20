@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,25 +17,25 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.opd.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
+import org.isf.generaldata.MessageBundle;
 import org.isf.opd.model.Opd;
-import org.isf.ward.model.Ward;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -47,77 +47,65 @@ public class OpdIoOperationRepositoryImpl implements OpdIoOperationRepositoryCus
 	@SuppressWarnings("unchecked")	
 	@Override
 	public List<Opd> findAllOpdWhereParams(
-			Ward ward,
 			String diseaseTypeCode,
-			String diseaseCode,
-			LocalDate dateFrom,
-			LocalDate dateTo,
-			int ageFrom,
-			int ageTo,
-			char sex,
-			char newPatient,
-			String user) {
-		return getOpdQuery(ward, diseaseTypeCode, diseaseCode, dateFrom, dateTo, ageFrom, ageTo, sex, newPatient, user).getResultList();
-	}	
-
-	private TypedQuery<Opd> getOpdQuery(
-			Ward ward, 
-			String diseaseTypeCode,
-			String diseaseCode,
-			LocalDate dateFrom,
-			LocalDate dateTo,
+			String diseaseCode, 
+			GregorianCalendar dateFrom,
+			GregorianCalendar dateTo,
 			int ageFrom, 
 			int ageTo,
 			char sex,
-			char newPatient,
-			String user) {
+			char newPatient) {
+		return _getOpdQuery(
+						diseaseTypeCode, diseaseCode, dateFrom, dateTo,
+						ageFrom, ageTo, sex, newPatient).
+					getResultList();
+	}	
+
+	private TypedQuery<Opd> _getOpdQuery(
+			String diseaseTypeCode,
+			String diseaseCode, 
+			GregorianCalendar dateFrom,
+			GregorianCalendar dateTo,
+			int ageFrom, 
+			int ageTo,
+			char sex,
+			char newPatient) {
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		CriteriaQuery<Opd> query = cb.createQuery(Opd.class);
 		Root<Opd> opd = query.from(Opd.class);
 		List<Predicate> predicates = new ArrayList<>();
 
 		query.select(opd);
-		if (ward != null) {
+		if (!(diseaseTypeCode.equals(MessageBundle.getMessage("angal.common.alltypes.txt")))) {
 			predicates.add(
-					cb.equal(opd.join("ward").get("code"), ward.getCode())
+				cb.equal(opd.join("disease").join("diseaseType").get("code"), diseaseTypeCode)
 			);
 		}
-		if (diseaseTypeCode != null && !diseaseTypeCode.equals("")) {
+		if (!diseaseCode.equals(MessageBundle.getMessage("angal.opd.alldiseases.txt"))) {
 			predicates.add(
-					cb.equal(opd.join("disease").join("diseaseType").get("code"), diseaseTypeCode)
-			);
-		}
-		if (diseaseCode != null && !diseaseCode.equals("")) {
-			predicates.add(
-					cb.equal(opd.join("disease").get("code"), diseaseCode)
+				cb.equal(opd.join("disease").get("code"), diseaseCode)
 			);
 		}
 		if (ageFrom != 0 || ageTo != 0) {
 			predicates.add(
-					cb.between(opd.<Integer>get("age"), ageFrom, ageTo)
+				cb.between(opd.<Integer>get("age"), ageFrom, ageTo)
 			);
 		}
 		if (sex != 'A') {
 			predicates.add(
-					cb.equal(opd.get("sex"), sex)
+				cb.equal(opd.get("sex"), sex)
 			);
 		}
 		if (newPatient != 'A') {
 			predicates.add(
-					cb.equal(opd.get("newPatient"), newPatient)
-			);
-		}
-		if (user != null) {
-			predicates.add(
-					cb.equal(opd.get("userID"), user)
+				cb.equal(opd.get("newPatient"), newPatient)
 			);
 		}
 		predicates.add(
-				cb.between(opd.<LocalDateTime>get("date"), dateFrom.atStartOfDay(), dateTo.plusDays(1).atStartOfDay())
+			cb.between(opd.<Date>get("date"), dateFrom.getTime(), dateTo.getTime())
 		);
-		query.where(cb.and(predicates.toArray(new Predicate[0])));
+		query.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
 		return entityManager.createQuery(query);
 	}
-
 }

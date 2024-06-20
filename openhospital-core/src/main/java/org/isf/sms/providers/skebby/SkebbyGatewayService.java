@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,11 +17,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.providers.skebby;
 
 import java.awt.TrayIcon.MessageType;
+import java.util.Properties;
+
+import javax.annotation.Resource;
 
 import org.isf.sms.model.Sms;
 import org.isf.sms.providers.SmsSenderInterface;
@@ -32,9 +35,8 @@ import org.isf.sms.providers.skebby.model.SckebbySmsResponse;
 import org.isf.sms.providers.skebby.remote.SkebbyGatewayRemoteService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.openfeign.support.SpringMvcContract;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.netflix.feign.support.SpringMvcContract;
 import org.springframework.stereotype.Component;
 
 import feign.Feign;
@@ -42,7 +44,6 @@ import feign.FeignException;
 import feign.slf4j.Slf4jLogger;
 
 @Component
-@PropertySource("classpath:sms.properties")
 public class SkebbyGatewayService implements SmsSenderInterface {
 
 	private static final String SERVICE_NAME = "skebby-gateway-service";
@@ -58,14 +59,11 @@ public class SkebbyGatewayService implements SmsSenderInterface {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SkebbyGatewayService.class);
 
-	private final Environment smsProperties;
+	@Resource(name = "smsProperties")
+	private Properties smsProperties;
 
-	private final SkebbyGatewayConverter skebbyGatewayConverter;
-
-	public SkebbyGatewayService(Environment smsProperties, SkebbyGatewayConverter skebbyGatewayConverter) {
-		this.smsProperties = smsProperties;
-		this.skebbyGatewayConverter = skebbyGatewayConverter;
-	}
+	@Autowired
+	private SkebbyGatewayConverter skebbyGatewayConverter;
 
 	@Override
 	public boolean sendSMS(Sms sms) {
@@ -85,7 +83,7 @@ public class SkebbyGatewayService implements SmsSenderInterface {
 
 		SkebbyGatewayRemoteService httpClient = buildHttlClient();
 		System.out.println("Sending...");
-		SckebbySmsResponse result;
+		SckebbySmsResponse result = null;
 		try {
 			if (this.isAccessTokenAuthentication()) {
 				result = httpClient.sendSmsWithAccessToken(userKey, sessionKeyOrAccessToken, smsSendingRequest).getBody();
@@ -113,7 +111,7 @@ public class SkebbyGatewayService implements SmsSenderInterface {
 		final String userKey = this.smsProperties.getProperty(KEY_USER_KEY);
 		final String token = this.smsProperties.getProperty(KEY_ACCESS_TOKEN);
 		if (userKey != null && !userKey.trim().isEmpty() && token != null && !token.trim().isEmpty()) {
-			return userKey + ';' + token;
+			return userKey + ";" + token;
 		}
 
 		final String username = this.smsProperties.getProperty(KEY_USERNAME);
@@ -123,7 +121,7 @@ public class SkebbyGatewayService implements SmsSenderInterface {
 	}
 
 	private boolean isAccessTokenAuthentication() {
-		// if user defined these properties, then it means that we will retrieve data with ACCESS_TOKEN (which does not expire -> SESSION_KEY instead expires)
+		// if user defined these properties, then it means that we will retrieve data with ACCESS_TOKEN (which does not expires -> SESSION_KEY instead expires)
 		final String userKey = this.smsProperties.getProperty(KEY_USER_KEY);
 		final String token = this.smsProperties.getProperty(KEY_ACCESS_TOKEN);
 		return (userKey != null && !userKey.trim().isEmpty() && token != null && !token.trim().isEmpty());

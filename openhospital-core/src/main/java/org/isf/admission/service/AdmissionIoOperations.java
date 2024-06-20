@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,17 +17,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.admission.service;
 
-import static java.time.temporal.TemporalAdjusters.firstDayOfYear;
-import static java.time.temporal.TemporalAdjusters.lastDayOfYear;
-
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.Month;
-import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -40,43 +35,44 @@ import org.isf.disctype.service.DischargeTypeIoOperationRepository;
 import org.isf.generaldata.GeneralData;
 import org.isf.patient.model.Patient;
 import org.isf.patient.service.PatientIoOperationRepository;
-import org.isf.patient.service.PatientIoOperations;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.pagination.PageInfo;
-import org.isf.utils.pagination.PagedResponse;
-import org.isf.utils.time.TimeTools;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * ---------------------------------------------------------
+ * modification history
+ * ====================
+ * 10/11/06 - ross - removed from the list the deleted patients
+ *                   the list is now in alphabetical  order
+ * 11/08/08 - alessandro - addedd getFather&Mother Names
+ * 26/08/08 - claudio - changed getAge for managing varchar type
+ * 					  - added getBirthDate
+ * 01/01/09 - Fabrizio - changed the calls to PAT_AGE fields to
+ *                       return again an integer type
+ * 20/01/09 - Chiara -   restart of progressive number of maternity
+ * 						 ward on 1st July conditioned to parameter
+ * 						 MATERNITYRESTARTINJUNE in generalData.properties
+ * -----------------------------------------------------------
+ */
 @Service
-@Transactional(rollbackFor = OHServiceException.class)
+@Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
-public class AdmissionIoOperations {
-
+public class AdmissionIoOperations 
+{
+	@Autowired
 	private AdmissionIoOperationRepository repository;
-
+	@Autowired
 	private AdmissionTypeIoOperationRepository typeRepository;
-
+	@Autowired
 	private DischargeTypeIoOperationRepository dischargeRepository;
-
+	@Autowired
 	private PatientIoOperationRepository patientRepository;
-
-	public AdmissionIoOperations(AdmissionIoOperationRepository admissionIoOperationRepository,
-	                             AdmissionTypeIoOperationRepository admissionTypeIoOperationRepository,
-	                             DischargeTypeIoOperationRepository dischargeTypeIoOperationRepository,
-	                             PatientIoOperationRepository patientIoOperationRepository) {
-		this.repository = admissionIoOperationRepository;
-		this.typeRepository = admissionTypeIoOperationRepository;
-		this.dischargeRepository = dischargeTypeIoOperationRepository;
-		this.patientRepository = patientIoOperationRepository;
-	}
-
+	
 	/**
 	 * Returns all patients with ward in which they are admitted.
-	 *
 	 * @return the patient list with associated ward.
 	 * @throws OHServiceException if an error occurs during database request.
 	 */
@@ -86,71 +82,65 @@ public class AdmissionIoOperations {
 
 	/**
 	 * Returns all patients with ward in which they are admitted filtering the list using the passed search term.
-	 *
 	 * @param searchTerms the search terms to use for filter the patient list, {@code null} if no filter is to be applied.
 	 * @return the filtered patient list.
 	 * @throws OHServiceException if an error occurs during database request.
 	 */
 	public List<AdmittedPatient> getAdmittedPatients(String searchTerms) throws OHServiceException {
-		LocalDateTime[] admissionRange = new LocalDateTime[2];
-		LocalDateTime[] dischargeRange = new LocalDateTime[2];
+		GregorianCalendar[] admissionRange = new GregorianCalendar[2];
+		GregorianCalendar[] dischargeRange = new GregorianCalendar[2];	
 		return repository.findPatientAdmissionsBySearchAndDateRanges(searchTerms, admissionRange, dischargeRange);
 	}
 
 	/**
 	 * Returns all patients based on the applied filters.
-	 *
 	 * @param admissionRange (two-dimensions array) the patient admission dates range, both {@code null} if no filter is to be applied.
 	 * @param dischargeRange (two-dimensions array) the patient discharge dates range, both {@code null} if no filter is to be applied.
 	 * @param searchTerms the search terms to use for filter the patient list, {@code null} if no filter is to be applied.
 	 * @return the filtered patient list.
 	 * @throws OHServiceException if an error occurs during database request.
 	 */
-	public List<AdmittedPatient> getAdmittedPatients(String searchTerms, LocalDateTime[] admissionRange, LocalDateTime[] dischargeRange)
-					throws OHServiceException {
+	public List<AdmittedPatient> getAdmittedPatients(String searchTerms, 
+					GregorianCalendar[] admissionRange, 
+					GregorianCalendar[] dischargeRange) throws OHServiceException {
 		return repository.findPatientAdmissionsBySearchAndDateRanges(searchTerms, admissionRange, dischargeRange);
 	}
 
 	/**
 	 * Load patient together with the profile photo, or {@code null} if there is no patient with the given id
 	 */
-	public AdmittedPatient loadAdmittedPatient(int patientId) {
-		boolean isLoadPatientProfilePhotoFromDb = PatientIoOperations.LOAD_FROM_DB.equals(GeneralData.PATIENTPHOTOSTORAGE);
-		Patient patient = patientRepository.findById(patientId).orElse(null);
+	public AdmittedPatient loadAdmittedPatient(final Integer patientId) {
+		final Patient patient = patientRepository.findOne(patientId);
 		if (patient == null) {
 			return null;
 		}
-		if (isLoadPatientProfilePhotoFromDb) {
-			Hibernate.initialize(patient.getPatientProfilePhoto());
-		}
-		Admission admission = repository.findOneWherePatientIn(patientId);
+		Hibernate.initialize(patient.getPatientProfilePhoto());
+		final Admission admission = repository.findOneWherePatientIn(patientId);
 		return new AdmittedPatient(patient, admission);
 	}
-
+	
 	/**
 	 * Returns the current admission (or null if none) for the specified patient.
-	 *
 	 * @param patient the patient target of the admission.
 	 * @return the patient admission.
+	 * @throws OHServiceException if an error occurs during database request.
 	 */
-	public Admission getCurrentAdmission(Patient patient) {
+	public Admission getCurrentAdmission(Patient patient) throws OHServiceException	{
 		return repository.findOneWherePatientIn(patient.getCode());
 	}
 
 	/**
 	 * Returns the admission with the selected id.
-	 *
 	 * @param id the admission id.
 	 * @return the admission with the specified id, {@code null} otherwise.
 	 * @throws OHServiceException if an error occurs during database request.
 	 */
 	public Admission getAdmission(int id) throws OHServiceException {
-		return repository.findById(id).orElse(null);
+		return repository.findOne(id);
 	}
 
 	/**
 	 * Returns all the admissions for the specified patient.
-	 *
 	 * @param patient the patient.
 	 * @return the admission list.
 	 * @throws OHServiceException if an error occurs during database request.
@@ -158,46 +148,61 @@ public class AdmissionIoOperations {
 	public List<Admission> getAdmissions(Patient patient) throws OHServiceException {
 		return repository.findAllWherePatientByOrderByDate(patient.getCode());
 	}
-
+	
 	/**
 	 * Inserts a new admission.
-	 *
 	 * @param admission the admission to insert.
-	 * @return the new/saved Admission object.
+	 * @return <code>true</code> if the admission has been successfully inserted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the insertion.
 	 */
-	public Admission newAdmission(Admission admission) throws OHServiceException {
-		return repository.save(admission);
+	public boolean newAdmission(
+			Admission admission) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		Admission savedAdmission = repository.save(admission);
+		result = (savedAdmission != null);
+		
+		return result;
 	}
 
 	/**
 	 * Inserts a new {@link Admission} and the returns the generated id.
-	 *
 	 * @param admission the admission to insert.
 	 * @return the generated id.
 	 * @throws OHServiceException if an error occurs during the insertion.
 	 */
-	public int newAdmissionReturnKey(Admission admission) throws OHServiceException {
-		Admission newAdmission = newAdmission(admission);
-		return newAdmission.getId();
+	public int newAdmissionReturnKey(
+			Admission admission) throws OHServiceException 
+	{
+		newAdmission(admission);
+		
+		return admission.getId();
 	}
 
 	/**
 	 * Updates the specified {@link Admission} object.
-	 *
 	 * @param admission the admission object to update.
-	 * @return the updated Admission object
+	 * @return <code>true</code> if has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs.
 	 */
-	public Admission updateAdmission(Admission admission) throws OHServiceException {
-		return repository.save(admission);
+	public boolean updateAdmission(
+			Admission admission) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		Admission savedAdmission = repository.save(admission);
+		result = (savedAdmission != null);
+		
+		return result;
 	}
 
 	/**
 	 * Lists the {@link AdmissionType}s.
-	 *
 	 * @return the admission types.
-	 * @throws OHServiceException
+	 * @throws OHServiceException 
 	 */
 	public List<AdmissionType> getAdmissionType() throws OHServiceException {
 		return typeRepository.findAll();
@@ -205,9 +210,8 @@ public class AdmissionIoOperations {
 
 	/**
 	 * Lists the {@link DischargeType}s.
-	 *
 	 * @return the discharge types.
-	 * @throws OHServiceException
+	 * @throws OHServiceException 
 	 */
 	public List<DischargeType> getDischargeType() throws OHServiceException {
 		return dischargeRepository.findAll();
@@ -215,196 +219,125 @@ public class AdmissionIoOperations {
 
 	/**
 	 * Returns the next prog in the year for a certain ward.
-	 *
 	 * @param wardId the ward id.
 	 * @return the next prog.
 	 * @throws OHServiceException if an error occurs retrieving the value.
 	 */
-	public int getNextYProg(String wardId) throws OHServiceException {
+	public int getNextYProg(
+			String wardId) throws OHServiceException 
+	{
 		int next = 1;
-		LocalDateTime now = getNow();
-		LocalDateTime first;
-		LocalDateTime last;
+		GregorianCalendar now = getNow();
+		GregorianCalendar first = null;
+		GregorianCalendar last = null;
+		
+		if (wardId.equalsIgnoreCase("M") && GeneralData.MATERNITYRESTARTINJUNE) 
+		{
+			if (now.get(Calendar.MONTH) < 6) 
+			{
+				first = new GregorianCalendar(now.get(Calendar.YEAR) - 1, Calendar.JULY, 1);
+				last = new GregorianCalendar(now.get(Calendar.YEAR), Calendar.JULY, 1);
+			} 
+			else 
+			{
+				first = new GregorianCalendar(now.get(Calendar.YEAR), Calendar.JULY, 1);
+				last = new GregorianCalendar(now.get(Calendar.YEAR) + 1, Calendar.JULY, 1);
 
-		if ("M".equalsIgnoreCase(wardId) && GeneralData.MATERNITYRESTARTINJUNE) {
-			if (now.getMonthValue() < Month.JUNE.getValue()) {
-				first = now.minusYears(1).withMonth(Month.JULY.getValue()).withDayOfMonth(1).with(LocalTime.MIN).truncatedTo(ChronoUnit.SECONDS);
-				last = now.withMonth(Month.JUNE.getValue()).withDayOfMonth(30).with(LocalTime.MAX).truncatedTo(ChronoUnit.SECONDS);
-			} else {
-				first = now.withMonth(Month.JULY.getValue()).withDayOfMonth(1).with(LocalTime.MIN).truncatedTo(ChronoUnit.SECONDS);
-				last = now.plusYears(1).withMonth(Month.JUNE.getValue()).withDayOfMonth(30).with(LocalTime.MAX).truncatedTo(ChronoUnit.SECONDS);
 			}
-		} else {
-			first = now.with(firstDayOfYear()).with(LocalTime.MIN).truncatedTo(ChronoUnit.SECONDS);
-			last = now.with(lastDayOfYear()).with(LocalTime.MAX).truncatedTo(ChronoUnit.SECONDS);
+		} 
+		else 
+		{
+			first = new GregorianCalendar(now.get(Calendar.YEAR), 0, 1);
+			last = new GregorianCalendar(now.get(Calendar.YEAR), 11, 31);
 		}
-
+		
 		List<Admission> admissions = repository.findAllWhereWardAndDates(wardId, first, last);
-		if (!admissions.isEmpty()) {
-			next = admissions.get(0).getYProg() + 1;
-		}
-
+		if (!admissions.isEmpty())
+		{
+			next = admissions.get(0).getYProg() + 1; 		
+		} 
+		
 		return next;
 	}
 
 	/**
 	 * The variables, {@code testing} and {@code afterJune}, are here only for testing purposes and are **NOT** to be used
-	 * in production code.
+	 * in production code.   
 	 * The default path ({@code testing == false}) ensures that the code performs as it
 	 * always has in the past.
 	 * This code permits the unit testing of maternity wards with dates before and after June.
-	 * TODO: once the LocalDateTime object is replaced by Java 8+ date/time objects this can be revisited
+	 * TODO: once the GregorianCalendar object is replaced by Java 8+ date/time objects this can be revisited
 	 * as there is more flexibility in modifying the new objects in Java 8+.
 	 */
-	public static boolean testing;
-	public static boolean afterJune;
-
-	public static LocalDateTime getNow() {
-		LocalDateTime now = TimeTools.getNow();
+	public static boolean testing = false;
+	public static boolean afterJune = false;
+	public static GregorianCalendar getNow() {
+		GregorianCalendar now = new GregorianCalendar();
 		if (!testing) {
 			return now;
 		}
 		// testing date June or later
 		if (afterJune) {
-			return LocalDateTime.of(now.getYear(), 8, 2, 0, 0);
+			return new GregorianCalendar(now.get(Calendar.YEAR), 8, 2);
 		}
 		// testing data before June
-		return LocalDateTime.of(now.getYear(), 1, 2, 0, 0);
+		return new GregorianCalendar(now.get(Calendar.YEAR), 0, 2);
 	}
 
 	/**
-	 * Sets an admission record as deleted.
-	 *
+	 * Sets an admission record to deleted.
 	 * @param admissionId the admission id.
-	 * @return return the "deleted" admission object or null if the admission is not found
+	 * @return <code>true</code> if the record has been set to delete.
 	 * @throws OHServiceException if an error occurs.
 	 */
-	public Admission setDeleted(int admissionId) throws OHServiceException {
-		Admission foundAdmission = repository.findById(admissionId).orElse(null);
-		if (foundAdmission == null) {
-			return null;
-		}
-		foundAdmission.setDeleted('Y');
-		return repository.save(foundAdmission);
+	public boolean setDeleted(
+			int admissionId) throws OHServiceException 
+	{
+		boolean result = true;
+		
+		
+		Admission foundAdmission = repository.findOne(admissionId);  
+		foundAdmission.setDeleted("Y");
+		Admission savedAdmission = repository.save(foundAdmission);
+		result = (savedAdmission != null);    	
+    	
+		return result;
 	}
 
 	/**
 	 * Counts the number of used bed for the specified ward.
-	 *
 	 * @param wardId the ward id.
 	 * @return the number of used beds.
 	 * @throws OHServiceException if an error occurs retrieving the bed count.
 	 */
-	public int getUsedWardBed(String wardId) throws OHServiceException {
-		List<Admission> admissionList = repository.findAllWhereWardIn(wardId);
+	public int getUsedWardBed(
+			String wardId) throws OHServiceException 
+	{
+    	List<Admission> admissionList = repository.findAllWhereWardIn(wardId);
+		
+
 		return admissionList.size();
 	}
 
 	/**
 	 * Deletes the patient photo.
-	 *
 	 * @param patientId the patient id.
-	 * @return the updated patient object or null if patient is not found
+	 * @return <code>true</code> if the photo has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs.
 	 */
-	public Patient deletePatientPhoto(int patientId) throws OHServiceException {
-		Patient foundPatient = patientRepository.findById(patientId).orElse(null);
-		if (foundPatient == null) {
-			return null;
-		}
+	public boolean deletePatientPhoto(
+			int patientId) throws OHServiceException
+	{
+		boolean result = true;
+		
+		
+		Patient foundPatient = patientRepository.findOne(patientId);
 		if (foundPatient.getPatientProfilePhoto() != null && foundPatient.getPatientProfilePhoto().getPhoto() != null) {
 			foundPatient.getPatientProfilePhoto().setPhoto(null);
 		}
-		return patientRepository.save(foundPatient);
+        Patient savedPatient = patientRepository.save(foundPatient);
+		result = (savedPatient != null);    
+		
+		return result;
 	}
-
-	/**
-	 * Returns the list of Admissions by pages
-	 *
-	 * @param dateFrom
-	 * @param dateTo
-	 * @param pageable
-	 * @return the list of {@link Admission}.
-	 * @throws OHServiceException if an error occurs during database request.
-	 */
-	public List<Admission> getAdmissionsByAdmissionDate(LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable) throws OHServiceException {
-		return repository.findAllWhereAdmissionDate(dateFrom, dateTo, pageable);
-	}
-
-	/**
-	 * Returns the list of Admissions
-	 *
-	 * @param dateFrom
-	 * @param dateTo
-	 * @return the list of {@link Admission}.
-	 * @throws OHServiceException if an error occurs during database request.
-	 */
-	public List<Admission> getAdmissionsByAdmDate(LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
-		return repository.findAllWhereAdmissionDate(dateFrom, dateTo);
-	}
-
-	/**
-	 * Returns the list of Admissions with discharge
-	 *
-	 * @param dateFrom
-	 * @param dateTo
-	 * @param pageable
-	 * @return the list of {@link Admission}.
-	 * @throws OHServiceException if an error occurs during database request.
-	 */
-	public List<Admission> getAdmissionsByDischargeDate(LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable) throws OHServiceException {
-		return repository.findAllWhereDischargeDate(dateFrom, dateTo, pageable);
-	}
-
-	/**
-	 * Returns the list of Admissions by page
-	 *
-	 * @param dateFrom
-	 * @param dateTo
-	 * @param pageable
-	 * @return the list of {@link Admission}.
-	 * @throws OHServiceException if an error occurs during database request.
-	 */
-	public PagedResponse<Admission> getAdmissionsByAdmissionDates(LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable) throws OHServiceException {
-		Page<Admission> pagedResult = repository.findAllWhere_AdmissionDate_Paginated(dateFrom, dateTo, pageable);
-		return setPaginationData(pagedResult);
-	}
-
-	/**
-	 * Returns the list of Admissions with discharge by page
-	 *
-	 * @param dateFrom
-	 * @param dateTo
-	 * @param pageable
-	 * @return the list of {@link Admission}.
-	 * @throws OHServiceException if an error occurs during database request.
-	 */
-	public PagedResponse<Admission> getAdmissionsByDischargeDates(LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable) throws OHServiceException {
-		Page<Admission> pagedResult = repository.findAllWhere_DischargeDate_Paginated(dateFrom, dateTo, pageable);
-		return setPaginationData(pagedResult);
-	}
-
-	/**
-	 * Returns the list of Admissions with page info
-	 *
-	 * @param pages of admissions
-	 * @return {@link PagedResponse<Admission>}.
-	 */
-	PagedResponse<Admission> setPaginationData(Page<Admission> pages) {
-		PagedResponse<Admission> data = new PagedResponse<>();
-		data.setData(pages.getContent());
-		data.setPageInfo(PageInfo.from(pages));
-		return data;
-	}
-
-	/**
-	 * Count not deleted {@link Admission}s
-	 * 
-	 * @return the number of recorded {@link Admission}s
-	 * @throws OHServiceException
-	 */
-	public long countAllActiveAdmissions() {
-		return this.repository.countAllActiveNotDeletedAdmissions();
-	}
-
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,63 +17,65 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.LocalDate;
+import java.util.Date;
 
 import org.assertj.core.api.Condition;
 import org.isf.OHCoreTestCase;
-import org.isf.accounting.TestBill;
-import org.isf.accounting.TestBillPayments;
 import org.isf.accounting.model.Bill;
 import org.isf.accounting.service.AccountingBillIoOperationRepository;
-import org.isf.admission.TestAdmission;
+import org.isf.accounting.test.TestBill;
+import org.isf.accounting.test.TestBillPayments;
 import org.isf.admission.model.Admission;
 import org.isf.admission.service.AdmissionIoOperationRepository;
-import org.isf.admtype.TestAdmissionType;
+import org.isf.admission.test.TestAdmission;
 import org.isf.admtype.model.AdmissionType;
 import org.isf.admtype.service.AdmissionTypeIoOperationRepository;
-import org.isf.disease.TestDisease;
+import org.isf.admtype.test.TestAdmissionType;
 import org.isf.disease.model.Disease;
 import org.isf.disease.service.DiseaseIoOperationRepository;
-import org.isf.distype.TestDiseaseType;
+import org.isf.disease.test.TestDisease;
 import org.isf.distype.model.DiseaseType;
 import org.isf.distype.service.DiseaseTypeIoOperationRepository;
-import org.isf.examination.TestPatientExamination;
+import org.isf.distype.test.TestDiseaseType;
 import org.isf.examination.model.PatientExamination;
 import org.isf.examination.service.ExaminationIoOperationRepository;
+import org.isf.examination.test.TestPatientExamination;
 import org.isf.patient.manager.PatientBrowserManager;
 import org.isf.patient.model.Patient;
 import org.isf.patient.service.PatientIoOperationRepository;
 import org.isf.patient.service.PatientIoOperations;
-import org.isf.priceslist.TestPriceList;
+import org.isf.patient.test.TestPatient;
 import org.isf.priceslist.model.PriceList;
-import org.isf.priceslist.service.PricesListIoOperationRepository;
+import org.isf.priceslist.service.PriceListIoOperationRepository;
+import org.isf.priceslist.test.TestPriceList;
 import org.isf.utils.exception.OHException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.visits.TestVisit;
 import org.isf.visits.model.Visit;
 import org.isf.visits.service.VisitsIoOperationRepository;
-import org.isf.ward.TestWard;
+import org.isf.visits.test.TestVisit;
 import org.isf.ward.model.Ward;
 import org.isf.ward.service.WardIoOperationRepository;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.isf.ward.test.TestWard;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class TestMergePatient extends OHCoreTestCase {
+public class TestMergePatient extends OHCoreTestCase {
 
 	private static TestPatient testPatient;
 	private static TestPatientExamination testPatientExamination;
 	private static TestAdmission testAdmission;
 	private static TestAdmissionType testAdmissionType;
 	private static TestBill testBill;
+	private static TestBillPayments testBillPayments;
 	private static TestDisease testDisease;
 	private static TestDiseaseType testDiseaseType;
 	private static TestPriceList testPriceList;
@@ -93,7 +95,7 @@ class TestMergePatient extends OHCoreTestCase {
 	@Autowired
 	TestPatientMergedEventListener testPatientMergedEventListener;
 	@Autowired
-	PricesListIoOperationRepository priceListIoOperationRepository;
+	PriceListIoOperationRepository priceListIoOperationRepository;
 	@Autowired
 	AccountingBillIoOperationRepository accountingBillIoOperationRepository;
 	@Autowired
@@ -107,14 +109,14 @@ class TestMergePatient extends OHCoreTestCase {
 	@Autowired
 	WardIoOperationRepository wardIoOperationRepository;
 
-	@BeforeAll
-	static void setUpClass() {
+	@BeforeClass
+	public static void setUpClass() {
 		testPatient = new TestPatient();
 		testPatientExamination = new TestPatientExamination();
 		testAdmission = new TestAdmission();
 		testAdmissionType = new TestAdmissionType();
 		testBill = new TestBill();
-		TestBillPayments testBillPayments = new TestBillPayments();
+		testBillPayments = new TestBillPayments();
 		testDisease = new TestDisease();
 		testDiseaseType = new TestDiseaseType();
 		testPriceList = new TestPriceList();
@@ -122,14 +124,14 @@ class TestMergePatient extends OHCoreTestCase {
 		testWard = new TestWard();
 	}
 
-	@BeforeEach
-	void setUp() {
+	@Before
+	public void setUp() {
 		cleanH2InMemoryDb();
 		testPatientMergedEventListener.setShouldFail(false);
 	}
 
 	@Test
-	void testMergePatientHistory() throws Exception {
+	public void testMergePatientHistory() throws Exception {
 		// given:
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
@@ -147,7 +149,7 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testWholeMergeOperationShouldBeRolledBackWhenOneOfUpdateOperationsFails() throws OHException {
+	public void testWholeMergeOperationShouldBeRolledBackWhenOneOfUpdateOperationsFails() throws OHException {
 		// given:
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
@@ -169,7 +171,7 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testMgrMergePatient() throws Exception {
+	public void testMgrMergePatient() throws Exception {
 		// given:
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
@@ -187,18 +189,18 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testMgrMergePatientPatient1MissingInformation() throws Exception {
+	public void testMgrMergePatientPatient1MissingInformation() throws Exception {
 		// given:
 		Patient patient1 = testPatient.setup(false);
 		patient1.setAddress(null);
-		patient1.setCity("TestCity");
+		patient1.setCity(null);
 		patient1.setNextKin(null);
 		patient1.setTelephone(null);
-		patient1.setMotherName("TestMotherName");
+		patient1.setMotherName(null);
 		patient1.setMother('U');
-		patient1.setFatherName("TestFatherName");
+		patient1.setFatherName(null);
 		patient1.setFather('U');
-		patient1.setBloodType("0-/+");
+		patient1.setBloodType(null);
 		patient1.setHasInsurance('U');
 		patient1.setParentTogether('U');
 		patient1.setNote(null);
@@ -218,7 +220,7 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testMgrMergePatientMergeNotes() throws Exception {
+	public void testMgrMergePatientMergeNotes() throws Exception {
 		// given:
 		Patient patient1 = testPatient.setup(false);
 		patient1.setNote("Note 1");
@@ -228,48 +230,48 @@ class TestMergePatient extends OHCoreTestCase {
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(patient2);
 
 		// when:
-		patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
+		assertThat(patientBrowserManager.mergePatient(mergedPatient, obsoletePatient)).isTrue();
 
 		// then:
 		assertThat(mergedPatient.getNote()).isEqualTo("Note 2\n\nNote 1");
 	}
 
 	@Test
-	void testMgrMergePatientMergeBirthDateMissingAgeTypePatient2HasBirthDate() throws Exception {
+	public void testMgrMergePatientMergeBirthDateMissingAgeTypePatient2HasBirthDate() throws Exception {
 		// given:
 		Patient patient1 = testPatient.setup(false);
-		patient1.setBirthDate(LocalDate.of(50, 1, 1));
+		patient1.setBirthDate(new Date(50, 0, 1));
 		patient1.setAgetype(null);
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
 
 		Patient patient2 = testPatient.setup(false);
-		patient2.setBirthDate(LocalDate.of(100, 1, 1));
+		patient2.setBirthDate(new Date(100, 0, 1));
 		patient2.setAge(199);
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(patient2);
 
 		// when:
-		patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
+		assertThat(patientBrowserManager.mergePatient(mergedPatient, obsoletePatient)).isTrue();
 
 		// then:
 		assertThat(mergedPatient.getAge()).isGreaterThanOrEqualTo(21);   // in 2021 the value of age is 21
-		assertThat(mergedPatient.getBirthDate()).isEqualTo(LocalDate.of(100, 1, 1));
+		assertThat(mergedPatient.getBirthDate()).isEqualTo(new Date(100, 0, 1));
 	}
 
 	@Test
-	void testMgrMergePatientMergeBirthDatePatient2HasAgeType() throws Exception {
+	public void testMgrMergePatientMergeBirthDatePatient2HasAgeType() throws Exception {
 		// given:
 		Patient patient1 = testPatient.setup(false);
-		patient1.setBirthDate(LocalDate.of(50, 1, 1));
+		patient1.setBirthDate(new Date(50, 0, 1));
 		patient1.setAgetype("d5");
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
 
 		Patient patient2 = testPatient.setup(false);
-		patient2.setBirthDate(LocalDate.of(100, 1, 1));
+		patient2.setBirthDate(new Date(100, 0, 1));
 		patient2.setAge(199);
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(patient2);
 
 		// when:
-		patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
+		assertThat(patientBrowserManager.mergePatient(mergedPatient, obsoletePatient)).isTrue();
 
 		// then:
 		assertThat(mergedPatient.getAge()).isGreaterThanOrEqualTo(71);  // in 2021 the value of age is 71
@@ -277,7 +279,7 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testMgrWholeMergeOperationShouldBeRolledBackWhenOneOfUpdateOperationsFails() throws OHException {
+	public void testMgrWholeMergeOperationShouldBeRolledBackWhenOneOfUpdateOperationsFails() throws OHException {
 		// given:
 		Patient mergedPatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
 		Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(testPatient.setup(false));
@@ -299,7 +301,7 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
-	void testMgrMergeValidationSexNotTheSame() {
+	public void testMgrMergeValidationSexNotTheSame() {
 		assertThatThrownBy(() -> {
 			Patient patient1 = testPatient.setup(false);
 			patient1.setSex('F');
@@ -311,18 +313,18 @@ class TestMergePatient extends OHCoreTestCase {
 
 			patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
 		})
-			.isInstanceOf(OHServiceException.class)
-			.has(
-				new Condition<Throwable>(
-					e -> ((OHServiceException) e).getMessages().size() == 1, "Expecting single validation error"));
+				.isInstanceOf(OHServiceException.class)
+				.has(
+						new Condition<Throwable>(
+								(e -> ((OHServiceException) e).getMessages().size() == 1), "Expecting single validation error"));
 	}
 
 	@Test
-	void testMgrMergeValidationPatient1PendingBills() {
+	public void testMgrMergeValidationPatient1PendingBills() {
 		assertThatThrownBy(() -> {
 			Patient patient1 = testPatient.setup(false);
 			PriceList priceList = testPriceList.setup(false);
-			Bill bill = testBill.setup(priceList, patient1, null, true);
+			Bill bill = testBill.setup(priceList, patient1, true);
 			priceListIoOperationRepository.saveAndFlush(priceList);
 			Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
 			accountingBillIoOperationRepository.saveAndFlush(bill);
@@ -332,35 +334,35 @@ class TestMergePatient extends OHCoreTestCase {
 
 			patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
 		})
-			.isInstanceOf(OHServiceException.class)
-			.has(
-				new Condition<Throwable>(
-					e -> ((OHServiceException) e).getMessages().size() == 1, "Expecting one validation error messages"));
+				.isInstanceOf(OHServiceException.class)
+				.has(
+						new Condition<Throwable>(
+								(e -> ((OHServiceException) e).getMessages().size() == 2), "Expecting two validation error messages"));
 	}
 
 	@Test
-	void testMgrMergeValidationPatient2PendingBills() {
+	public void testMgrMergeValidationPatient2PendingBills() {
 		assertThatThrownBy(() -> {
 			Patient patient1 = testPatient.setup(false);
 			Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
 
 			Patient patient2 = testPatient.setup(false);
 			PriceList priceList = testPriceList.setup(false);
-			Bill bill = testBill.setup(priceList, patient2, null, true);
+			Bill bill = testBill.setup(priceList, patient2, true);
 			priceListIoOperationRepository.saveAndFlush(priceList);
 			Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(patient2);
 			accountingBillIoOperationRepository.saveAndFlush(bill);
 
 			patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
 		})
-			.isInstanceOf(OHServiceException.class)
-			.has(
-				new Condition<Throwable>(
-					e -> ((OHServiceException) e).getMessages().size() == 1, "Expecting one validation error messages"));
+				.isInstanceOf(OHServiceException.class)
+				.has(
+						new Condition<Throwable>(
+								(e -> ((OHServiceException) e).getMessages().size() == 2), "Expecting two validation error messages"));
 	}
 
 	@Test
-	void testMgrMergeValidationPatient1Admitted() {
+	public void testMgrMergeValidationPatient1Admitted() {
 		assertThatThrownBy(() -> {
 			Ward ward = testWard.setup(false, false);
 			Patient patient1 = testPatient.setup(false);
@@ -370,7 +372,7 @@ class TestMergePatient extends OHCoreTestCase {
 			Disease diseaseOut1 = testDisease.setup(diseaseType, false);
 			diseaseOut1.setCode("888");
 			Admission admission = testAdmission.setup(ward, patient1, admissionType, diseaseIn, diseaseOut1,
-				null, null, null, null, null, null, null, false);
+					null, null, null, null, null, null, null, false);
 
 			wardIoOperationRepository.saveAndFlush(ward);
 			Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
@@ -385,14 +387,14 @@ class TestMergePatient extends OHCoreTestCase {
 
 			patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
 		})
-			.isInstanceOf(OHServiceException.class)
-			.has(
-				new Condition<Throwable>(
-					e -> ((OHServiceException) e).getMessages().size() == 1, "Expecting one validation error messages"));
+				.isInstanceOf(OHServiceException.class)
+				.has(
+						new Condition<Throwable>(
+								(e -> ((OHServiceException) e).getMessages().size() == 2), "Expecting two validation error messages"));
 	}
 
 	@Test
-	void testMgrMergeValidationPatient2Admitted() {
+	public void testMgrMergeValidationPatient2Admitted() {
 		assertThatThrownBy(() -> {
 			Patient patient1 = testPatient.setup(false);
 			Patient mergedPatient = patientIoOperationRepository.saveAndFlush(patient1);
@@ -405,7 +407,7 @@ class TestMergePatient extends OHCoreTestCase {
 			Disease diseaseOut1 = testDisease.setup(diseaseType, false);
 			diseaseOut1.setCode("888");
 			Admission admission = testAdmission.setup(ward, patient2, admissionType, diseaseIn, diseaseOut1,
-				null, null, null, null, null, null, null, false);
+					null, null, null, null, null, null, null, false);
 
 			wardIoOperationRepository.saveAndFlush(ward);
 			Patient obsoletePatient = patientIoOperationRepository.saveAndFlush(patient2);
@@ -417,48 +419,41 @@ class TestMergePatient extends OHCoreTestCase {
 
 			patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
 		})
-			.isInstanceOf(OHServiceException.class)
-			.has(
-				new Condition<Throwable>(
-					e -> ((OHServiceException) e).getMessages().size() == 1, "Expecting two validation error messages"));
+				.isInstanceOf(OHServiceException.class)
+				.has(
+						new Condition<Throwable>(
+								(e -> ((OHServiceException) e).getMessages().size() == 2), "Expecting two validation error messages"));
 	}
 
 	private void assertThatObsoletePatientWasDeletedAndMergedIsTheActiveOne(Patient mergedPatient, Patient obsoletePatient) {
-		Patient mergedPatientResult = patientIoOperationRepository.findById(mergedPatient.getCode()).orElse(null);
-		assertThat(mergedPatientResult).isNotNull();
-		Patient obsoletePatientResult = patientIoOperationRepository.findById(obsoletePatient.getCode()).orElse(null);
-		assertThat(obsoletePatientResult).isNotNull();
-		assertThat(obsoletePatientResult.getDeleted()).isEqualTo('Y');
-		assertThat(mergedPatientResult.getDeleted()).isEqualTo('N');
+		Patient mergedPatientResult = patientIoOperationRepository.findOne(mergedPatient.getCode());
+		Patient obsoletePatientResult = patientIoOperationRepository.findOne(obsoletePatient.getCode());
+		assertThat(obsoletePatientResult.getDeleted()).isEqualTo("Y");
+		assertThat(mergedPatientResult.getDeleted()).isEqualTo("N");
 	}
 
 	private void assertThatObsoletePatientWasNotDeletedAndIsTheActiveOne(Patient obsoletePatient) throws OHException {
-		Patient obsoletePatientResult = patientIoOperationRepository.findById(obsoletePatient.getCode()).orElse(null);
-		assertThat(obsoletePatientResult).isNotNull();
-		assertThat(obsoletePatientResult.getDeleted()).isEqualTo('N');
+		Patient obsoletePatientResult = patientIoOperationRepository.findOne(obsoletePatient.getCode());
+		assertThat(obsoletePatientResult.getDeleted()).isEqualTo("N");
 	}
 
 	private void assertThatVisitWasMovedFromObsoleteToMergedPatient(Visit visit, Patient mergedPatient) throws OHException {
-		Visit visitResult = visitsIoOperationRepository.findById(visit.getVisitID()).orElse(null);
-		assertThat(visitResult).isNotNull();
+		Visit visitResult = visitsIoOperationRepository.findOne(visit.getVisitID());
 		assertThat(visitResult.getPatient().getCode()).isEqualTo(mergedPatient.getCode());
 	}
 
 	private void assertThatVisitIsStillAssignedToObsoletePatient(Visit visit, Patient obsoletePatient) throws OHException {
-		Visit visitResult = visitsIoOperationRepository.findById(visit.getVisitID()).orElse(null);
-		assertThat(visitResult).isNotNull();
+		Visit visitResult = visitsIoOperationRepository.findOne(visit.getVisitID());
 		assertThat(visitResult.getPatient().getCode()).isEqualTo(obsoletePatient.getCode());
 	}
 
 	private void assertThatExaminationWasMovedFromObsoleteToMergedPatient(PatientExamination examination, Patient mergedPatient) throws OHException {
-		PatientExamination patientResult = examinationIoOperationRepository.findById(examination.getPex_ID()).orElse(null);
-		assertThat(patientResult).isNotNull();
+		PatientExamination patientResult = examinationIoOperationRepository.findOne(examination.getPex_ID());
 		assertThat(patientResult.getPatient().getCode()).isEqualTo(mergedPatient.getCode());
 	}
 
 	private void assertThatExaminationIsStillAssignedToObsoletePatient(PatientExamination patientExamination, Patient obsoletePatient) throws OHException {
-		PatientExamination patientResult = examinationIoOperationRepository.findById(patientExamination.getPex_ID()).orElse(null);
-		assertThat(patientResult).isNotNull();
+		PatientExamination patientResult = examinationIoOperationRepository.findOne(patientExamination.getPex_ID());
 		assertThat(patientResult.getPatient().getCode()).isEqualTo(obsoletePatient.getCode());
 	}
 

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,44 +17,59 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.lab.model;
 
-import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.persistence.Version;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
 
 import org.isf.exa.model.Exam;
 import org.isf.patient.model.Patient;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Laboratory - laboratory execution model
+ * -----------------------------------------
+ * modification history
+ * 02/03/2006 - theo - first beta version
+ * 10/11/2006 - ross - new fields data esame, sex, age, material, inout flag added
+ * 06/01/2016 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_LABORATORY")
+@Table(name="LABORATORY")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "LAB_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "LAB_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "LAB_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "LAB_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "LAB_LAST_MODIFIED_DATE"))
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="LAB_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="LAB_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="LAB_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="LAB_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="LAB_LAST_MODIFIED_DATE"))
+})
 public class Laboratory extends Auditable<String> {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="LAB_ID")
 	private Integer code;
 
@@ -67,8 +82,13 @@ public class Laboratory extends Auditable<String> {
 	private Exam exam;
 
 	@NotNull
-	@Column(name="LAB_DATE")		// SQL type: datetime
-	private LocalDateTime labDate;
+	@Column(name="LAB_DATE")
+	private GregorianCalendar labDate;
+
+	@Column(name="LAB_EXAM_DATE")
+	@Temporal(TemporalType.DATE)
+	@Deprecated
+	private Calendar examDate;
 
 	@NotNull
 	@Column(name="LAB_RES")
@@ -89,35 +109,33 @@ public class Laboratory extends Auditable<String> {
 	private String patName;
 
 	@Column(name="LAB_PAT_INOUT")
-	private String inOutPatient;
+	private String InOutPatient;
 
 	@Column(name="LAB_AGE")
 	private Integer age;
 
 	@Column(name="LAB_SEX")
 	private String sex;
-	
-	@Column(name="LAB_STATUS")
-	private String status;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 
-	public Laboratory() { }
+	public Laboratory() {
+	}
 
-	public Laboratory(Exam aExam, LocalDateTime aDate, String aResult, String aNote, Patient aPatId, String aPatName) {
+	public Laboratory(Exam aExam, GregorianCalendar aDate, String aResult, String aNote, Patient aPatId, String aPatName) {
 		exam = aExam;
-		labDate = TimeTools.truncateToSeconds(aDate);
+		labDate = aDate;
 		result = aResult;
 		note = aNote;
 		patient = aPatId;
 		patName = aPatName;
 	}
 
-	public Laboratory(Integer aCode, Exam aExam, LocalDateTime aDate, String aResult, String aNote, Patient aPatId, String aPatName) {
+	public Laboratory(Integer aCode, Exam aExam, GregorianCalendar aDate, String aResult, String aNote, Patient aPatId, String aPatName) {
 		code = aCode;
 		exam = aExam;
-		labDate = TimeTools.truncateToSeconds(aDate);
+		labDate = aDate;
 		result = aResult;
 		note = aNote;
 		patient = aPatId;
@@ -127,7 +145,7 @@ public class Laboratory extends Auditable<String> {
 	public Exam getExam() {
 		return exam;
 	}
-	public LocalDateTime getLabDate() {
+	public GregorianCalendar getDate() {
 		return labDate;
 	}
 	public String getResult() {
@@ -148,84 +166,74 @@ public class Laboratory extends Auditable<String> {
 	public void setLock(int aLock) {
 		lock = aLock;
 	}
-	public void setLabDate(LocalDateTime aDate) {
-		labDate = TimeTools.truncateToSeconds(aDate);
+	/**
+	 * use <code>getCreatedDate()</code> instead
+	 */
+	@Deprecated
+	public GregorianCalendar getExamDate() {
+		return (GregorianCalendar) examDate;
 	}
-
+	/**
+	 * the field has been replaced by <code>createdDate()</code> and it's not meant to be managed by the user (Spring managed)
+	 */
+	@Deprecated
+	public void setExamDate(GregorianCalendar exDate) {
+		this.examDate = exDate;
+	}
+	public void setDate(GregorianCalendar aDate) {
+		labDate = aDate;
+	}
 	public void setResult(String aResult) {
 		result = aResult;
 	}
-
 	public String getNote() {
 		return note;
 	}
-
 	public void setNote(String note) {
 		this.note = note;
 	}
-
 	public String getMaterial() {
 		return material;
 	}
-
 	public void setMaterial(String material) {
 		this.material = material;
 	}
-
 	public Patient getPatient() {
 		return patient;
 	}
-
 	public void setPatient(Patient patient) {
 		this.patient = patient;
 	}
-
 	public Integer getAge() {
 		return age;
 	}
-
 	public void setAge(Integer age) {
 		this.age = age;
 	}
-
 	public String getInOutPatient() {
-		return inOutPatient;
+		return InOutPatient;
 	}
-
-	public void setInOutPatient(String inOut) {
-		if (inOut == null) {
-			inOut = "";
-		}
-		this.inOutPatient = inOut;
+	public void setInOutPatient(String InOut) {
+		if (InOut == null)
+			InOut = "";
+		this.InOutPatient = InOut;
 	}
-
 	public String getPatName() {
 		return patName;
 	}
-
 	public void setPatName(String patName) {
 		this.patName = patName;
 	}
-
 	public String getSex() {
 		return sex;
 	}
-
 	public void setSex(String sex) {
 		this.sex = sex;
-	}
-	
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Laboratory)) {
+		if (obj == null || !(obj instanceof Laboratory)) {
 			return false;
 		}
 
@@ -251,9 +259,9 @@ public class Laboratory extends Auditable<String> {
 	@Override
 	public String toString() {
 		return "-------------------------------------------\nLaboratory{" + "code=" + code + ", material=" + material
-				+ ", exam=" + exam + ", registrationDate=" + createdDate + ", examDate=" + labDate + ", result="
+				+ ", exam=" + exam + ", registrationDate=" + labDate + ", examDate=" + examDate + ", result="
 				+ result + ", lock=" + lock + ", note=" + note + ", patient=" + patient + ", patName=" + patName
-				+ ", InOutPatient=" + inOutPatient + ", age=" + age + ", sex=" + sex + ", hashCode=" + hashCode
+				+ ", InOutPatient=" + InOutPatient + ", age=" + age + ", sex=" + sex + ", hashCode=" + hashCode
 				+ "}\n---------------------------------------------";
 	}
 

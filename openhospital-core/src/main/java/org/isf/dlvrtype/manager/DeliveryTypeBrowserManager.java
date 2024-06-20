@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.dlvrtype.manager;
 
@@ -30,6 +30,8 @@ import org.isf.generaldata.MessageBundle;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,17 +40,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class DeliveryTypeBrowserManager {
 
+	@Autowired
 	private DeliveryTypeIoOperation ioOperations;
-
-	public DeliveryTypeBrowserManager(DeliveryTypeIoOperation deliveryTypeIoOperation) {
-		this.ioOperations = deliveryTypeIoOperation;
-	}
 
 	/**
 	 * Returns all stored {@link DeliveryType}s.
-	 * In case of error a message error is shown and a {@code null} value is returned.
+	 * In case of error a message error is shown and a <code>null</code> value is returned.
 	 *
-	 * @return all stored delivery types, {@code null} if an error occurred.
+	 * @return all stored delivery types, <code>null</code> if an error occurred.
 	 * @throws OHServiceException
 	 */
 	public List<DeliveryType> getDeliveryType() throws OHServiceException {
@@ -57,36 +56,36 @@ public class DeliveryTypeBrowserManager {
 
 	/**
 	 * Stores the specified {@link DeliveryType}.
-	 * In case of error a message error is shown and a {@code false} value is returned.
+	 * In case of error a message error is shown and a <code>false</code> value is returned.
 	 *
 	 * @param deliveryType the delivery type to store.
-	 * @return the newly persisted {@link DeliveryType} object.
+	 * @return <code>true</code> if the delivery type has been stored, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public DeliveryType newDeliveryType(DeliveryType deliveryType) throws OHServiceException {
+	public boolean newDeliveryType(DeliveryType deliveryType) throws OHServiceException {
 		validateDeliveryType(deliveryType, true);
 		return ioOperations.newDeliveryType(deliveryType);
 	}
 
 	/**
 	 * Updates the specified {@link DeliveryType}.
-	 * In case of error a message error is shown and a {@code false} value is returned.
+	 * In case of error a message error is shown and a <code>false</code> value is returned.
 	 *
 	 * @param deliveryType the delivery type to update.
-	 * @return the updated {@link DeliveryType} object.
+	 * @return <code>true</code> if the delivery type has been update.
 	 * @throws OHServiceException
 	 */
-	public DeliveryType updateDeliveryType(DeliveryType deliveryType) throws OHServiceException {
+	public boolean updateDeliveryType(DeliveryType deliveryType) throws OHServiceException {
 		validateDeliveryType(deliveryType, false);
 		return ioOperations.updateDeliveryType(deliveryType);
 	}
 
 	/**
 	 * Checks if the specified code is already used by others {@link DeliveryType}s.
-	 * In case of error a message error is shown and a {@code false} value is returned.
+	 * In case of error a message error is shown and a <code>false</code> value is returned.
 	 *
 	 * @param code the code to check.
-	 * @return {@code true} if the code is used, {@code false} otherwise.
+	 * @return <code>true</code> if the code is used, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
@@ -95,36 +94,48 @@ public class DeliveryTypeBrowserManager {
 
 	/**
 	 * Delete the specified {@link DeliveryType}.
-	 * In case of error a message error is shown and a {@code false} value is returned.
+	 * In case of error a message error is shown and a <code>false</code> value is returned.
 	 *
 	 * @param deliveryType the delivery type to delete.
+	 * @return <code>true</code> if the delivery type has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteDeliveryType(DeliveryType deliveryType) throws OHServiceException {
-		ioOperations.deleteDeliveryType(deliveryType);
+	public boolean deleteDeliveryType(DeliveryType deliveryType) throws OHServiceException {
+		return ioOperations.deleteDeliveryType(deliveryType);
 	}
 
 	/**
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param deliveryType
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHServiceException
 	 */
 	protected void validateDeliveryType(DeliveryType deliveryType, boolean insert) throws OHServiceException {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		String key = deliveryType.getCode();
-		if (key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+		if (key.equals("")) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (key.length() > 1) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (insert && isCodePresent(key)) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(key)) {
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
-		if (deliveryType.getDescription().isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+		if (deliveryType.getDescription().equals("")) {
+			errors.add(
+					new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+							MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+							OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);

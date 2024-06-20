@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.disease.service;
 
@@ -32,67 +32,57 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DiseaseIoOperationRepository extends JpaRepository<Disease, String> {
 
-	Disease findOneByCode(@Param("code") String code);
+    Disease findOneByCode(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d WHERE d.description = :description AND d.diseaseType.code = :code")
 	Disease findOneByDescriptionAndTypeCode(@Param("description") String description, @Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code order BY d.description")
-	List<Disease> findAllByDiseaseTypeCode(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCode(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.opdInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndOpd(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndOpd(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.ipdInInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndIpdIn(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndIpdIn(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndIpdOut(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndIpdOut(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.ipdInInclude=true and d.opdInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdIn(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdIn(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.opdInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdOut(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdOut(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.ipdInInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndIpdInAndIpdOut(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndIpdInAndIpdOut(@Param("code") String code);
 
 	@Query(value = "select d FROM Disease d where d.diseaseType.code like :code and d.opdInclude=true and d.ipdInInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdInAndIpdOut(@Param("code") String code);
+    List<Disease> findAllByDiseaseTypeCodeAndOpdAndIpdInAndIpdOut(@Param("code") String code);
 
 	@Override
 	@Query(value = "select d FROM Disease d order by d.description")
-	List<Disease> findAll();
+    List<Disease> findAll();
 
 	@Query(value = "select d FROM Disease d where d.opdInclude=true order BY d.description")
-	List<Disease> findAllByOpd();
-
-	@Query(value = "select d FROM Disease d where d.code=:code and d.opdInclude=true")
-	Disease findOpdByCode(@Param("code") String code);
+    List<Disease> findAllByOpd();
 
 	@Query(value = "select d FROM Disease d where d.ipdInInclude=true order BY d.description")
-	List<Disease> findAllByIpdIn();
+    List<Disease> findAllByIpdIn();
 
 	@Query(value = "select d FROM Disease d where d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByIpdOut();
+    List<Disease> findAllByIpdOut();
 
 	@Query(value = "select d FROM Disease d where d.opdInclude=true and d.ipdInInclude=true order BY d.description")
-	List<Disease> findAllByOpdAndIpdIn();
+    List<Disease> findAllByOpdAndIpdIn();
 
 	@Query(value = "select d FROM Disease d where d.opdInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByOpdAndIpdOut();
+    List<Disease> findAllByOpdAndIpdOut();
 
 	@Query(value = "select d FROM Disease d where d.ipdInInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByIpdInAndIpdOut();
+    List<Disease> findAllByIpdInAndIpdOut();
 
 	@Query(value = "select d FROM Disease d where d.opdInclude=true and d.ipdInInclude=true and d.ipdOutInclude=true order BY d.description")
-	List<Disease> findAllByOpdAndIpdInAndIpdOut();
-
-	@Query(value = "select d FROM Disease d where d.code=:code and d.ipdInInclude=true")
-	Disease findIpdInByCode(@Param("code") String code);
-
-	@Query(value = "select d FROM Disease d where d.code=:code and d.ipdOutInclude=true")
-	Disease findIpdOutByCode(@Param("code") String code);
-
+    List<Disease> findAllByOpdAndIpdInAndIpdOut();
 }

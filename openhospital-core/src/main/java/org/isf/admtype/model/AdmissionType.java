@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,33 +17,45 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.admtype.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Admission Type - model for the admission type entity
+ * -----------------------------------------
+ * modification history
+ * ? - bob - first version
+ * 03/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_ADMISSIONTYPE")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "ADMT_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "ADMT_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "ADMT_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "ADMT_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "ADMT_LAST_MODIFIED_DATE"))
-public class AdmissionType extends Auditable<String> {
-
-	@Id
+@Table(name="ADMISSIONTYPE")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="ADMT_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="ADMT_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="ADMT_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="ADMT_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="ADMT_LAST_MODIFIED_DATE"))
+})
+public class AdmissionType extends Auditable<String>
+{
+	@Id 
 	@Column(name="ADMT_ID_A")	
     private String code;
 
@@ -52,9 +64,10 @@ public class AdmissionType extends Auditable<String> {
     private String description;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
-	public AdmissionType() {
+	public AdmissionType() 
+    {
 		super();
     }
 	 
@@ -62,16 +75,19 @@ public class AdmissionType extends Auditable<String> {
      * @param aCode
      * @param aDescription
      */
-    public AdmissionType(String aCode, String aDescription) {
-	    this.code = aCode;
-	    this.description = aDescription;
+    public AdmissionType(String aCode, String aDescription) 
+    {
+        this.code = aCode;
+        this.description = aDescription;
     }
     
-    public String getCode() {
+    public String getCode() 
+    {
         return this.code;
     }
     
-    public void setCode(String aCode) {
+    public void setCode(String aCode) 
+    {
         this.code = aCode;
     }
 
@@ -83,7 +99,6 @@ public class AdmissionType extends Auditable<String> {
         this.description = aDescription;
     }    
     
-    @Override
     public String toString() {
         return getDescription();
     }
@@ -99,7 +114,7 @@ public class AdmissionType extends Auditable<String> {
 		}
 		
 		AdmissionType admissionType = (AdmissionType)obj;
-		return this.getCode().equals(admissionType.getCode());
+		return (this.getCode().equals(admissionType.getCode()));
 	}
 	
 	@Override

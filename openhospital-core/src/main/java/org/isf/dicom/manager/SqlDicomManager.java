@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,13 +17,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.dicom.manager;
 
 import org.isf.dicom.model.FileDicom;
 import org.isf.dicom.service.DicomIoOperations;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,14 +36,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SqlDicomManager implements DicomManagerInterface {
 
+	@Autowired
 	private DicomIoOperations ioOperations;
 
-	public SqlDicomManager(DicomIoOperations dicomIoOperations) {
-		this.ioOperations = dicomIoOperations;
+	public SqlDicomManager() {
 	}
 
 	/**
-	 * Load a list of id file for a series.
+	 * Load a list of id file for series
 	 *
 	 * @param patientID, the patient id
 	 * @param seriesNumber, the series number
@@ -50,8 +51,8 @@ public class SqlDicomManager implements DicomManagerInterface {
 	 * @throws OHServiceException
 	 */
 	@Override
-	public Long[] getSeriesDetail(int patientID, String seriesNumber) throws OHServiceException {
-		return ioOperations.getSeriesDetail(patientID, seriesNumber);
+	public Long[] getSerieDetail(int patientID, String seriesNumber) throws OHServiceException {
+		return ioOperations.getSerieDetail(patientID, seriesNumber);
 	}
 
 	/**
@@ -59,11 +60,12 @@ public class SqlDicomManager implements DicomManagerInterface {
 	 *
 	 * @param patientID, the id of patient
 	 * @param seriesNumber, the series number to delete
+	 * @return true if success
 	 * @throws OHServiceException
 	 */
 	@Override
-	public void deleteSeries(int patientID, String seriesNumber) throws OHServiceException {
-		ioOperations.deleteSeries(patientID, seriesNumber);
+	public boolean deleteSerie(int patientID, String seriesNumber) throws OHServiceException {
+		return ioOperations.deleteSerie(patientID, seriesNumber);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,12 +17,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.providers.skebby;
 
 import java.awt.TrayIcon.MessageType;
-import java.util.Collections;
+import java.util.Arrays;
 
 import org.isf.sms.model.Sms;
 import org.isf.sms.providers.skebby.model.SckebbySmsRequest;
@@ -34,7 +34,7 @@ public class SkebbyGatewayConverter {
 	public SckebbySmsRequest toServiceDTO(Sms sms, MessageType messageType, String sender) {
 		SckebbySmsRequest result = new SckebbySmsRequest();
 		result.setMessage(sms.getSmsText());
-		result.setRecipient(Collections.singletonList(sms.getSmsNumber()));
+		result.setRecipient(Arrays.asList(sms.getSmsNumber()));
 		if (messageType != null) {
 			result.setMessageType(messageType.name());
 		}

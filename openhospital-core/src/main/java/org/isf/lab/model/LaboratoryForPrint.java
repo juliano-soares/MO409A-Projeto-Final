@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,21 +17,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.lab.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
 import org.isf.exa.model.Exam;
 
 public class LaboratoryForPrint {
-
+	
 	private String exam;
-	private LocalDateTime date;
+	private String date;
 	private String result;
 	private Integer code;
-	private String patName;
 
 	public Integer getCode() {
 		return code;
@@ -41,47 +40,46 @@ public class LaboratoryForPrint {
 		this.code = code;
 	}
 
-	public LaboratoryForPrint(Integer aCode, Exam aExam, LocalDateTime aDate, String aResult, String patientName, Integer patCode) {
+	public LaboratoryForPrint(Integer aCode, Exam aExam,GregorianCalendar aDate,String aResult){
 		code = aCode;
-		exam = aExam.getDescription();
-		date = aDate;
-		result = aResult;
-		patName = patientName;
+		exam=aExam.getDescription();
+		date=getConvertedString(aDate);
+		result=aResult;
+	}
+	
+	private String getConvertedString(GregorianCalendar time){
+		String string=String.valueOf(time.get(GregorianCalendar.DAY_OF_MONTH));
+		string+="/"+ (time.get(GregorianCalendar.MONTH) + 1);
+		string+="/"+ time.get(GregorianCalendar.YEAR);
+		string+="  "+ time.get(GregorianCalendar.HOUR_OF_DAY);
+		string+=":"+ time.get(GregorianCalendar.MINUTE);
+		string+=":"+ time.get(GregorianCalendar.SECOND);
+		return string;
 	}
 
-	public LaboratoryForPrint(Integer aCode, Exam aExam, LocalDateTime aDate, String aResult) {
-		code = aCode;
-		exam = aExam.getDescription();
-		date = aDate;
-		result = aResult;
-	}
+    public String getDate() {
+        return this.date;
+    }
 
-	public LocalDateTime getDate() {
-		return this.date;
-	}
+    public void setDate(String aDate) {
+        this.date = aDate;
+    }
 
-	public void setDate(LocalDateTime aDate) {
-		this.date = aDate;
-	}
+    public String getExam() {
+        return this.exam;
+    }
 
-	public String getExam() {
-		return this.exam;
-	}
+    public void setExam(String aExam) {
+        this.exam = aExam;
+    }
 
-	public void setExam(String aExam) {
-		this.exam = aExam;
-	}
+    public String getResult() {
+        return this.result;
+    }
 
-	public String getResult() {
-		return this.result;
-	}
+    public void setResult(String aResult) {
+        this.result = aResult;
+    }
 
-	public void setResult(String aResult) {
-		this.result = aResult;
-	}
-
-	public String getPatName() {
-		return patName;
-	}
 
 }

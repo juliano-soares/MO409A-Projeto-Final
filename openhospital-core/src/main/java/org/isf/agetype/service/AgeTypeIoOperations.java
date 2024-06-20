@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.agetype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.agetype.model.AgeType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,14 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
-public class AgeTypeIoOperations {
-
+public class AgeTypeIoOperations 
+{
+	@Autowired
 	private AgeTypeIoOperationRepository repository;
-
-	public AgeTypeIoOperations(AgeTypeIoOperationRepository ageTypeIoOperationRepository) {
-		this.repository = ageTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Returns all available age types.
 	 * @return a list of {@link AgeType}.
@@ -55,32 +53,30 @@ public class AgeTypeIoOperations {
 	/**
 	 * Updates the list of {@link AgeType}s.
 	 * @param ageType the {@link AgeType} to update.
-	 * @return a list of updated {@link AgeType}s.
+	 * @return <code>true</code> if the list has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the update.
 	 */
-	public List<AgeType> updateAgeType(List<AgeType> ageType) throws OHServiceException {
-		return repository.saveAll(ageType);
+	public boolean updateAgeType(List<AgeType> ageType) throws OHServiceException {
+		List<AgeType> savedAgeType = repository.save(ageType);
+		return savedAgeType != null;
 	}
 
 	/**
 	 * Gets the {@link AgeType} from the code index.
 	 * @param index the code index.
-	 * @return the retrieved element, {@code null} otherwise.
+	 * @return the retrieved element, <code>null</code> otherwise.
 	 * @throws OHServiceException if an error occurs retrieving the item.
 	 */
-	public AgeType getAgeTypeByCode(int index) throws OHServiceException {
-		String code = "d" + (index - 1);
-		return repository.findOneByCode(code);
-	}
-	
-	/**
-	 * Gets the {@link AgeType} from the code index.
-	 * @param code of agetype.
-	 * @return the retrieved element, {@code null} otherwise.
-	 * @throws OHServiceException if an error occurs retrieving the item.
-	 */
-	public AgeType getAgeTypeByCode(String code) throws OHServiceException {
+	public AgeType getAgeTypeByCode(
+			int index) throws OHServiceException 
+	{	
+		String code = "";
+		AgeType ageType = null;
+				
+		
+		code = "d" + (index - 1);
+		ageType = repository.findOneByCode(code); 
 
-		return repository.findOneByCode(code);
+		return ageType;
 	}
 }

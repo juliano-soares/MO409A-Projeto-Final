@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,37 +17,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patvac.manager;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.isf.generaldata.MessageBundle;
 import org.isf.patvac.model.PatientVaccine;
 import org.isf.patvac.service.PatVacIoOperations;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+/**
+ * ------------------------------------------
+ * PatVacManager - patient-vaccine manager
+ * -----------------------------------------
+ * modification history
+ * 25/08/2011 - claudia - first beta version
+ * 14/11/2011 - claudia - inserted search condition on date
+ * ------------------------------------------
+ */
 @Component
 public class PatVacManager {
 
+	@Autowired
 	private PatVacIoOperations ioOperations;
 
-	public PatVacManager(PatVacIoOperations patVacIoOperations) {
-		this.ioOperations = patVacIoOperations;
-	}
-
 	/**
-	 * Returns all {@link PatientVaccine}s for today or one week ago.
+	 * Returns all {@link PatientVaccine}s of today or one week ago
 	 *
-	 * @param minusOneWeek - if {@code true} return the last week
+	 * @param minusOneWeek - if <code>true</code> return the last week
 	 * @return the list of {@link PatientVaccine}s
 	 * @throws OHServiceException
 	 */
@@ -56,7 +63,8 @@ public class PatVacManager {
 	}
 
 	/**
-	 * Returns all {@link PatientVaccine}s within {@code dateFrom} and {@code dateTo}.
+	 * Returns all {@link PatientVaccine}s within <code>dateFrom</code> and
+	 * <code>dateTo</code>
 	 *
 	 * @param vaccineTypeCode
 	 * @param vaccineCode
@@ -68,62 +76,60 @@ public class PatVacManager {
 	 * @return the list of {@link PatientVaccine}s
 	 * @throws OHServiceException
 	 */
-	public List<PatientVaccine> getPatientVaccine(String vaccineTypeCode, String vaccineCode, LocalDateTime dateFrom, LocalDateTime dateTo, char sex,
-			int ageFrom, int ageTo) throws OHServiceException {
+	public List<PatientVaccine> getPatientVaccine(String vaccineTypeCode, String vaccineCode,
+			GregorianCalendar dateFrom, GregorianCalendar dateTo,
+			char sex, int ageFrom, int ageTo) throws OHServiceException {
 		return ioOperations.getPatientVaccine(vaccineTypeCode, vaccineCode, dateFrom, dateTo, sex, ageFrom, ageTo);
 	}
 
 	/**
-	 * Inserts a {@link PatientVaccine}.
+	 * Inserts a {@link PatientVaccine} in the DB
 	 *
 	 * @param patVac - the {@link PatientVaccine} to insert
-	 * @return the newly {@link PatientVaccine} object.
+	 * @return <code>true</code> if the item has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public PatientVaccine newPatientVaccine(PatientVaccine patVac) throws OHServiceException {
+	public boolean newPatientVaccine(PatientVaccine patVac) throws OHServiceException {
 		validatePatientVaccine(patVac);
 		return ioOperations.newPatientVaccine(patVac);
 	}
 
 	/**
-	 * Updates a {@link PatientVaccine}.
+	 * Updates a {@link PatientVaccine}
 	 *
 	 * @param patVac - the {@link PatientVaccine} to update
-	 * @return the updated {@link PatientVaccine} object.
+	 * @return <code>true</code> if the item has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public PatientVaccine updatePatientVaccine(PatientVaccine patVac) throws OHServiceException {
+	public boolean updatePatientVaccine(PatientVaccine patVac) throws OHServiceException {
 		validatePatientVaccine(patVac);
 		return ioOperations.updatePatientVaccine(patVac);
 	}
 
 	/**
-	 * Deletes a {@link PatientVaccine}.
+	 * Deletes a {@link PatientVaccine}
 	 *
 	 * @param patVac - the {@link PatientVaccine} to delete
+	 * @return <code>true</code> if the item has been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deletePatientVaccine(PatientVaccine patVac) throws OHServiceException {
-		ioOperations.deletePatientVaccine(patVac);
+	public boolean deletePatientVaccine(PatientVaccine patVac) throws OHServiceException {
+		return ioOperations.deletePatientVaccine(patVac);
 	}
 
 	/**
-	 * Returns the max progressive number within specified year or within current year if {@code 0}.
+	 * Returns the max progressive number within specified year or within current year if <code>0</code>.
 	 *
 	 * @param year
-	 * @return {@code int} - the progressive number in the year
+	 * @return <code>int</code> - the progressive number in the year
 	 * @throws OHServiceException
 	 */
 	public int getProgYear(int year) throws OHServiceException {
 		return ioOperations.getProgYear(year);
 	}
-	
-	public Optional<PatientVaccine> getPatientVaccine(int code) throws OHServiceException {
-		return ioOperations.getPatientVaccine(code);
-	}
 
 	/**
-	 * Verify if the object is valid for CRUD and return a list of errors, if any.
+	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param patientVaccine
 	 * @throws OHDataValidationException
@@ -132,19 +138,27 @@ public class PatVacManager {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 
 		if (patientVaccine.getVaccineDate() == null) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patvac.pleaseinsertvaccinedate.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patvac.pleaseinsertvaccinedate.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (patientVaccine.getProgr() < 0) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patvac.pleaseinsertavalidprogressive.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patvac.pleaseinsertavalidprogressive.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (patientVaccine.getVaccine() == null
-				|| patientVaccine.getVaccine().getDescription().equals(MessageBundle.getMessage("angal.patvac.allvaccine"))) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.patvac.pleaseselectavaccine.msg")));
+		if (patientVaccine.getVaccine() == null || 
+						patientVaccine.getVaccine().getDescription().equals(MessageBundle.getMessage("angal.patvac.allvaccine"))) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.patvac.pleaseselectavaccine.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (patientVaccine.getPatient() == null
 				|| StringUtils.isEmpty(patientVaccine.getPatName())
 				|| StringUtils.isEmpty(String.valueOf(patientVaccine.getPatSex()))) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseselectapatient.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseselectapatient.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);

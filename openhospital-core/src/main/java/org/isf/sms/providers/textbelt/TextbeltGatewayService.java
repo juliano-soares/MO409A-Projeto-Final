@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,9 +17,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.providers.textbelt;
+
+import java.util.Properties;
+
+import javax.annotation.Resource;
 
 import org.isf.sms.model.Sms;
 import org.isf.sms.providers.SmsSenderInterface;
@@ -30,9 +34,8 @@ import org.isf.sms.providers.textbelt.model.TextbeltSmsResponse;
 import org.isf.sms.providers.textbelt.remote.TextbeltGatewayRemoteService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.openfeign.support.SpringMvcContract;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.netflix.feign.support.SpringMvcContract;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +43,6 @@ import feign.Feign;
 import feign.slf4j.Slf4jLogger;
 
 @Component
-@PropertySource("classpath:sms.properties")
 public class TextbeltGatewayService implements SmsSenderInterface {
 
 	private static final String SERVICE_NAME = "textbelt-gateway-service";
@@ -48,13 +50,11 @@ public class TextbeltGatewayService implements SmsSenderInterface {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TextbeltGatewayService.class);
 
-	private final Environment smsProperties;
-	private final TextbeltGatewayConverter textbeltGatewayConverter;
+	@Resource(name = "smsProperties")
+	private Properties smsProperties;
 
-	public TextbeltGatewayService(TextbeltGatewayConverter textbeltGatewayConverter, Environment smsProperties) {
-		this.textbeltGatewayConverter = textbeltGatewayConverter;
-		this.smsProperties = smsProperties;
-	}
+	@Autowired
+	private TextbeltGatewayConverter textbeltGatewayConverter;
 
 	@Override
 	public boolean sendSMS(Sms sms) {

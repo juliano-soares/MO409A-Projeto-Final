@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,53 +17,29 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.manager;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.isf.generaldata.MessageBundle;
-import org.isf.medicals.model.Medical;
-import org.isf.medicals.service.MedicalsIoOperations;
-import org.isf.medicalstock.model.Lot;
 import org.isf.medicalstock.model.Movement;
-import org.isf.medicalstock.service.LotIoOperationRepository;
 import org.isf.medicalstock.service.MedicalStockIoOperations;
-import org.isf.medicalstockward.manager.MovWardBrowserManager;
-import org.isf.medicalstockward.model.MedicalWard;
-import org.isf.medicalstockward.model.MovementWard;
-import org.isf.medstockmovtype.manager.MedicalDsrStockMovementTypeBrowserManager;
-import org.isf.medstockmovtype.model.MovementType;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
 import org.isf.ward.model.Ward;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class MovBrowserManager {
 
+	@Autowired
 	private MedicalStockIoOperations ioOperations;
-
-	private LotIoOperationRepository lotRepository;
-
-	private MedicalsIoOperations medicalsIoOperation;
-
-	private MedicalDsrStockMovementTypeBrowserManager medicalDsrStockMovTypeManager;
-
-	private MovWardBrowserManager movWardBrowserManager;
-
-	public MovBrowserManager(MedicalStockIoOperations ioOperations, LotIoOperationRepository lotRepository, MedicalsIoOperations medicalsIoOperation,
-	                         MedicalDsrStockMovementTypeBrowserManager medicalDsrStockMovTypeManager, MovWardBrowserManager movWardBrowserManager) {
-		this.ioOperations = ioOperations;
-		this.lotRepository = lotRepository;
-		this.medicalsIoOperation = medicalsIoOperation;
-		this.medicalDsrStockMovTypeManager = medicalDsrStockMovTypeManager;
-		this.movWardBrowserManager = movWardBrowserManager;
-	}
 
 	/**
 	 * Retrieves all the {@link Movement}s.
@@ -84,7 +60,7 @@ public class MovBrowserManager {
 	 * @return the retrieved movements.
 	 * @throws OHServiceException
 	 */
-	public List<Movement> getMovements(String wardId, LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
+	public List<Movement> getMovements(String wardId, GregorianCalendar dateFrom, GregorianCalendar dateTo) throws OHServiceException {
 		return ioOperations.getMovements(wardId, dateFrom, dateTo);
 	}
 
@@ -116,19 +92,19 @@ public class MovBrowserManager {
 	 * @throws OHServiceException
 	 */
 	public List<Movement> getMovements(Integer medicalCode, String medicalType,
-					String wardId, String movType, LocalDateTime movFrom, LocalDateTime movTo,
-					LocalDateTime lotPrepFrom, LocalDateTime lotPrepTo,
-					LocalDateTime lotDueFrom, LocalDateTime lotDueTo) throws OHServiceException {
+			String wardId, String movType, GregorianCalendar movFrom, GregorianCalendar movTo,
+			GregorianCalendar lotPrepFrom, GregorianCalendar lotPrepTo,
+			GregorianCalendar lotDueFrom, GregorianCalendar lotDueTo) throws OHServiceException {
 
 		if (medicalCode == null &&
-						medicalType == null &&
-						movType == null &&
-						movFrom == null &&
-						movTo == null &&
-						lotPrepFrom == null &&
-						lotPrepTo == null &&
-						lotDueFrom == null &&
-						lotDueTo == null) {
+				medicalType == null &&
+				movType == null &&
+				movFrom == null &&
+				movTo == null &&
+				lotPrepFrom == null &&
+				lotPrepTo == null &&
+				lotDueFrom == null &&
+				lotDueTo == null) {
 			return getMovements();
 		}
 
@@ -139,71 +115,17 @@ public class MovBrowserManager {
 		return ioOperations.getMovements(medicalCode, medicalType, wardId, movType, movFrom, movTo, lotPrepFrom, lotPrepTo, lotDueFrom, lotDueTo);
 	}
 
-	private void check(LocalDateTime from, LocalDateTime to, String errMsgKey) throws OHDataValidationException {
+	private void check(GregorianCalendar from, GregorianCalendar to, String errMsgKey) throws OHDataValidationException {
 		if (from == null || to == null) {
 			if (!(from == null && to == null)) {
 				throw new OHDataValidationException(
-								new OHExceptionMessage(MessageBundle.getMessage(errMsgKey)));
+						new OHExceptionMessage(
+								MessageBundle.getMessage("angal.common.error.title"),
+								MessageBundle.getMessage(errMsgKey),
+								OHSeverityLevel.ERROR
+						)
+				);
 			}
-		}
-	}
-
-	/**
-	 * Get the last Movement.
-	 *
-	 * @return the retrieved movement.
-	 * @throws OHServiceException
-	 */
-	public Movement getLastMovement() throws OHServiceException {
-		return ioOperations.getLastMovement();
-	}
-
-	/**
-	 * Deletes the last Movement.
-	 *
-	 * @param lastMovement - the last movement to delete
-	 * @throws OHServiceException
-	 */
-	@Transactional(rollbackFor = OHServiceException.class)
-	public void deleteLastMovement(Movement lastMovement) throws OHServiceException {
-
-		MovementType movType = medicalDsrStockMovTypeManager.getMovementType(lastMovement.getType().getCode());
-		Lot lot = lastMovement.getLot();
-		Medical medical = lastMovement.getMedical();
-		int medicalCode = medical.getCode();
-		int quantity = lastMovement.getQuantity();
-		LocalDateTime date = lastMovement.getDate();
-
-		if (movType.getType().contains("+")) {
-			medical.setInqty(medical.getInqty() - quantity);
-			medicalsIoOperation.updateMedical(medical);
-			List<Movement> movementWithSameLot = ioOperations.getMovementByLot(lot);
-			if (movementWithSameLot.size() == 1) {
-				lotRepository.deleteById(lot.getCode());
-			}
-			ioOperations.deleteMovement(lastMovement);
-		} else {
-			Ward ward = lastMovement.getWard();
-			String wardCode = ward.getCode();
-			String lotCode = lot.getCode();
-			List<MovementWard> movWard = movWardBrowserManager.getMovementWardByWardMedicalAndLotAfterOrSameDate(wardCode, medicalCode, lotCode, date);
-			if (movWard.size() > 0) {
-				throw new OHDataValidationException(
-								new OHExceptionMessage(MessageBundle.formatMessage(
-												"angal.medicalstock.notpossibletodeletethismovementthemedicalhasbeenusedafterbeenreceivedinward.fmt.msg",
-												lastMovement.getMedical().getDescription(), lastMovement.getWard().getDescription())));
-			}
-			MedicalWard medWard = movWardBrowserManager.getMedicalWardByWardMedicalAndLot(wardCode, medicalCode, lotCode);
-			medWard.setIn_quantity(medWard.getIn_quantity() - quantity);
-			if (medWard.getIn_quantity() == 0 && medWard.getOut_quantity() == 0) {
-				movWardBrowserManager.deleteMedicalWard(medWard);
-			} else {
-				movWardBrowserManager.updateMedicalWard(medWard);
-			}
-			medical.setOutqty(medical.getOutqty() - quantity);
-			medicalsIoOperation.updateMedical(medical);
-
-			ioOperations.deleteMovement(lastMovement);
 		}
 	}
 }

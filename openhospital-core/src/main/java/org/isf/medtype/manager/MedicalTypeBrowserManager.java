@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medtype.manager;
 
@@ -31,6 +31,8 @@ import org.isf.utils.exception.OHDataIntegrityViolationException;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,17 +41,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class MedicalTypeBrowserManager {
 
+	@Autowired
 	private MedicalTypeIoOperation ioOperations;
 
-	public MedicalTypeBrowserManager(MedicalTypeIoOperation medicalTypeIoOperation) {
-		this.ioOperations = medicalTypeIoOperation;
-	}
-
 	/**
-	 * Verify if the object is valid for CRUD and return a list of errors, if any.
+	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param medicalType
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHServiceException
 	 */
 	protected void validateMedicalType(MedicalType medicalType, boolean insert) throws OHServiceException {
@@ -57,16 +56,26 @@ public class MedicalTypeBrowserManager {
 		String description = medicalType.getDescription();
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		if (key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (key.length() > 1) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (description.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (insert && isCodePresent(medicalType.getCode())) {
-			throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(medicalType.getCode())) {
+				throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -74,9 +83,9 @@ public class MedicalTypeBrowserManager {
 	}
 
 	/**
-	 * Retrieves all the {@link MedicalType}s.
+	 * Retrieves all the medical types.
 	 *
-	 * @return a list of all the {@link MedicalType}s.
+	 * @return all the medical types.
 	 * @throws OHServiceException
 	 */
 	public List<MedicalType> getMedicalType() throws OHServiceException {
@@ -84,34 +93,34 @@ public class MedicalTypeBrowserManager {
 	}
 
 	/**
-	 * Saves the specified {@link MedicalType}.
+	 * Saves the specified medical type.
 	 *
 	 * @param medicalType the medical type to save.
-	 * @return the newly saved {@link MedicalType} object.
+	 * @return <code>true</code> if the medical type has been saved, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public MedicalType newMedicalType(MedicalType medicalType) throws OHServiceException {
+	public boolean newMedicalType(MedicalType medicalType) throws OHServiceException {
 		validateMedicalType(medicalType, true);
 		return ioOperations.newMedicalType(medicalType);
 	}
 
 	/**
-	 * Updates the specified {@link MedicalType}.
+	 * Updates the specified medical type.
 	 *
 	 * @param medicalType the medical type to update.
-	 * @return the updated {@link MedicalType} object.
+	 * @return <code>true</code> if the medical type has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public MedicalType updateMedicalType(MedicalType medicalType) throws OHServiceException {
+	public boolean updateMedicalType(MedicalType medicalType) throws OHServiceException {
 		validateMedicalType(medicalType, false);
 		return ioOperations.updateMedicalType(medicalType);
 	}
 
 	/**
-	 * Checks if the specified {@link MedicalType} code is already used.
+	 * Checks if the specified medical type code is already used.
 	 *
 	 * @param code the code to check.
-	 * @return {@code true} if the code is used, {@code false} otherwise.
+	 * @return <code>true</code> if the code is used, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
@@ -119,12 +128,14 @@ public class MedicalTypeBrowserManager {
 	}
 
 	/**
-	 * Deletes the specified {@link MedicalType} object.
+	 * Deletes the specified medical type.
+	 * In case of error a message error is shown and a <code>false</code> value is returned.
 	 *
 	 * @param medicalType the medical type to delete.
+	 * @return <code>true</code> if the medical type has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException
 	 */
-	public void deleteMedicalType(MedicalType medicalType) throws OHServiceException {
-		ioOperations.deleteMedicalType(medicalType);
+	public boolean deleteMedicalType(MedicalType medicalType) throws OHServiceException {
+		return ioOperations.deleteMedicalType(medicalType);
 	}
 }

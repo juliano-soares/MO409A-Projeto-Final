@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,17 +17,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstockward.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.isf.medicals.model.Medical;
 import org.isf.medicalstock.model.Lot;
@@ -35,16 +36,27 @@ import org.isf.utils.db.Auditable;
 import org.isf.ward.model.Ward;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Medical Ward - model for the medical ward entity
+ * -----------------------------------------
+ * modification history
+ * ? - ?
+ * 17/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_MEDICALDSRWARD")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "MDSRWRD_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "MDSRWRD_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "MDSRWRD_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "MDSRWRD_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "MDSRWRD_LAST_MODIFIED_DATE"))
-public class MedicalWard extends Auditable<String> implements Comparable<Object> {
-
+@Table(name="MEDICALDSRWARD")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="MDSRWRD_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="MDSRWRD_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="MDSRWRD_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="MDSRWRD_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="MDSRWRD_LAST_MODIFIED_DATE"))
+})
+public class MedicalWard extends Auditable<String> implements Comparable<Object> 
+{	
 	@EmbeddedId 
 	MedicalWardId id;
 	
@@ -58,11 +70,12 @@ public class MedicalWard extends Auditable<String> implements Comparable<Object>
 	private Double qty = 0.0;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	public MedicalWard() {
 		super();
-		this.id = new MedicalWardId();
+		this.id = new MedicalWardId(); 
+		
 	}
 	
 	public MedicalWard(Medical medical, Double qty) {
@@ -72,11 +85,11 @@ public class MedicalWard extends Auditable<String> implements Comparable<Object>
 		this.qty = qty;
 	}
 	
-	public MedicalWard(Ward ward, Medical medical, float inQuantity, float outQuantity, Lot lot) {
+	public MedicalWard(Ward ward, Medical medical, float in_quantity, float out_quantity, Lot lot) {
 		super();
 		this.id = new MedicalWardId(ward, medical, lot);  
-		this.in_quantity = inQuantity;
-		this.out_quantity = outQuantity;
+		this.in_quantity = in_quantity;
+		this.out_quantity = out_quantity;
 		
 	}
 	
@@ -115,12 +128,12 @@ public class MedicalWard extends Auditable<String> implements Comparable<Object>
 	
 	@Override
 	public int compareTo(Object anObject) {
+		
 		Medical medical = id.getMedical();
-		if (anObject instanceof MedicalWard) {
+		if (anObject instanceof MedicalWard)
 			return (medical.getDescription().toUpperCase().compareTo(
-					((MedicalWard) anObject).getMedical().getDescription().toUpperCase()));
-		}
-		return 0;
+					((MedicalWard)anObject).getMedical().getDescription().toUpperCase()));
+		else return 0;		
 	}
 
 	public Ward getWard() {
@@ -139,20 +152,20 @@ public class MedicalWard extends Auditable<String> implements Comparable<Object>
 		id.setLot(lot);
 	}
 	
-	public float getIn_quantity() {
+	public float getInQuantity() {
 		return this.in_quantity;
 	}
 	
-	public void setIn_quantity(float inQuantity) {
-		this.in_quantity = inQuantity;
+	public void setInQuantity(float in_quantity) {
+		this.in_quantity = in_quantity;
 	}
 	
-	public float getOut_quantity() {
+	public float getOutQuantity() {
 		return this.out_quantity;
 	}
 	
-	public void setOut_quantity(float outQuantity) {
-		this.out_quantity = outQuantity;
+	public void setOutQuantity(float out_quantity) {
+		this.out_quantity = out_quantity;
 	}
 	
 	@Override

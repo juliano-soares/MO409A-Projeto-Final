@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,23 +17,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patvac.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.isf.patvac.model.PatientVaccine;
-import org.isf.utils.time.TimeTools;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -46,23 +46,25 @@ public class PatVacIoOperationRepositoryImpl implements PatVacIoOperationReposit
 	@SuppressWarnings("unchecked")	
 	@Override
 	public List<PatientVaccine> findAllByCodesAndDatesAndSexAndAges(
-			String vaccineTypeCode,
-			String vaccineCode,
-			LocalDateTime dateFrom,
-			LocalDateTime dateTo,
-			char sex,
-			int ageFrom,
-			int ageTo) {
-		return this.entityManager.
-				createQuery(getPatientVaccineQuery(vaccineTypeCode, vaccineCode, TimeTools.truncateToSeconds(dateFrom),
-				                                   TimeTools.truncateToSeconds(dateTo), sex, ageFrom, ageTo)).getResultList();
-	}	
-
-	private CriteriaQuery<PatientVaccine> getPatientVaccineQuery(
 			String vaccineTypeCode, 
 			String vaccineCode, 
-			LocalDateTime dateFrom, 
-			LocalDateTime dateTo, 
+			GregorianCalendar dateFrom, 
+			GregorianCalendar dateTo, 
+			char sex, 
+			int ageFrom, 
+			int ageTo) {
+		return this.entityManager.
+				createQuery(_getPatientVaccineQuery(
+						vaccineTypeCode, vaccineCode, dateFrom, dateTo,
+						sex, ageFrom, ageTo)).
+					getResultList();
+	}	
+
+	private CriteriaQuery<PatientVaccine> _getPatientVaccineQuery(
+			String vaccineTypeCode, 
+			String vaccineCode, 
+			GregorianCalendar dateFrom, 
+			GregorianCalendar dateTo, 
 			char sex, 
 			int ageFrom, 
 			int ageTo) {
@@ -74,12 +76,12 @@ public class PatVacIoOperationRepositoryImpl implements PatVacIoOperationReposit
 		query.select(pvRoot);
 		if (dateFrom != null) {
 			predicates.add(
-					cb.greaterThanOrEqualTo(pvRoot.<LocalDateTime> get("vaccineDate"), TimeTools.truncateToSeconds(dateFrom))
+				cb.greaterThanOrEqualTo(pvRoot.<Date> get("vaccineDate"), dateFrom.getTime())
 			);
 		}
 		if (dateTo != null) {
 			predicates.add(
-					cb.lessThanOrEqualTo(pvRoot.<LocalDateTime> get("vaccineDate"), TimeTools.truncateToSeconds(dateTo))
+				cb.lessThanOrEqualTo(pvRoot.<Date> get("vaccineDate"), dateTo.getTime())
 			);
 		}
 		if (vaccineTypeCode != null) {
@@ -102,10 +104,9 @@ public class PatVacIoOperationRepositoryImpl implements PatVacIoOperationReposit
 				cb.between(pvRoot.join("patient").<Integer>get("age"), ageFrom, ageTo)
 			);
 		}
-		query.where(cb.and(predicates.toArray(new Predicate[0])));
+		query.where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 		query.orderBy(cb.desc(pvRoot.get("vaccineDate")), cb.asc(pvRoot.get("code")));
 
 		return query;
 	}
-
 }

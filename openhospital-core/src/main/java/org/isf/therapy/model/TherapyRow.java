@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,43 +17,54 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.therapy.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
+import org.isf.utils.db.Auditable;
 import org.isf.medicals.model.Medical;
 import org.isf.patient.model.Patient;
-import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * TherapyRow : Bean to collect data from DB table THERAPIES
+ * -----------------------------------------
+ * modification history
+ * ? - Mwithi - first version
+ * 1/08/2016 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_THERAPIES")
+@Table(name="THERAPIES")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "THR_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "THR_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "THR_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "THR_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "THR_LAST_MODIFIED_DATE"))
-public class TherapyRow extends Auditable<String> {
-
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="THR_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="THR_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="THR_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="THR_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="THR_LAST_MODIFIED_DATE"))
+})
+public class TherapyRow  extends Auditable<String>
+{	
 	@Id 
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="THR_ID")	
 	private int therapyID;
 
@@ -64,11 +75,11 @@ public class TherapyRow extends Auditable<String> {
 
 	@NotNull
 	@Column(name="THR_STARTDATE")	
-	private LocalDateTime startDate;
+	private GregorianCalendar startDate;
 
 	@NotNull
 	@Column(name="THR_ENDDATE")	
-	private LocalDateTime endDate;
+	private GregorianCalendar endDate;
 
 	@NotNull
 	@Column(name="THR_MDSR_ID")	
@@ -102,7 +113,7 @@ public class TherapyRow extends Auditable<String> {
 	private int smsInt;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	
 	public TherapyRow() {
@@ -124,14 +135,14 @@ public class TherapyRow extends Auditable<String> {
 	 * @param sms
 	 */
 	public TherapyRow(int therapyID, Patient patient,
-			LocalDateTime startDate, LocalDateTime endDate,
+			GregorianCalendar startDate, GregorianCalendar endDate,
 			Medical medical, Double qty, int unitID, int freqInDay,
 			int freqInPeriod, String note, boolean notify, boolean sms) {
 		super();
 		this.therapyID = therapyID;
 		this.patient = patient;
-		this.startDate = TimeTools.truncateToSeconds(startDate);
-		this.endDate = TimeTools.truncateToSeconds(endDate);
+		this.startDate = startDate;
+		this.endDate = endDate;
 		this.medicalId = medical.getCode();
 		this.qty = qty;
 		this.unitID = unitID;
@@ -158,20 +169,20 @@ public class TherapyRow extends Auditable<String> {
 		this.patient = patient;
 	}
 
-	public LocalDateTime getStartDate() {
+	public GregorianCalendar getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(LocalDateTime startDate) {
-		this.startDate = TimeTools.truncateToSeconds(startDate);
+	public void setStartDate(GregorianCalendar startDate) {
+		this.startDate = startDate;
 	}
 
-	public LocalDateTime getEndDate() {
+	public GregorianCalendar getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(LocalDateTime endDate) {
-		this.endDate = TimeTools.truncateToSeconds(endDate);
+	public void setEndDate(GregorianCalendar endDate) {
+		this.endDate = endDate;
 	}
 
 	public Integer getMedical() {
@@ -238,43 +249,9 @@ public class TherapyRow extends Auditable<String> {
 		this.smsInt = sms ? 1 : 0;
 	}
 
-	public Integer getMedicalId() {
-		return medicalId;
-	}
-
-	public void setMedicalId(Integer medicalId) {
-		this.medicalId = medicalId;
-	}
-
-	public int getNotifyInt() {
-		return notifyInt;
-	}
-
-	public void setNotifyInt(int notifyInt) {
-		this.notifyInt = notifyInt;
-	}
-
-	public int getSmsInt() {
-		return smsInt;
-	}
-
-	public void setSmsInt(int smsInt) {
-		this.smsInt = smsInt;
-	}
-
-	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(medicalId);
-		sb.append(" - ");
-		sb.append(this.unitID);
-		sb.append(' ');
-		sb.append(this.qty);
-		sb.append('/');
-		sb.append(freqInDay);
-		sb.append('/');
-		sb.append(this.freqInPeriod);
-		return sb.toString();
+		String string = medicalId.toString() + " - " + this.unitID + " " + this.qty + "/" + this.freqInDay + "/" + this.freqInPeriod;
+		return string;
 	}
 	
 	@Override

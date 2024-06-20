@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,58 +17,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.lab.service;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 import java.util.List;
 
-import org.isf.exa.model.Exam;
 import org.isf.lab.model.Laboratory;
-import org.isf.patient.model.Patient;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface LabIoOperationRepository extends JpaRepository<Laboratory, Integer> {
 
-	List<Laboratory> findByLabDateBetweenOrderByLabDateDesc(LocalDateTime dateFrom, LocalDateTime dateTo);
+    List<Laboratory> findByExamDateBetweenOrderByLabDateDesc(
+            GregorianCalendar dateFrom,
+            GregorianCalendar dateTo);
 
-	List<Laboratory> findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(LocalDateTime dateFrom, LocalDateTime dateTo, String exam);
+    List<Laboratory> findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(
+            GregorianCalendar dateFrom,
+            GregorianCalendar dateTo,
+            String exam);
 
-	List<Laboratory> findByPatient_CodeOrderByLabDate(Integer patient);
+    List<Laboratory> findByPatient_CodeOrderByLabDate(Integer patient);
 
-	List<Laboratory> findByLabDateBetweenOrderByExam_Examtype_DescriptionDesc(LocalDateTime dateFrom, LocalDateTime dateTo);
+    List<Laboratory> findByLabDateBetweenOrderByExam_Examtype_DescriptionDesc(
+            GregorianCalendar dateFrom,
+            GregorianCalendar dateTo);
 
-	List<Laboratory> findByLabDateBetweenAndExam_DescriptionContainingOrderByExam_Examtype_DescriptionDesc(LocalDateTime dateFrom, LocalDateTime dateTo,
-					String exam);
-
-	List<Laboratory> findByLabDateBetweenAndPatientCode(LocalDateTime dateFrom, LocalDateTime dateTo, Integer patientCode);
-
-	List<Laboratory> findByLabDateBetweenAndExamDescriptionAndPatientCode(LocalDateTime dateFrom, LocalDateTime dateTo, String exam, Integer patient);
-
-	Page<Laboratory> findByLabDateBetweenOrderByLabDateDesc(LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable);
-
-	@Query(value = "select lab from Laboratory lab where lab.labDate >= :dateFrom and lab.labDate < :dateTo order by lab.labDate desc")
-	Page<Laboratory> findByLabDateBetweenOrderByLabDateDescPage(@Param("dateFrom") LocalDateTime dateFrom, @Param("dateTo") LocalDateTime dateTo,
-					Pageable pageable);
-
-	@Query(value = "select lab from Laboratory lab where (lab.labDate >= :dateFrom and lab.labDate < :dateTo) and lab.exam = :exam order by lab.labDate desc")
-	Page<Laboratory> findByLabDateBetweenAndExam_DescriptionOrderByLabDateDescPage(@Param("dateFrom") LocalDateTime dateFrom,
-					@Param("dateTo") LocalDateTime dateTo, @Param("exam") Exam exam, Pageable pageable);
-
-	@Query(value = "select lab from Laboratory lab where (lab.labDate >= :dateFrom and lab.labDate < :dateTo) and lab.patient = :patient order by lab.labDate desc")
-	Page<Laboratory> findByLabDateBetweenAndPatientCodePage(@Param("dateFrom") LocalDateTime dateFrom, @Param("dateTo") LocalDateTime dateTo,
-					@Param("patient") Patient patient, Pageable pageable);
-
-	@Query(value = "select lab from Laboratory lab where (lab.labDate >= :dateFrom and lab.labDate < :dateTo) and lab.exam = :exam and lab.patient = :patient order by lab.labDate desc")
-	Page<Laboratory> findByLabDateBetweenAndExamDescriptionAndPatientCodePage(@Param("dateFrom") LocalDateTime dateFrom, @Param("dateTo") LocalDateTime dateTo,
-					@Param("exam") Exam exam, @Param("patient") Patient patient, Pageable pageable);
-
-	@Query("select count(l) from Laboratory l where active=1")
-	long countAllActiveLabs();
+    List<Laboratory> findByLabDateBetweenAndExam_DescriptionContainingOrderByExam_Examtype_DescriptionDesc(
+            GregorianCalendar dateFrom,
+            GregorianCalendar dateTo,
+            String exam);
 
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,43 +17,54 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patvac.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.patient.model.Patient;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.isf.vaccine.model.Vaccine;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * PatientVaccine - class
+ * -----------------------------------------
+ * modification history
+ * 25/08/2011 - claudia - first beta version
+ * 04/06/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_PATIENTVACCINE")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "PAV_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "PAV_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "PAV_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "PAV_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "PAV_LAST_MODIFIED_DATE"))
-public class PatientVaccine extends Auditable<String> {
-
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+@Table(name="PATIENTVACCINE")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="PAV_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="PAV_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="PAV_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="PAV_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="PAV_LAST_MODIFIED_DATE"))
+})
+public class PatientVaccine extends Auditable<String>
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="PAV_ID")
 	private int code;
 
@@ -62,8 +73,8 @@ public class PatientVaccine extends Auditable<String> {
 	private int progr;
 
 	@NotNull
-	@Column(name="PAV_DATE")		// SQL type: datetime
-	private LocalDateTime vaccineDate;
+	@Column(name="PAV_DATE")
+	private GregorianCalendar vaccineDate;
 
 	@NotNull
 	@ManyToOne
@@ -79,20 +90,21 @@ public class PatientVaccine extends Auditable<String> {
 	private int lock;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 
 	
 	public PatientVaccine()
 	{		
 	}
-
-	public PatientVaccine(int codeIn, int progIn, LocalDateTime vacDateIn, Patient patient, Vaccine vacIn, int lockIn) {
+	
+	public PatientVaccine(int codeIn, int progIn, GregorianCalendar vacDateIn, 
+			Patient patient, Vaccine vacIn, int lockIn) {
 		this.code = codeIn;
 		this.progr = progIn;
-		this.vaccineDate = TimeTools.truncateToSeconds(vacDateIn);
+		this.vaccineDate = vacDateIn;
 		this.patient = patient;
 		this.vaccine = vacIn;
-		this.lock = lockIn;
+		this.lock = lockIn ;
 	}
 	
 	public int getCode() {
@@ -111,12 +123,12 @@ public class PatientVaccine extends Auditable<String> {
 		this.progr = progr;
 	}
 
-	public LocalDateTime getVaccineDate() {
+	public GregorianCalendar getVaccineDate() {
 		return vaccineDate;
 	}
 
-	public void setVaccineDate(LocalDateTime vaccineDate) {
-		this.vaccineDate = TimeTools.truncateToSeconds(vaccineDate);
+	public void setVaccineDate(GregorianCalendar vaccineDate) {
+		this.vaccineDate = vaccineDate;
 	}
 
 	public Patient getPatient() {
@@ -134,6 +146,7 @@ public class PatientVaccine extends Auditable<String> {
 	public void setVaccine(Vaccine vaccine) {
 		this.vaccine = vaccine;
 	}
+	
 
 	public int getLock() {
 		return lock;
@@ -203,8 +216,11 @@ public class PatientVaccine extends Auditable<String> {
 				|| (other.vaccine != null && !other.vaccine.equals(vaccine))) {
 			return false;
 		}
-		return (vaccineDate == null || vaccineDate.equals(other.vaccineDate))
-				&& (other.vaccineDate == null || other.vaccineDate.equals(vaccineDate));
+		if ((vaccineDate != null && !vaccineDate.equals(other.vaccineDate))
+				|| (other.vaccineDate != null && !other.vaccineDate.equals(vaccineDate))) {
+			return false;
+		}
+		return true;
 	}
 
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,36 +17,48 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.priceslist.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * -----------------------------------------
+ * PriceList - model for a price list entity
+ * -----------------------------------------
+ * modification history
+ * ? - Mwithi - first version
+ * 25/08/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_PRICELISTS")
+@Table(name="PRICELISTS")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "LST_CREATED_BY"))
-@AttributeOverride(name = "createdDate", column = @Column(name = "LST_CREATED_DATE"))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "LST_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "LST_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "LST_LAST_MODIFIED_DATE"))
-public class PriceList extends Auditable<String> {
-
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="LST_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="LST_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="LST_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="LST_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="LST_LAST_MODIFIED_DATE"))
+})
+public class PriceList  extends Auditable<String>
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="LST_ID")
 	private int id;
 
@@ -67,7 +79,7 @@ public class PriceList extends Auditable<String> {
     private String currency;
 	
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 	
 	
 	public PriceList() {

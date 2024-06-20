@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,64 +17,55 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patient.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import jakarta.persistence.EntityManager;
 
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
-import org.isf.generaldata.GeneralData;
 import org.isf.patient.model.Patient;
 import org.isf.patient.model.PatientMergedEvent;
-import org.isf.patient.model.PatientProfilePhoto;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.pagination.PageInfo;
-import org.isf.utils.pagination.PagedResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * ------------------------------------------
+ * PatientIoOperations - dB operations for the patient entity
+ * -----------------------------------------
+ * modification history
+ * 05/05/2005 - giacomo  - first beta version
+ * 03/11/2006 - ross - added toString method. Gestione apici per
+ * nome, cognome, citta', indirizzo e note
+ * 11/08/2008 - alessandro - added father & mother's names
+ * 26/08/2008 - claudio    - added birth date
+ * modified age
+ * 01/01/2009 - Fabrizio   - changed the calls to PAT_AGE fields to
+ * return again an int type
+ * 03/12/2009 - Alex       - added method for merge two patients history
+ * ------------------------------------------
+ */
 @Service
 @Transactional(rollbackFor = OHServiceException.class)
 @TranslateOHServiceException
 public class PatientIoOperations {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PatientIoOperations.class);
+	public static final String NOT_DELETED_STATUS = "N";
+	@Autowired
+	private PatientIoOperationRepository repository;
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 
-	public static final String LOAD_FROM_DB = "DB";
-
-	public static final char NOT_DELETED_STATUS = 'N';
-
-	private final PatientIoOperationRepository repository;
-
-	private final ApplicationEventPublisher applicationEventPublisher;
-
-	private final FileSystemPatientPhotoRepository fileSystemPatientPhotoRepository;
-
-	private final EntityManager entityManager;
-
-	public PatientIoOperations(PatientIoOperationRepository repository, ApplicationEventPublisher applicationEventPublisher, FileSystemPatientPhotoRepository fileSystemPatientPhotoRepository, EntityManager entityManager) {
-		this.repository = repository;
-		this.applicationEventPublisher = applicationEventPublisher;
-		this.fileSystemPatientPhotoRepository = fileSystemPatientPhotoRepository;
-		this.entityManager = entityManager;
-	}
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted,
+	 * Method that returns the full list of Patients not logically deleted
 	 *
-	 * @return the list of {@link Patient}s
+	 * @return the list of patients
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatients() throws OHServiceException {
@@ -82,25 +73,20 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted by page.
+	 * Method that returns the full list of Patients not logically deleted by page
 	 *
-	 * @return the list of {@link Patient}s
+	 * @return the list of patients
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatients(Pageable pageable) throws OHServiceException {
-		return repository.findAllByDeletedIsNullOrDeletedEqualsOrderByName('N', pageable).getContent();
-	}
-	
-	public PagedResponse<Patient> getPatientsPageable(Pageable pageable) throws OHServiceException {
-		Page<Patient> pagedResult = repository.findAllByDeletedIsNullOrDeletedEqualsOrderByName('N', pageable);
-		return setPaginationData(pagedResult);
+		return repository.findAllByDeletedIsNullOrDeletedEqualsOrderByName("N", pageable);
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s with specified parameters.
+	 * Method that returns the full list of Patients by parameters
 	 *
 	 * @param parameters
-	 * @return the list of {@link Patient}s.
+	 * @return
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatients(Map<String, Object> parameters) throws OHServiceException {
@@ -108,16 +94,15 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that returns the full list of {@link Patient}s not logically deleted, having
-	 * the passed String in:<br>
+	 * Method that returns the full list of Patients not logically deleted, having the passed String in:<br>
 	 * - code<br>
 	 * - firstName<br>
 	 * - secondName<br>
 	 * - taxCode<br>
 	 * - note<br>
 	 *
-	 * @param keyword - String to search, use {@code null} for full list
-	 * @return the list of {@link Patient}s (could be empty),
+	 * @param keyword - String to search, <code>null</code> for full list
+	 * @return the list of Patients (could be empty)
 	 * @throws OHServiceException
 	 */
 	public List<Patient> getPatientsByOneOfFieldsLike(String keyword) throws OHServiceException {
@@ -125,118 +110,90 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that gets a {@link Patient}s by his/her ID.
+	 * Method that gets a Patient by his/her name
 	 *
-	 * @param code
-	 * @return the {@link Patient} that matches the specified ID or {@code null}.
-	 * @throws OHServiceException
-	 */
-	public Patient getPatient(Integer code) throws OHServiceException {
-		List<Patient> patients = repository.findAllWhereIdAndDeleted(code, NOT_DELETED_STATUS);
-		if (!patients.isEmpty()) {
-			Patient patient = patients.get(patients.size() - 1);
-			retrievePatientProfilePhoto(patient);
-			return patient;
-		}
-		return null;
-	}
-
-	/**
-	 * Method that gets a {@link Patient} by his/her name.
-	 * 
 	 * @param name
-	 * @return the {@link Patient} that matches the specified ID or {@code null}.
+	 * @return the Patient that match specified name
 	 * @throws OHServiceException
 	 */
 	public Patient getPatient(String name) throws OHServiceException {
 		List<Patient> patients = repository.findByNameAndDeletedOrderByName(name, NOT_DELETED_STATUS);
 		if (!patients.isEmpty()) {
 			Patient patient = patients.get(patients.size() - 1);
-			retrievePatientProfilePhoto(patient);
+			Hibernate.initialize(patient.getPatientProfilePhoto());
 			return patient;
 		}
 		return null;
 	}
 
 	/**
-	 * Get a {@link Patient} by his/her ID, even if he/her has been logically deleted.
+	 * Method that gets a Patient by his/her ID
 	 *
 	 * @param code
-	 * @return  the {@link Patient} that matches the specified ID or {@code null}.
+	 * @return the Patient
 	 * @throws OHServiceException
 	 */
-	public Patient getPatientAll(Integer code) throws OHServiceException {
-		Patient patient = repository.findById(code).orElse(null);
-		if (patient != null) {
-			retrievePatientProfilePhoto(patient);
-		}
-		return patient;
-	}
-
-	/**
-	 * Save / update a {@link Patient}.
-	 *
-	 * @param patient the recently saved {@link Patient}.
-	 * @return saved / updated patient
-	 */
-	public Patient savePatient(Patient patient) {
-		boolean isLoadProfilePhotoFromDB = LOAD_FROM_DB.equals(GeneralData.PATIENTPHOTOSTORAGE);
-		if (isLoadProfilePhotoFromDB) {
-			return repository.save(patient);
-		}
-		try {
-			PatientProfilePhoto photo = patient.getPatientProfilePhoto();
-			patient.setPatientProfilePhoto(null);
-			Patient patientSaved = repository.save(patient);
-			((Session) this.entityManager.getDelegate()).evict(patient);
-			if (photo != null && photo.getPhoto() != null) {
-				fileSystemPatientPhotoRepository.save(GeneralData.PATIENTPHOTOSTORAGE, patient.getCode(), photo.getPhoto());
-			} else if (this.fileSystemPatientPhotoRepository.exist(GeneralData.PATIENTPHOTOSTORAGE, patient.getCode())) {
-				this.fileSystemPatientPhotoRepository.delete(GeneralData.PATIENTPHOTOSTORAGE, patient.getCode());
-			}
-			return patientSaved;
-		} catch (OHServiceException e) {
-			LOGGER.error("Exception in savePatient method.", e);
+	public Patient getPatient(Integer code) throws OHServiceException {
+		List<Patient> patients = repository.findAllWhereIdAndDeleted(code, NOT_DELETED_STATUS);
+		if (!patients.isEmpty()) {
+			Patient patient = patients.get(patients.size() - 1);
+			Hibernate.initialize(patient.getPatientProfilePhoto());
+			return patient;
 		}
 		return null;
 	}
 
 	/**
-	 * Method that updates an existing {@link Patient}.
+	 * Get a Patient by his/her ID, even if he/her has been logically deleted
 	 *
-	 * @param patient - the {@link Patient} to update
-	 * @return the updated {@link Patient} object.
+	 * @param code
+	 * @return the list of Patients
 	 * @throws OHServiceException
 	 */
-	public Patient updatePatient(Patient patient) throws OHServiceException {
+	public Patient getPatientAll(Integer code) throws OHServiceException {
+		Patient patient = repository.findOne(code);
+		if (patient != null) {
+			Hibernate.initialize(patient.getPatientProfilePhoto());
+		}
+		return patient;
+	}
+
+	/**
+	 * Save / update patient
+	 *
+	 * @param patient
+	 * @return saved / updated patient
+	 */
+	public Patient savePatient(Patient patient) {
 		return repository.save(patient);
 	}
 
 	/**
-	 * Method that logically deletes a {@link Patient} (not physically deleted).
+	 * Method that updates an existing {@link Patient} in the db
 	 *
-	 * @param patient
+	 * @param patient - the {@link Patient} to update
+	 * @return true - if the existing {@link Patient} has been updated
 	 * @throws OHServiceException
 	 */
-	public void deletePatient(Patient patient) throws OHServiceException {
-		boolean isLoadProfilePhotoFromDB = LOAD_FROM_DB.equals(GeneralData.PATIENTPHOTOSTORAGE);
-		if (isLoadProfilePhotoFromDB) {
-			Optional<Patient> foundPatient = repository.findById(patient.getCode());
-			if (foundPatient.isPresent()) {
-				foundPatient.get().setPatientProfilePhoto(null);
-			} else {
-				LOGGER.error("Patient not found to delete with code {}.", patient.getCode());
-				throw new OHServiceException(new OHExceptionMessage("Patient not found to delete with code " + patient.getCode()));
-			}
-		} else {
-			fileSystemPatientPhotoRepository.delete(GeneralData.PATIENTPHOTOSTORAGE, patient.getCode());
-		}
-		repository.updateDeleted(patient.getCode());
+	public boolean updatePatient(Patient patient) throws OHServiceException {
+		repository.save(patient);
+		return true;
 	}
 
 	/**
-	 * Method that check if a {@link Patient}  is already present in the DB by his/her name
-	 * (the passed string 'name' should be a concatenation of firstName + " " + secondName),
+	 * Method that logically deletes a Patient (not physically deleted)
+	 *
+	 * @param patient
+	 * @return true - if the Patient has been deleted (logically)
+	 * @throws OHServiceException
+	 */
+	public boolean deletePatient(Patient patient) throws OHServiceException {
+		return repository.updateDeleted(patient.getCode()) > 0;
+	}
+
+	/**
+	 * Method that check if a Patient is already present in the DB by his/her name
+	 * (the passed string 'name' should be a concatenation of firstName + " " + secondName
 	 *
 	 * @param name
 	 * @return true - if the patient is already present
@@ -247,7 +204,7 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that gets the next PAT_ID that is going to be used.
+	 * Method that get next PAT_ID is going to be used.
 	 *
 	 * @return code
 	 * @throws OHServiceException
@@ -257,64 +214,30 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that merges all clinic details under the same PAT_ID.
+	 * Method that merges all clinic details under the same PAT_ID
 	 *
 	 * @param mergedPatient
 	 * @param obsoletePatient
+	 * @return true - if no OHServiceExceptions occurred
 	 * @throws OHServiceException
 	 */
-	public void mergePatientHistory(Patient mergedPatient, Patient obsoletePatient) throws OHServiceException {
+	@Transactional
+	public boolean mergePatientHistory(Patient mergedPatient, Patient obsoletePatient) throws OHServiceException {
 		repository.updateDeleted(obsoletePatient.getCode());
 		applicationEventPublisher.publishEvent(new PatientMergedEvent(obsoletePatient, mergedPatient));
+
+		return true;
 	}
 
 	/**
-	 * Checks if the code is already in use.
+	 * Checks if the code is already in use
 	 *
 	 * @param code - the patient code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(Integer code) throws OHServiceException {
-		return repository.existsById(code);
-	}
-
-	/**
-	 * Method that returns a list of cities to be used.
-	 *
-	 * @return list of Cities
-	 * @throws OHServiceException
-	 */
-	public List<String> getCities() throws OHServiceException {
-		return repository.findCities();
-	}
-
-	public PatientProfilePhoto retrievePatientProfilePhoto(Patient patient) throws OHServiceException {
-		boolean isLoadProfilePhotoFromDB = LOAD_FROM_DB.equals(GeneralData.PATIENTPHOTOSTORAGE);
-		if (isLoadProfilePhotoFromDB) {
-			Hibernate.initialize(patient.getPatientProfilePhoto());
-		} else {
-			((Session) this.entityManager.getDelegate()).evict(patient);
-			fileSystemPatientPhotoRepository.loadInPatient(patient, GeneralData.PATIENTPHOTOSTORAGE);
-		}
-		return patient.getPatientProfilePhoto();
-	}
-
-	PagedResponse<Patient> setPaginationData(Page<Patient> pages){
-		PagedResponse<Patient> data = new PagedResponse<>();
-		data.setData(pages.getContent());
-		data.setPageInfo(PageInfo.from(pages));
-		return data;
-	}
-  
-	/**
-	 * Count all active {@link Patient}s
-	 * 
-	 * @return
-	 * @throws OHServiceException
-	 */
-	public long countAllActivePatients() throws OHServiceException {
-		return repository.countAllActiveNotDeletedPatients();
+		return repository.exists(code);
 	}
 
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,19 +17,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.examination.service;
 
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.isf.examination.model.PatientExamination;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.pagination.PageInfo;
-import org.isf.utils.pagination.PagedResponse;
-import org.isf.utils.time.TimeTools;
-import org.springframework.data.domain.Page;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,32 +41,35 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class ExaminationOperations {
 
+	@Autowired
 	private ExaminationIoOperationRepository repository;
 	
-	public ExaminationOperations(ExaminationIoOperationRepository examinationIoOperationRepository) {
-		this.repository = examinationIoOperationRepository;
+	public ExaminationOperations() {
 	}
 
 	/**
-	 * Get from last PatientExamination
+	 * Get from last PatientExamination (only height, weight & note)
 	 */
-	public PatientExamination getFromLastPatientExamination(PatientExamination lastPatientExamination) {
-		return new PatientExamination(TimeTools.getNow(),
-		                              lastPatientExamination.getPatient(),
-		                              lastPatientExamination.getPex_height(),
-		                              lastPatientExamination.getPex_weight(),
-		                              lastPatientExamination.getPex_ap_min(),
-		                              lastPatientExamination.getPex_ap_max(),
-		                              lastPatientExamination.getPex_hr(),
-		                              lastPatientExamination.getPex_temp(),
-		                              lastPatientExamination.getPex_sat(),
-		                              lastPatientExamination.getPex_hgt(),
-		                              lastPatientExamination.getPex_diuresis(),
-		                              lastPatientExamination.getPex_diuresis_desc(),
-		                              lastPatientExamination.getPex_bowel_desc(),
-		                              lastPatientExamination.getPex_rr(),
-		                              lastPatientExamination.getPex_auscultation(),
-		                              lastPatientExamination.getPex_note());
+	public PatientExamination getFromLastPatientExamination(
+			PatientExamination lastPatientExamination)
+	{
+		PatientExamination newPatientExamination = new PatientExamination(new GregorianCalendar(),
+				lastPatientExamination.getPatient(),
+				lastPatientExamination.getPex_height(),
+				lastPatientExamination.getPex_weight(),
+				lastPatientExamination.getPex_ap_min(),
+				lastPatientExamination.getPex_ap_max(),
+				lastPatientExamination.getPex_hr(),
+				lastPatientExamination.getPex_temp(),
+				lastPatientExamination.getPex_sat(),
+				lastPatientExamination.getPex_hgt(),
+				lastPatientExamination.getPex_diuresis(),
+				lastPatientExamination.getPex_diuresis_desc(),
+				lastPatientExamination.getPex_bowel_desc(),
+				lastPatientExamination.getPex_rr(),
+				lastPatientExamination.getPex_auscultation(),
+				lastPatientExamination.getPex_note());
+		return newPatientExamination;
 	}
 
 	/**
@@ -76,12 +78,12 @@ public class ExaminationOperations {
 	 *            - the PatientExamination to save
 	 * @throws OHServiceException
 	 */
-	public PatientExamination saveOrUpdate(PatientExamination patex) throws OHServiceException {
-		return repository.save(patex);
+	public void saveOrUpdate(PatientExamination patex) throws OHServiceException {
+		repository.save(patex);
 	}
 
-	public PatientExamination getByID(int id) throws OHServiceException {
-		return repository.findById(id).orElse(null);
+	public PatientExamination getByID(int ID) throws OHServiceException {
+		return repository.findOne(ID);
 	}
 
 	public PatientExamination getLastByPatID(int patID) throws OHServiceException	{
@@ -91,14 +93,13 @@ public class ExaminationOperations {
 
 	public List<PatientExamination> getLastNByPatID(int patID, int number) throws OHServiceException {
 		if (number > 0) {
-			return repository.findByPatient_CodeOrderByPexDateDesc(patID, PageRequest.of(0, number));
+			return new ArrayList<>(repository
+							.findByPatient_CodeOrderByPexDateDesc(patID, new PageRequest(0, number)).getContent());
+		} else {
+			return new ArrayList<>(repository
+							.findByPatient_CodeOrderByPexDateDesc(patID));
 		}
-		return repository.findByPatient_CodeOrderByPexDateDesc(patID);
-	}
-	
-	public PagedResponse<PatientExamination> getLastNByPatIDPageable(int patID, int number) throws OHServiceException {	
-		Page<PatientExamination> pagedResult = repository.findByPatient_CodeOrderByPexDateDesc_Paginated(patID, PageRequest.of(0, number));
-		return setPaginationData(pagedResult);
+		
 	}
 
 	public List<PatientExamination> getByPatID(int patID) throws OHServiceException	{
@@ -106,13 +107,6 @@ public class ExaminationOperations {
 	}
 
 	public void remove(List<PatientExamination> patexList) throws OHServiceException {
-		repository.deleteAll(patexList);
-	}
-	
-	PagedResponse<PatientExamination> setPaginationData(Page<PatientExamination> pages){
-		PagedResponse<PatientExamination> data = new PagedResponse<>();
-		data.setData(pages.getContent());
-		data.setPageInfo(PageInfo.from(pages));
-		return data;
+		repository.delete(patexList);
 	}
 }

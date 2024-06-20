@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,12 +17,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.manager;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.isf.generaldata.MessageBundle;
@@ -32,7 +32,8 @@ import org.isf.sms.service.SmsOperations;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.time.TimeTools;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -41,10 +42,10 @@ public class SmsManager {
 	public static final int MAX_LENGHT = 160;
 	private static final String NUMBER_REGEX = "^\\+?\\d+$"; //$NON-NLS-1$
 
+	@Autowired
 	private SmsOperations smsOperations;
 
-	public SmsManager(SmsOperations smsOperations) {
-		this.smsOperations = smsOperations;
+	public SmsManager() {
 	}
 
 	/**
@@ -59,18 +60,22 @@ public class SmsManager {
 		String text = sms.getSmsText();
 
 		if (!number.matches(NUMBER_REGEX)) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.sms.pleaseinsertavalidtelephonenumber.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.sms.pleaseinsertavalidtelephonenumber.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (text.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.sms.pleaseinsertatextmessage.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.sms.pleaseinsertatextmessage.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
 		}
 	}
 
-	public List<Sms> getAll(LocalDateTime from, LocalDateTime to) throws OHServiceException {
-		return smsOperations.getAll(TimeTools.truncateToSeconds(from), TimeTools.truncateToSeconds(to));
+	public List<Sms> getAll(Date from, Date to) throws OHServiceException {
+		return smsOperations.getAll(from, to);
 	}
 
 	/**
@@ -89,14 +94,15 @@ public class SmsManager {
 		String text = smsToSend.getSmsText();
 		int textLenght = text.length();
 		if (textLenght > MAX_LENGHT && !split) {
-			throw new OHDataValidationException(
-					new OHExceptionMessage(MessageBundle.formatMessage("angal.sms.themessageislongerthencharacters.fmt.msg", MAX_LENGHT)));
-		}
-		else if (textLenght > MAX_LENGHT && split) {
+			throw new OHDataValidationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.formatMessage("angal.sms.themessageislongerthencharacters.fmt.msg", MAX_LENGHT),
+					OHSeverityLevel.ERROR));
+
+		} else if (textLenght > MAX_LENGHT && split) {
 
 			String[] parts = split(text);
 			String number = smsToSend.getSmsNumber();
-			LocalDateTime schedDate = smsToSend.getSmsDateSched();
+			Date schedDate = smsToSend.getSmsDateSched();
 
 			for (String part : parts) {
 				Sms sms = new Sms();
@@ -120,10 +126,19 @@ public class SmsManager {
 		smsOperations.delete(smsToDelete);
 	}
 
+	public int getMaxLength() {
+		return MAX_LENGHT;
+	}
+
+	public String getNUMBER_REGEX() {
+		return NUMBER_REGEX;
+	}
+
 	private String[] split(String text) {
 		int len = text.length();
 		if (len <= MAX_LENGHT) {
-			return new String[] { text };
+			String[] messages = { text };
+			return messages;
 		}
 
 		// Number of parts
@@ -140,5 +155,4 @@ public class SmsManager {
 		}
 		return parts;
 	}
-
 }

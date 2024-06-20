@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,48 +17,45 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.examination.manager;
 
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.isf.examination.model.PatientExamination;
 import org.isf.examination.service.ExaminationOperations;
 import org.isf.generaldata.ExaminationParameters;
 import org.isf.generaldata.MessageBundle;
 import org.isf.patient.model.Patient;
-import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.pagination.PagedResponse;
+import org.isf.utils.exception.model.OHSeverityLevel;
 import org.isf.utils.time.TimeTools;
 import org.isf.utils.validator.DefaultSorter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExaminationBrowserManager {
 
+	@Autowired
 	private ExaminationOperations ioOperations;
 
 	protected HashMap<String, String> diuresisDescriptionHashMap;
 	protected HashMap<String, String> bowelDescriptionHashMap;
 	protected LinkedHashMap<String, String> auscultationHashMap;
 
-	public ExaminationBrowserManager(ExaminationOperations examinationOperations) {
-		this.ioOperations = examinationOperations;
-	}
-
 	/**
 	 * Default PatientExamination
 	 */
 	public PatientExamination getDefaultPatientExamination(Patient patient) {
-		return new PatientExamination(
-				TimeTools.getNow(),
+		PatientExamination defaultPatient = new PatientExamination(
+				new GregorianCalendar(),
 				patient,
 				ExaminationParameters.HEIGHT_INIT,
 				(double) ExaminationParameters.WEIGHT_INIT,
@@ -74,28 +71,30 @@ public class ExaminationBrowserManager {
 				ExaminationParameters.RR_INIT,
 				ExaminationParameters.AUSCULTATION_INIT,
 				"");
+		return defaultPatient;
 	}
 
 	/**
 	 * Get from last PatientExamination (only height, weight & note)
 	 */
 	public PatientExamination getFromLastPatientExamination(PatientExamination lastPatientExamination) {
-		return new PatientExamination(TimeTools.getNow(),
+		PatientExamination newPatientExamination = new PatientExamination(new GregorianCalendar(), 
 				lastPatientExamination.getPatient(),
 				lastPatientExamination.getPex_height(),
-				lastPatientExamination.getPex_weight(),
-				lastPatientExamination.getPex_ap_min(),
+				lastPatientExamination.getPex_weight(), 
+				lastPatientExamination.getPex_ap_min(), 
 				lastPatientExamination.getPex_ap_max(),
 				lastPatientExamination.getPex_hr(),
-				lastPatientExamination.getPex_temp(),
-				lastPatientExamination.getPex_sat(),
+				lastPatientExamination.getPex_temp(), 
+				lastPatientExamination.getPex_sat(), 
 				lastPatientExamination.getPex_hgt(),
-				lastPatientExamination.getPex_diuresis(),
-				lastPatientExamination.getPex_diuresis_desc(),
+				lastPatientExamination.getPex_diuresis(), 
+				lastPatientExamination.getPex_diuresis_desc(), 
 				lastPatientExamination.getPex_bowel_desc(),
 				lastPatientExamination.getPex_rr(),
-				lastPatientExamination.getPex_auscultation(),
+				lastPatientExamination.getPex_auscultation(), 
 				formatLastNote(lastPatientExamination));
+		return newPatientExamination;
 	}
 
 	private String formatLastNote(PatientExamination lastPatientExamination) {
@@ -109,7 +108,7 @@ public class ExaminationBrowserManager {
 	}
 
 	private void buildAuscultationHashMap() {
-		auscultationHashMap = new LinkedHashMap<>(6);
+		auscultationHashMap = new LinkedHashMap<>();
 		auscultationHashMap.put("normal", MessageBundle.getMessage("angal.examination.auscultation.normal.txt"));
 		auscultationHashMap.put("wheezes", MessageBundle.getMessage("angal.examination.auscultation.wheezes.txt"));
 		auscultationHashMap.put("rhonchi", MessageBundle.getMessage("angal.examination.auscultation.rhonchi.txt"));
@@ -138,9 +137,9 @@ public class ExaminationBrowserManager {
 		if (auscultationHashMap == null) {
 			buildAuscultationHashMap();
 		}
-		for (Map.Entry<String, String> entry : auscultationHashMap.entrySet()) {
-			if (entry.getValue().equals(description)) {
-				return entry.getKey();
+		for (String key : auscultationHashMap.keySet()) {
+			if (auscultationHashMap.get(key).equals(description)) {
+				return key;
 			}
 		}
 		return "";
@@ -150,9 +149,12 @@ public class ExaminationBrowserManager {
 	 * @param patex - the PatientExamination to save
 	 * @throws OHServiceException
 	 */
-	public PatientExamination saveOrUpdate(PatientExamination patex) throws OHServiceException {
-		validateExamination(patex);
-		return ioOperations.saveOrUpdate(patex);
+	public void saveOrUpdate(PatientExamination patex) throws OHServiceException {
+		List<OHExceptionMessage> errors = validateExamination(patex);
+		if (!errors.isEmpty()) {
+			throw new OHServiceException(errors);
+		}
+		ioOperations.saveOrUpdate(patex);
 	}
 
 	public PatientExamination getByID(int id) throws OHServiceException {
@@ -161,15 +163,12 @@ public class ExaminationBrowserManager {
 
 	public PatientExamination getLastByPatID(int patID) throws OHServiceException {
 		List<PatientExamination> patExamination = getByPatID(patID);
+
 		return !patExamination.isEmpty() ? patExamination.get(0) : null;
 	}
 
 	public List<PatientExamination> getLastNByPatID(int patID, int number) throws OHServiceException {
 		return ioOperations.getLastNByPatID(patID, number);
-	}
-
-	public PagedResponse<PatientExamination> getLastNByPatIDPageable(int patID, int number) throws OHServiceException {
-		return ioOperations.getLastNByPatIDPageable(patID, number);
 	}
 
 	public List<PatientExamination> getByPatID(int patID) throws OHServiceException {
@@ -185,29 +184,23 @@ public class ExaminationBrowserManager {
 	}
 
 	public String getBMIdescription(double bmi) {
-		if (bmi < 16.5) {
+		if (bmi < 16.5)
 			return MessageBundle.getMessage("angal.examination.bmi.severeunderweight.txt");
-		}
-		if (bmi >= 16.5 && bmi < 18.5) {
+		if (bmi >= 16.5 && bmi < 18.5)
 			return MessageBundle.getMessage("angal.examination.bmi.underweight.txt");
-		}
-		if (bmi >= 18.5 && bmi < 24.5) {
+		if (bmi >= 18.5 && bmi < 24.5)
 			return MessageBundle.getMessage("angal.examination.bmi.normalweight.txt");
-		}
-		if (bmi >= 24.5 && bmi < 30.0) {
+		if (bmi >= 24.5 && bmi < 30)
 			return MessageBundle.getMessage("angal.examination.bmi.overweight.txt");
-		}
-		if (bmi >= 30.0 && bmi < 35.0) {
+		if (bmi >= 30 && bmi < 35)
 			return MessageBundle.getMessage("angal.examination.bmi.obesityclassilight.txt");
-		}
-		if (bmi >= 35.0 && bmi < 40.0) {
+		if (bmi >= 35 && bmi < 40)
 			return MessageBundle.getMessage("angal.examination.bmi.obesityclassiimedium.txt");
-		}
 		return MessageBundle.getMessage("angal.examination.bmi.obesityclassiiisevere.txt");
 	}
 
 	private void buildDiuresisDescriptionHashMap() {
-		diuresisDescriptionHashMap = new HashMap<>(8);
+		diuresisDescriptionHashMap = new HashMap<>();
 		diuresisDescriptionHashMap.put("physiological", MessageBundle.getMessage("angal.examination.diuresis.physiological.txt"));
 		diuresisDescriptionHashMap.put("oliguria", MessageBundle.getMessage("angal.examination.diuresis.oliguria.txt"));
 		diuresisDescriptionHashMap.put("anuria", MessageBundle.getMessage("angal.examination.diuresis.anuria.txt"));
@@ -219,7 +212,7 @@ public class ExaminationBrowserManager {
 	}
 
 	private void buildBowelDescriptionHashMap() {
-		bowelDescriptionHashMap = new HashMap<>(4);
+		bowelDescriptionHashMap = new HashMap<>();
 		bowelDescriptionHashMap.put("regular", MessageBundle.getMessage("angal.examination.bowel.regular.txt"));
 		bowelDescriptionHashMap.put("irregular", MessageBundle.getMessage("angal.examination.bowel.irregular.txt"));
 		bowelDescriptionHashMap.put("constipation", MessageBundle.getMessage("angal.examination.bowel.constipation.txt"));
@@ -266,39 +259,37 @@ public class ExaminationBrowserManager {
 		return bowelDescriptionList;
 	}
 
-	public String getBowelDescriptionTranslated(String pexBowelDescKey) {
-		if (bowelDescriptionHashMap == null) {
+	public String getBowelDescriptionTranslated(String pex_bowel_desc_key) {
+		if (bowelDescriptionHashMap == null)
 			buildBowelDescriptionHashMap();
-		}
-		return bowelDescriptionHashMap.get(pexBowelDescKey);
+		return bowelDescriptionHashMap.get(pex_bowel_desc_key);
 	}
 
 	public String getBowelDescriptionKey(String description) {
 		if (bowelDescriptionHashMap == null) {
 			buildBowelDescriptionHashMap();
 		}
-		for (Map.Entry<String, String> entry : bowelDescriptionHashMap.entrySet()) {
-			if (entry.getValue().equals(description)) {
-				return entry.getKey();
+		for (String key : bowelDescriptionHashMap.keySet()) {
+			if (bowelDescriptionHashMap.get(key).equals(description)) {
+				return key;
 			}
 		}
 		return "";
 	}
 
-	public String getDiuresisDescriptionTranslated(String pexDiuresisDescKey) {
-		if (diuresisDescriptionHashMap == null) {
+	public String getDiuresisDescriptionTranslated(String pex_diuresis_desc_key) {
+		if (diuresisDescriptionHashMap == null)
 			buildDiuresisDescriptionHashMap();
-		}
-		return diuresisDescriptionHashMap.get(pexDiuresisDescKey);
+		return diuresisDescriptionHashMap.get(pex_diuresis_desc_key);
 	}
 
 	public String getDiuresisDescriptionKey(String description) {
 		if (diuresisDescriptionHashMap == null) {
 			buildDiuresisDescriptionHashMap();
 		}
-		for (Map.Entry<String, String> entry : diuresisDescriptionHashMap.entrySet()) {
-			if (entry.getValue().equals(description)) {
-				return entry.getKey();
+		for (String key : diuresisDescriptionHashMap.keySet()) {
+			if (diuresisDescriptionHashMap.get(key).equals(description)) {
+				return key;
 			}
 		}
 		return "";
@@ -308,28 +299,30 @@ public class ExaminationBrowserManager {
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param patex
-	 * @throws OHDataValidationException
+	 * @return list of {@link OHExceptionMessage}
 	 */
-	protected void validateExamination(PatientExamination patex)  throws OHDataValidationException {
-		buildAuscultationHashMap();
-		buildBowelDescriptionHashMap();
-		buildDiuresisDescriptionHashMap();
+	protected List<OHExceptionMessage> validateExamination(PatientExamination patex) {
 		List<OHExceptionMessage> errors = new ArrayList<>();
-		if (patex.getPex_note() != null && patex.getPex_note().length() > PatientExamination.PEX_NOTE_LENGTH) {
-			errors.add(
-					new OHExceptionMessage(MessageBundle.formatMessage("angal.common.thenoteistoolongmaxchars.fmt.msg", PatientExamination.PEX_NOTE_LENGTH)));
+		if (patex.getPex_note().length() > PatientExamination.PEX_NOTE_LENGTH) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+							MessageBundle.formatMessage("angal.common.thenoteistoolongmaxchars.fmt.msg", PatientExamination.PEX_NOTE_LENGTH),
+							OHSeverityLevel.ERROR));
 		}
 		if (patex.getPex_diuresis_desc() != null && !diuresisDescriptionHashMap.containsKey(patex.getPex_diuresis_desc())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.examination.pleaseinsertavaliddiuresisdescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.examination.pleaseinsertavaliddiuresisdescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (patex.getPex_bowel_desc() != null && !bowelDescriptionHashMap.containsKey(patex.getPex_bowel_desc())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.examination.pleaseinsertavalidboweldescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.examination.pleaseinsertavalidboweldescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (patex.getPex_auscultation() != null && !auscultationHashMap.containsKey(patex.getPex_auscultation())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.examination.pleaseinsertavalidauscultationdescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.examination.pleaseinsertavalidauscultationdescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (!errors.isEmpty()) {
-			throw new OHDataValidationException(errors);
-		}
+		return errors;
 	}
 }

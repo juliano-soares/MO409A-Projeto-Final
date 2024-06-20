@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.pricesothers.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.pricesothers.model.PricesOthers;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,14 +35,11 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class PriceOthersIoOperations {
 
+	@Autowired
 	private PriceOthersIoOperationRepository repository;
-
-	public PriceOthersIoOperations(PriceOthersIoOperationRepository priceOthersIoOperationRepository) {
-		this.repository = priceOthersIoOperationRepository;
-	}
-
+	
 	/**
-	 * Return the list of {@link PricesOthers}s.
+	 * Return the list of {@link PricesOthers}s in the DB
 	 * 
 	 * @return the list of {@link PricesOthers}s
 	 * @throws OHServiceException 
@@ -51,46 +49,76 @@ public class PriceOthersIoOperations {
 	}
 
 	/**
-	 * Insert a new {@link PricesOthers}.
+	 * Insert a new {@link PricesOthers} in the DB
 	 * 
 	 * @param other - the {@link PricesOthers} to insert
-	 * @return the newly inserted {@link PricesOthers} object.
+	 * @return <code>true</code> if the list has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public PricesOthers newOthers(PricesOthers other) throws OHServiceException {
-		return repository.save(other);
+	public boolean newOthers(
+			PricesOthers other) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		PricesOthers savedOther = repository.save(other);
+		result = (savedOther != null);
+		    	
+		return result;
 	}
 
 	/**
 	 * Delete a {@link PricesOthers} in the DB
 	 * 
 	 * @param other - the {@link PricesOthers} to delete
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the list has been deleted, <code>false</code> otherwise
+	 * @throws OHServiceException 
 	 */
-	public void deleteOthers(PricesOthers other) throws OHServiceException {
+	public boolean deleteOthers(
+			PricesOthers other) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(other);
+		
+		return result;
 	}
 
 	/**
-	 * Update a {@link PricesOthers}.
+	 * Update a {@link PricesOthers} in the DB
 	 * 
 	 * @param other - the {@link PricesOthers} to update
-	 * @return the updated {@link PricesOthers} object.
+	 * @return <code>true</code> if the list has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public PricesOthers updateOther(PricesOthers other) throws OHServiceException {
-		return repository.save(other);
+	public boolean updateOther(
+			PricesOthers other) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		PricesOthers savedOther = repository.save(other);
+		result = (savedOther != null);
+		    	
+		return result;
 	}
 
 	/**
-	 * Checks if the code is already in use.
+	 * Checks if the code is already in use
 	 *
 	 * @param id - the price other code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public boolean isCodePresent(Integer id) throws OHServiceException {
-		return repository.existsById(id);
+	public boolean isCodePresent(
+			Integer id) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(id);
+		
+		return result;	
 	}
-
 }

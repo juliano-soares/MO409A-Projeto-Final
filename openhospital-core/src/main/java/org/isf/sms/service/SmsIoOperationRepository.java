@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,11 +17,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.service;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import org.isf.sms.model.Sms;
@@ -29,13 +29,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
 public interface SmsIoOperationRepository extends JpaRepository<Sms, Integer> {
-
-	List<Sms> findBySmsDateSchedBetweenOrderBySmsDateSchedAsc(LocalDateTime start, LocalDateTime stop);
-
-	List<Sms> findBySmsDateSchedBetweenAndSmsDateSentIsNullOrderBySmsDateSchedAsc(LocalDateTime start, LocalDateTime stop);
-
-	List<Sms> findBySmsDateSentIsNullOrderBySmsDateSchedAsc();
-
-	@Modifying
-	void deleteByModuleAndModuleIDAndSmsDateSentIsNull(String mod, String id);
+    List<Sms> findBySmsDateSchedBetweenOrderBySmsDateSchedAsc(Date start, Date stop);
+    List<Sms> findBySmsDateSchedBetweenAndSmsDateSentIsNullOrderBySmsDateSchedAsc(Date start, Date stop);
+    List<Sms> findBySmsDateSentIsNullOrderBySmsDateSchedAsc();
+    @Modifying
+    void deleteByModuleAndModuleIDAndSmsDateSentIsNull(String mod, String id);
 }

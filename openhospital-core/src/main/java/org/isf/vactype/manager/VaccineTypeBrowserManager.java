@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.vactype.manager;
 
@@ -29,24 +29,31 @@ import org.isf.utils.exception.OHDataIntegrityViolationException;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
 import org.isf.vactype.model.VaccineType;
 import org.isf.vactype.service.VacTypeIoOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * ------------------------------------------
+ * VaccineTypeBrowserManager -
+ * -----------------------------------------
+ * modification history
+ * 19/10/2011 - Cla - version is now 1.0
+ * ------------------------------------------
+ */
 @Component
 public class VaccineTypeBrowserManager {
 
+	@Autowired
 	private VacTypeIoOperation ioOperations;
 
-	public VaccineTypeBrowserManager( VacTypeIoOperation vacTypeIoOperation) {
-		this.ioOperations = vacTypeIoOperation;
-	}
-
 	/**
-	 * Verify if the object is valid for CRUD and return a list of errors, if any.
+	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param vaccineType
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHServiceException
 	 */
 	protected void validateVaccineType(VaccineType vaccineType, boolean insert) throws OHServiceException {
@@ -54,16 +61,26 @@ public class VaccineTypeBrowserManager {
 		String description = vaccineType.getDescription();
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		if (key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (key.length() > 1) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.thecodeistoolongmax1char.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (description.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+					OHSeverityLevel.ERROR));
 		}
-		if (insert && !key.isEmpty() && isCodePresent(key)) {
-			throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(vaccineType.getCode())) {
+				throw new OHDataIntegrityViolationException(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -71,7 +88,7 @@ public class VaccineTypeBrowserManager {
 	}
 
 	/**
-	 * This method returns all {@link VaccineType}s from the DB.
+	 * This method returns all {@link VaccineType}s from DB
 	 *
 	 * @return the list of {@link VaccineType}s
 	 * @throws OHServiceException
@@ -81,44 +98,45 @@ public class VaccineTypeBrowserManager {
 	}
 
 	/**
-	 * Inserts a new {@link VaccineType} into the DB.
+	 * Inserts a new {@link VaccineType} into DB
 	 *
 	 * @param vaccineType - the {@link VaccineType} to insert
-	 * @return the newly inserted {@link VaccineType} object.
+	 * @return <code>true</code> if the item has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public VaccineType newVaccineType(VaccineType vaccineType) throws OHServiceException {
+	public boolean newVaccineType(VaccineType vaccineType) throws OHServiceException {
 		validateVaccineType(vaccineType, true);
 		return ioOperations.newVaccineType(vaccineType);
 	}
 
 	/**
-	 * Update a {@link VaccineType} in the DB.
+	 * Update a {@link VaccineType} in the DB
 	 *
 	 * @param vaccineType - the item to update
-	 * @return the updated {@link VaccineType} object.
+	 * @return <code>true</code> if the item has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public VaccineType updateVaccineType(VaccineType vaccineType) throws OHServiceException {
+	public boolean updateVaccineType(VaccineType vaccineType) throws OHServiceException {
 		validateVaccineType(vaccineType, false);
 		return ioOperations.updateVaccineType(vaccineType);
 	}
 
 	/**
-	 * Deletes a {@link VaccineType} in the DB.
+	 * Deletes a {@link VaccineType} in the DB
 	 *
 	 * @param vaccineType - the item to delete
+	 * @return <code>true</code> if the item has been deleted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deleteVaccineType(VaccineType vaccineType) throws OHServiceException {
-		ioOperations.deleteVaccineType(vaccineType);
+	public boolean deleteVaccineType(VaccineType vaccineType) throws OHServiceException {
+		return ioOperations.deleteVaccineType(vaccineType);
 	}
 
 	/**
-	 * Checks if the code is already in use.
+	 * Checks if the code is already in use
 	 *
 	 * @param code - the {@link VaccineType} code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
@@ -126,10 +144,10 @@ public class VaccineTypeBrowserManager {
 	}
 
 	/**
-	 * Returns the {@link VaccineType} based on vaccine type code.
+	 * Returns the {@link VaccineType} based on vaccine type code
 	 *
 	 * @param code - the  {@link VaccineType} code.
-	 * @return the {@link VaccineType} or {@literal null} if none found
+	 * @return the {@link VaccineType}
 	 */
 	public VaccineType findVaccineType(String code) {
 		return ioOperations.findVaccineType(code);

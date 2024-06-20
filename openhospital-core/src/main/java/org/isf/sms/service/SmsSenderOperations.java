@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,40 +17,38 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.sms.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
+
+import javax.annotation.Resource;
 
 import org.isf.generaldata.SmsParameters;
 import org.isf.sms.model.Sms;
 import org.isf.sms.providers.SmsSenderInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(propagation = Propagation.REQUIRED)
-@PropertySource("classpath:sms.properties")
 public class SmsSenderOperations {
 
 	private static final String KEY_SMS_GATEWAY = "sms.gateway";
 	private static final Logger LOGGER = LoggerFactory.getLogger(SmsSenderOperations.class);
 
-	private final Environment smsProperties;
+	@Resource(name = "smsProperties")
+	private Properties smsProperties;
 
-	private final List<SmsSenderInterface> smsGateways;
-
-	public SmsSenderOperations(Environment smsProperties, List<SmsSenderInterface> smsGateways) {
-		this.smsProperties = smsProperties;
-		this.smsGateways = smsGateways;
-	}
+	@Autowired
+	private List<SmsSenderInterface> smsGateways;
 
 	public boolean initialize() {
 		String gateway = this.smsProperties.getProperty(KEY_SMS_GATEWAY);

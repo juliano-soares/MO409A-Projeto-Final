@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.vactype.service;
 
@@ -26,22 +26,28 @@ import java.util.List;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.vactype.model.VaccineType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * ------------------------------------------
+ * VacTypeIoOperation - methods to interact with DB
+ * -----------------------------------------
+ * modification history
+ * 19/10/2011 - Cla - version is now 1.0
+ * ------------------------------------------
+ */
 @Service
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class VacTypeIoOperation {
 
+	@Autowired
 	private VaccineTypeIoOperationRepository repository;
-
-	public VacTypeIoOperation(VaccineTypeIoOperationRepository vaccineTypeIoOperationRepository) {
-		this.repository = vaccineTypeIoOperationRepository;
-	}
-
+	
 	/**
-	 * Returns all {@link VaccineType}s from the DB.
+	 * Returns all {@link VaccineType}s from DB
 	 * 	
 	 * @return the list of {@link VaccineType}s
 	 * @throws OHServiceException 
@@ -51,47 +57,49 @@ public class VacTypeIoOperation {
 	}
 	
 	/**
-	 * Inserts a new {@link VaccineType} into the DB.
+	 * Inserts a new {@link VaccineType} into DB
 	 * 
 	 * @param vaccineType - the {@link VaccineType} to insert 
-	 * @return the newly inserted {@link VaccineType} object.
+	 * @return <code>true</code> if the item has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public VaccineType newVaccineType(VaccineType vaccineType) throws OHServiceException {
-		return repository.save(vaccineType);
+	public boolean newVaccineType(VaccineType vaccineType) throws OHServiceException {
+		return repository.save(vaccineType) != null;
 	}
 	
 	/**
-	 * Updates a {@link VaccineType} in the DB,
+	 * Updates a {@link VaccineType} in the DB
 	 *
 	 * @param vaccineType - the item to update
-	 * @return the updated {@link VaccineType} object.
+	 * @return <code>true</code> if the item has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
-	public VaccineType updateVaccineType(VaccineType vaccineType) throws OHServiceException	{
-		return repository.save(vaccineType);
+	public boolean updateVaccineType(VaccineType vaccineType) throws OHServiceException	{
+		return repository.save(vaccineType) != null;
 	}
 	
 	/**
-	 * Deletes a {@link VaccineType} in the DB.
+	 * Deletes a {@link VaccineType} in the DB
 	 *
 	 * @param vaccineType - the item to delete
-	 * @throws OHServiceException
+	 * @return <code>true</code> if the item has been deleted, <code>false</code> otherwise
+	 * @throws OHServiceException 
 	 */
-	public void deleteVaccineType(VaccineType vaccineType) throws OHServiceException {
+	public boolean deleteVaccineType(VaccineType vaccineType) throws OHServiceException {
 		repository.delete(vaccineType);
+		return true;
 	}
 	
 	
 	/**
-	 * Checks if the code is already in use.
+	 * Checks if the code is already in use
 	 *
 	 * @param code - the {@link VaccineType} code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
 	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+		return repository.exists(code);
 	}
 	
 	/**
@@ -101,11 +109,11 @@ public class VacTypeIoOperation {
 	 * @return the {@link VaccineType} or {@literal null} if none found
 	 * @throws IllegalArgumentException if {@code code} is {@literal null}
 	 */
-	public VaccineType findVaccineType(String code) {
+	public VaccineType findVaccineType(String code)
+	{
 		if (code != null) {
-			return repository.findById(code).orElse(null);
-		}
-		throw new IllegalArgumentException("VaccineType code must not be null.");
-	}
-
+			return repository.findOne(code);
+		}else
+			throw new IllegalArgumentException("code must not be null");
+	} 
 }

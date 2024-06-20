@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.xmpp.service;
 
@@ -38,6 +38,9 @@ import org.slf4j.LoggerFactory;
 public class Server {
 	private static Server server;
 	private XMPPConnection connection;
+	private String domain;
+	private int port;
+	private Roster roster;
 	private String user;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
@@ -47,8 +50,8 @@ public class Server {
 
 	public void login(String userName, String password) throws XMPPException {
 		XmppData.initialize();
-		String domain = XmppData.domain;
-		int port = XmppData.port;
+		domain = XmppData.domain;
+		port = XmppData.port;
 		user = userName;
 		ConnectionConfiguration config = new ConnectionConfiguration(domain, port);
 		connection = new XMPPConnection(config);
@@ -66,12 +69,13 @@ public class Server {
 	}
 
 	public Roster getRoster() {
-		return connection.getRoster();
+		roster = connection.getRoster();
+		return roster;
 	}
 
 	public Chat getChat(String to, String id, MessageListener listener) {
-		Chat chat;
-		id = id + '@' + user;
+		Chat chat = null;
+		id = id + "@" + user;
 		if (connection.getChatManager().getThreadChat(id) == null) {
 			LOGGER.debug("Creation chat: {}, id = {}", to, id);
 			chat = connection.getChatManager().createChat(to, id, listener);
@@ -87,11 +91,13 @@ public class Server {
 	}
 
 	public String getUserAddress() {
-		return '@' + connection.getHost();
+
+		return "@" + connection.getHost();
 	}
 
 	public FileTransferManager getTransferManager() {
-		return new FileTransferManager(connection);
+		FileTransferManager manager = new FileTransferManager(connection);
+		return manager;
 	}
 
 	public Connection getConnection() {
@@ -102,7 +108,7 @@ public class Server {
 		if (server == null) {
 			server = new Server();
 		}
+
 		return server;
 	}
-
 }

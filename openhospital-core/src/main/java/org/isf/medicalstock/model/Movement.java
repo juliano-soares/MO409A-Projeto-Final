@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,46 +17,57 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.model;
 
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.generaldata.MessageBundle;
 import org.isf.medicals.model.Medical;
 import org.isf.medstockmovtype.model.MovementType;
 import org.isf.supplier.model.Supplier;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.isf.ward.model.Ward;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Medical Stock Movement - model for the medical stock movement entity
+ * -----------------------------------------
+ * modification history
+ * ? - ?
+ * 17/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_MEDICALDSRSTOCKMOV")
-@EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "MMV_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "MMV_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "MMV_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "MMV_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "MMV_LAST_MODIFIED_DATE"))
-public class Movement extends Auditable<String> {
-
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+@Table(name="MEDICALDSRSTOCKMOV")
+@EntityListeners(AuditingEntityListener.class) 
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="MMV_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="MMV_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="MMV_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="MMV_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="MMV_LAST_MODIFIED_DATE"))
+})
+public class Movement extends Auditable<String>
+{
+	@Id 
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="MMV_ID")
 	private int code;
 
@@ -79,8 +90,8 @@ public class Movement extends Auditable<String> {
 	private Lot lot;
 
 	@NotNull
-	@Column(name="MMV_DATE")		// SQL type: datetime
-	private LocalDateTime date;
+	@Column(name="MMV_DATE")
+	private GregorianCalendar date;
 
 	@NotNull
 	@Column(name="MMV_QTY")
@@ -93,113 +104,118 @@ public class Movement extends Auditable<String> {
 	@NotNull
 	@Column(name="MMV_REFNO")
 	private String refNo;
-
-	@Transient
-	private volatile int hashCode;
+        
+//  @NotNull
+//	@ManyToOne
+//	@JoinColumn(name="MMV_WRD_ID_A_TO")	
+//	private Ward wardTo;
 	
-	public Movement() { }
+	@Transient
+	private volatile int hashCode = 0;
+	
 
-	public Movement(Medical aMedical, MovementType aType, Ward aWard, Lot aLot, LocalDateTime aDate, int aQuantity, Supplier aSupplier, String aRefNo) {
+	public Movement() { }
+		
+	public Movement(Medical aMedical,MovementType aType,Ward aWard,Lot aLot,GregorianCalendar aDate,int aQuantity,Supplier aSupplier, String aRefNo){
 		medical = aMedical;
 		type = aType;
 		ward = aWard;
 		lot = aLot;
-		date = TimeTools.truncateToSeconds(aDate);
+		date = aDate;
 		quantity = aQuantity;
 		supplier = aSupplier;
-		refNo = aRefNo;
+		refNo=aRefNo;
+                //this.wardTo = null;
 	}
 
-	public int getCode() {
+//        public Movement(Medical aMedical,MovementType aType,Ward aWard,Lot aLot,GregorianCalendar aDate,int aQuantity,Supplier aSupplier, String aRefNo, Ward wardTo){
+//		medical = aMedical;
+//		type = aType;
+//		ward = aWard;
+//		lot = aLot;
+//		date = aDate;
+//		quantity = aQuantity;
+//		supplier = aSupplier;
+//		refNo=aRefNo;
+//		this.wardTo = wardTo;
+//	}
+	
+	public int getCode(){
 		return code;
 	}
-
-	public Medical getMedical() {
+	public Medical getMedical(){
 		return medical;
 	}
-
-	public MovementType getType() {
+	public MovementType getType(){
 		return type;
 	}
-
-	public Ward getWard() {
+	public Ward getWard(){
 		return ward;
 	}
-
-	public Lot getLot() {
+	public Lot getLot(){
 		return lot;
 	}
-
-	public LocalDateTime getDate() {
+	public GregorianCalendar getDate(){
 		return date;
 	}
-
 	public Supplier getSupplier() {
 		return supplier;
 	}
-
-	public int getQuantity() {
+	public int getQuantity(){
 		return quantity;
 	}
-
 	public void setQuantity(int quantity) {
 		this.quantity = quantity;
 	}
-
-	public Supplier getOrigin() {
+	public Supplier getOrigin(){
 		return supplier;
 	}
-
 	public void setWard(Ward ward) {
 		this.ward = ward;
 	}
-
 	public void setLot(Lot lot) {
 		this.lot = lot;
 	}
-
-	public void setDate(LocalDateTime date) {
-		this.date = TimeTools.truncateToSeconds(date);
+	public void setDate(GregorianCalendar date) {
+		this.date = date;
 	}
-
 	public void setSupplier(Supplier supplier) {
 		this.supplier = supplier;
 	}
-
-	public void setCode(int aCode) {
-		code = aCode;
+	public void setCode(int aCode){
+		code=aCode;
 	}
-
-	public void setMedical(Medical aMedical) {
-		medical = aMedical;
+	public void setMedical(Medical aMedical){
+		medical=aMedical;
 	}
-
-	public void setType(MovementType aType) {
-		type = aType;
+	public void setType(MovementType aType){
+		type=aType;
 	}
-
 	public String getRefNo() {
 		return refNo;
 	}
-
 	public void setRefNo(String refNo) {
 		this.refNo = refNo;
 	}
 
-	@Override
-	public String toString() {
-		return MessageBundle.formatMessage("angal.movement.tostring.fmt.txt",
-				medical != null ? medical.toString() : "NULL",
-				type != null ? type.toString() : "NULL",
-				quantity);
+//    public Ward getWardTo() {
+//        return wardTo;
+//    }
+//
+//    public void setWardTo(Ward wardTo) {
+//        this.wardTo = wardTo;
+//    }
+        
+	public String toString(){
+		return MessageBundle.formatMessage("angal.movement.tostring.fmt.txt", medical.toString(), type.toString(), quantity);
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
 		}
-
+		
 		if (!(obj instanceof Movement)) {
 			return false;
 		}

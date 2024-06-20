@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2020 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,26 +17,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.service;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 import org.isf.medicalstock.service.MedicalStockIoOperations.MovementOrder;
 import org.springframework.stereotype.Repository;
 
+import java.util.GregorianCalendar;
+import java.util.List;
+
 @Repository
 public interface MovementIoOperationRepositoryCustom {
 
-	List<Integer> findMovementWhereDatesAndId(String wardId, LocalDateTime dateFrom, LocalDateTime dateTo);
+	List<Integer> findMovementWhereDatesAndId(String wardId, GregorianCalendar dateFrom, GregorianCalendar dateTo);
 
 	List<Integer> findMovementWhereData(Integer medicalCode, String medicalType, String wardId, String movType,
-			LocalDateTime movFrom, LocalDateTime movTo, LocalDateTime lotPrepFrom,
-			LocalDateTime lotPrepTo, LocalDateTime lotDueFrom, LocalDateTime lotDueTo);
+										GregorianCalendar movFrom, GregorianCalendar movTo, GregorianCalendar lotPrepFrom,
+										GregorianCalendar lotPrepTo, GregorianCalendar lotDueFrom, GregorianCalendar lotDueTo);
 
 	List<Integer> findMovementForPrint(String medicalDescription, String medicalTypeCode, String wardId,
-			String movType, LocalDateTime movFrom, LocalDateTime movTo, String lotCode, MovementOrder order);
-
+									   String movType, GregorianCalendar movFrom, GregorianCalendar movTo, String lotCode, MovementOrder order);
+	
 }

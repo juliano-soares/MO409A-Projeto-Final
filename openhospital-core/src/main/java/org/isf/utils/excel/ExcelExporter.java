@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.utils.excel;
 
@@ -119,7 +119,7 @@ public class ExcelExporter {
 	 * @throws IOException
 	 */
 	private void writeBOM(FileOutputStream fileStream) throws IOException {
-		byte[] bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+		byte[] bom = new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
 		fileStream.write(bom);
 	}
 
@@ -129,7 +129,9 @@ public class ExcelExporter {
 	 * @param jtable
 	 * @param file
 	 * @throws IOException
+	 * @deprecated use exportTableToExcel method
 	 */
+	@Deprecated
 	public void exportTableToCSV(JTable jtable, File file) throws IOException {
 		exportTableToCSV(jtable, file, ";");
 	}
@@ -147,51 +149,55 @@ public class ExcelExporter {
 		FileOutputStream fileStream = new FileOutputStream(file);
 		writeBOM(fileStream);
 
-		try (BufferedWriter outFile = new BufferedWriter(new OutputStreamWriter(fileStream, encoder))) {
-			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		BufferedWriter outFile = new BufferedWriter(new OutputStreamWriter(fileStream, encoder));
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-			int colCount = model.getColumnCount();
-			for (int i = 0; i < colCount; i++) {
-				if (i == colCount - 1) {
-					outFile.write(model.getColumnName(i));
+		int colCount = model.getColumnCount();
+		for (int i = 0; i < colCount; i++) {
+			if (i == colCount - 1)
+				outFile.write(model.getColumnName(i));
+			else
+				outFile.write(model.getColumnName(i) + separator);
+		}
+		outFile.write("\n");
+
+		int rowCount = model.getColumnCount();
+		for (int i = 0; i < rowCount; i++) {
+			for (int j = 0; j < colCount; j++) {
+				String strVal;
+				Object objVal = model.getValueAt(i, j);
+				if (objVal != null) {
+					if (objVal instanceof Integer) {
+						Integer val = (Integer) objVal;
+						NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+						strVal = format.format(val);
+
+					} else if (objVal instanceof Double) {
+
+						Double val = (Double) objVal;
+						NumberFormat format = NumberFormat.getInstance(currentLocale);
+						strVal = format.format(val);
+					} else if (objVal instanceof Timestamp) {
+
+						Timestamp val = (Timestamp) objVal;
+						strVal = sdf.format(val);
+					} else {
+
+						strVal = objVal.toString();
+					}
 				} else {
-					outFile.write(model.getColumnName(i) + separator);
+					strVal = " ";
 				}
+				if (j == colCount - 1)
+					outFile.write(strVal);
+				else
+					outFile.write(strVal + separator);
+
 			}
 			outFile.write("\n");
-
-			int rowCount = model.getColumnCount();
-			for (int i = 0; i < rowCount; i++) {
-				for (int j = 0; j < colCount; j++) {
-					String strVal;
-					Object objVal = model.getValueAt(i, j);
-					if (objVal != null) {
-						if (objVal instanceof Integer) {
-							Integer val = (Integer) objVal;
-							NumberFormat format = NumberFormat.getInstance(currentLocale);
-							strVal = format.format(val);
-						} else if (objVal instanceof Double) {
-							Double val = (Double) objVal;
-							NumberFormat format = NumberFormat.getInstance(currentLocale);
-							strVal = format.format(val);
-						} else if (objVal instanceof Timestamp) {
-							Timestamp val = (Timestamp) objVal;
-							strVal = sdf.format(val);
-						} else {
-							strVal = objVal.toString();
-						}
-					} else {
-						strVal = " ";
-					}
-					if (j == colCount - 1) {
-						outFile.write(strVal);
-					} else {
-						outFile.write(strVal + separator);
-					}
-				}
-				outFile.write("\n");
-			}
 		}
+
+		outFile.close();
 	}
 
 	/**
@@ -201,7 +207,9 @@ public class ExcelExporter {
 	 * @param exportFile
 	 * @throws IOException
 	 * @throws OHException
+	 * @deprecated use exportTableToExcel method
 	 */
+	@Deprecated
 	public void exportResultsetToCSV(ResultSet resultSet, File exportFile) throws IOException, OHException {
 		exportResultsetToCSV(resultSet, exportFile, ";");
 	}
@@ -223,58 +231,56 @@ public class ExcelExporter {
 		FileOutputStream fileStream = new FileOutputStream(exportFile);
 		writeBOM(fileStream);
 
-		try (BufferedWriter output = new BufferedWriter(new OutputStreamWriter(fileStream, encoder))) {
-			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-			NumberFormat numFormat = NumberFormat.getInstance(currentLocale);
+		BufferedWriter output = new BufferedWriter(new OutputStreamWriter(fileStream, encoder));
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		NumberFormat numFormat = NumberFormat.getInstance(Locale.getDefault());
 
-			try {
-				ResultSetMetaData rsmd = resultSet.getMetaData();
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
 
-				int colCount = rsmd.getColumnCount();
+			int colCount = rsmd.getColumnCount();
+			for (int i = 1; i <= colCount; i++) {
+				if (i == colCount - 1)
+					output.write(rsmd.getColumnName(i));
+				else
+					output.write(rsmd.getColumnName(i) + separator);
+			}
+			output.write("\n");
+
+			while (resultSet.next()) {
+
+				String strVal;
 				for (int i = 1; i <= colCount; i++) {
-					if (i == colCount - 1) {
-						output.write(rsmd.getColumnName(i));
+					Object objVal = resultSet.getObject(i);
+					if (objVal != null) {
+						if (objVal instanceof Double) {
+
+							Double val = (Double) objVal;
+							strVal = numFormat.format(val);
+						} else if (objVal instanceof Timestamp) {
+
+							Timestamp val = (Timestamp) objVal;
+							strVal = sdf.format(val);
+						} else {
+
+							strVal = objVal.toString();
+						}
 					} else {
-						output.write(rsmd.getColumnName(i) + separator);
+						strVal = " ";
 					}
+					if (i == colCount - 1)
+						output.write(strVal);
+					else
+						output.write(strVal + separator);
+
 				}
 				output.write("\n");
 
-				while (resultSet.next()) {
-
-					String strVal;
-					for (int i = 1; i <= colCount; i++) {
-						Object objVal = resultSet.getObject(i);
-						if (objVal != null) {
-							if (objVal instanceof Double) {
-
-								Double val = (Double) objVal;
-								strVal = numFormat.format(val);
-							} else if (objVal instanceof Timestamp) {
-
-								Timestamp val = (Timestamp) objVal;
-								strVal = sdf.format(val);
-							} else {
-
-								strVal = objVal.toString();
-							}
-						} else {
-							strVal = " ";
-						}
-						if (i == colCount - 1) {
-							output.write(strVal);
-						} else {
-							output.write(strVal + separator);
-						}
-
-					}
-					output.write("\n");
-
-				}
-			} catch (SQLException e) {
-				throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlinstruction.msg"), e);
 			}
+		} catch (SQLException e) {
+			throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlinstruction.msg"), e);
 		}
+		output.close();
 	}
 
 	/**
@@ -284,7 +290,9 @@ public class ExcelExporter {
 	 * @param exportFile
 	 * @throws IOException
 	 * @throws OHException
+	 * @deprecated use exportDataToExcel
 	 */
+	@Deprecated
 	public void exportDataToCSV(Collection data, File exportFile) throws IOException, OHException {
 
 		try (FileWriter outFile = new FileWriter(exportFile)) {
@@ -294,7 +302,7 @@ public class ExcelExporter {
 				if (!header) {
 					Set columns = thisMap.keySet();
 					for (Object column : columns) {
-						outFile.write(column.toString() + ';');
+						outFile.write(column.toString() + ";");
 					}
 					outFile.write("\n");
 					header = true;
@@ -304,7 +312,7 @@ public class ExcelExporter {
 				Collection values = thisMap.values();
 				for (Object value : values) {
 					strVal = convertValue(value);
-					outFile.write(strVal + ';');
+					outFile.write(strVal + ";");
 				}
 				outFile.write("\n");
 			}
@@ -312,18 +320,20 @@ public class ExcelExporter {
 	}
 
 	private String convertValue(Object value) {
-		String strVal;
+		String strVal = "";
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		if (value != null) {
 			if (value instanceof BigDecimal) {
 
 				BigDecimal val = (BigDecimal) value;
-				NumberFormat format = NumberFormat.getInstance(currentLocale);
+				NumberFormat format = NumberFormat.getInstance(Locale
+						.getDefault());
 				strVal = format.format(val);
 			} else if (value instanceof Double) {
 
 				Double val = (Double) value;
-				NumberFormat format = NumberFormat.getInstance(currentLocale);
+				NumberFormat format = NumberFormat.getInstance(Locale
+						.getDefault());
 				strVal = format.format(val);
 			} else if (value instanceof Timestamp) {
 
@@ -344,20 +354,13 @@ public class ExcelExporter {
 	 *
 	 * @param jtable
 	 * @param file
+	 * @param columnCount (optional) if not specified or -1 then get the column count from the table model; if specified use that number for the column count
 	 * @throws IOException
 	 */
 	public void exportTableToExcel(JTable jtable, File file) throws IOException {
 		exportTableToExcel(jtable, file, -1);
 	}
 
-	/**
-	 * Export a {@link JTable} to Excel using Apache POI library
-	 *
-	 * @param jtable
-	 * @param file
-	 * @param columnCount if -1 then get the column count from the table model; if specified use that number for the column count
-	 * @throws IOException
-	 */
 	public void exportTableToExcel(JTable jtable, File file, int columnCount) throws IOException {
 		TableModel model = jtable.getModel();
 		FileOutputStream fileStream = new FileOutputStream(file);
@@ -407,45 +410,50 @@ public class ExcelExporter {
 	 * @throws OHException
 	 */
 	public void exportResultsetToExcel(ResultSet resultSet, File exportFile) throws IOException, OHException {
-		try (FileOutputStream fileStream = new FileOutputStream(exportFile)) {
+		FileOutputStream fileStream = null;
+		try {
+			fileStream = new FileOutputStream(exportFile);
+		} catch (FileNotFoundException e) {
+			throw new OHException(e.getLocalizedMessage());
+		}
 
-			workbook = new XSSFWorkbook();
-			createHelper = workbook.getCreationHelper();
+		workbook = new XSSFWorkbook();
+		createHelper = workbook.getCreationHelper();
 
-			Sheet worksheet = workbook.createSheet();
-			initStyles();
+		Sheet worksheet = workbook.createSheet();
+		initStyles();
 
-			Row headers = worksheet.createRow((short) 0);
-			try {
-				ResultSetMetaData rsmd = resultSet.getMetaData();
+		Row headers = worksheet.createRow((short) 0);
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
 
-				int colCount = rsmd.getColumnCount();
-				for (int i = 0; i < colCount; i++) {
-					Cell cell = headers.createCell((short) i);
-					RichTextString value = createHelper.createRichTextString(rsmd.getColumnName(i + 1));
-					cell.setCellStyle(headerStyle);
-					cell.setCellValue(value);
-				}
-
-				int index = 1;
-				while (resultSet.next()) {
-					Row row = worksheet.createRow(index);
-
-					for (int j = 0; j < colCount; j++) {
-						Object value = resultSet.getObject(j + 1);
-						Cell cell = row.createCell((short) j);
-						setValueForExcel(cell, value);
-					}
-					index++;
-				}
-				workbook.write(fileStream);
-				fileStream.flush();
-			} catch (FileNotFoundException e) {
-				throw new OHException(e.getLocalizedMessage());
+			int colCount = rsmd.getColumnCount();
+			for (int i = 0; i < colCount; i++) {
+				Cell cell = headers.createCell((short) i);
+				RichTextString value = createHelper.createRichTextString(rsmd.getColumnName(i + 1));
+				cell.setCellStyle(headerStyle);
+				cell.setCellValue(value);
 			}
+
+			int index = 1;
+			while (resultSet.next()) {
+				Row row = worksheet.createRow(index);
+
+				for (int j = 0; j < colCount; j++) {
+					Object value = resultSet.getObject(j + 1);
+					Cell cell = row.createCell((short) j);
+					setValueForExcel(cell, value);
+				}
+				index++;
+			}
+			workbook.write(fileStream);
+			fileStream.flush();
+			fileStream.close();
+
 		} catch (SQLException e) {
 			throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlinstruction.msg"), e);
 		}
+
 	}
 
 	/**
@@ -537,20 +545,13 @@ public class ExcelExporter {
 	 *
 	 * @param jtable
 	 * @param file
+	 * @param columnCount (optional) if not specified or -1 then get the column count from the table model; if specified use that number for the column count
 	 * @throws IOException
 	 */
 	public void exportTableToExcelOLD(JTable jtable, File file) throws IOException {
 		exportTableToExcelOLD(jtable, file, -1);
 	}
 
-	/**
-	 * Export a {@link JTable} to Excel 97-2003 using Apache POI library
-	 *
-	 * @param jtable
-	 * @param file
-	 * @param columnCount if -1 then get the column count from the table model; othereise use the specfied number for the column count
-	 * @throws IOException
-	 */
 	public void exportTableToExcelOLD(JTable jtable, File file, int columnCount) throws IOException {
 		TableModel model = jtable.getModel();
 		FileOutputStream fileStream = new FileOutputStream(file);
@@ -598,41 +599,43 @@ public class ExcelExporter {
 	 * @throws OHException
 	 */
 	public void exportResultsetToExcelOLD(ResultSet resultSet, File exportFile) throws IOException, OHException {
-		try (FileOutputStream fileStream = new FileOutputStream(exportFile)) {
+		FileOutputStream fileStream = new FileOutputStream(exportFile);
 
-			workbook = new HSSFWorkbook();
-			HSSFSheet worksheet = (HSSFSheet) workbook.createSheet();
-			initStyles();
+		workbook = new HSSFWorkbook();
+		HSSFSheet worksheet = (HSSFSheet) workbook.createSheet();
+		initStyles();
 
-			HSSFRow headers = worksheet.createRow((short) 0);
-			try {
-				ResultSetMetaData rsmd = resultSet.getMetaData();
+		HSSFRow headers = worksheet.createRow((short) 0);
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
 
-				int colCount = rsmd.getColumnCount();
-				for (int i = 0; i < colCount; i++) {
-					HSSFCell cell = headers.createCell((short) i);
-					HSSFRichTextString value = new HSSFRichTextString(rsmd.getColumnName(i + 1));
-					cell.setCellStyle(headerStyle);
-					cell.setCellValue(value);
-				}
-
-				int index = 1;
-				while (resultSet.next()) {
-					HSSFRow row = worksheet.createRow((short) index);
-
-					for (int j = 0; j < colCount; j++) {
-						Object value = resultSet.getObject(j + 1);
-						HSSFCell cell = row.createCell((short) j);
-						setValueForExcelOLD(cell, value);
-					}
-					index++;
-				}
-				workbook.write(fileStream);
-				fileStream.flush();
-			} catch (SQLException e) {
-				throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlinstruction.msg"), e);
+			int colCount = rsmd.getColumnCount();
+			for (int i = 0; i < colCount; i++) {
+				HSSFCell cell = headers.createCell((short) i);
+				HSSFRichTextString value = new HSSFRichTextString(rsmd.getColumnName(i + 1));
+				cell.setCellStyle(headerStyle);
+				cell.setCellValue(value);
 			}
+
+			int index = 1;
+			while (resultSet.next()) {
+				HSSFRow row = worksheet.createRow((short) index);
+
+				for (int j = 0; j < colCount; j++) {
+					Object value = resultSet.getObject(j + 1);
+					HSSFCell cell = row.createCell((short) j);
+					setValueForExcelOLD(cell, value);
+				}
+				index++;
+			}
+			workbook.write(fileStream);
+			fileStream.flush();
+			fileStream.close();
+
+		} catch (SQLException e) {
+			throw new OHException(MessageBundle.getMessage("angal.sql.problemsoccurredwiththesqlinstruction.msg"), e);
 		}
+
 	}
 
 	/**

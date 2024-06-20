@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medtype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.medtype.model.MedicalType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,15 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 @TranslateOHServiceException
 public class MedicalTypeIoOperation {
 
+	@Autowired
 	private MedicalTypeIoOperationRepository repository;
-
-	public MedicalTypeIoOperation(MedicalTypeIoOperationRepository medicalTypeIoOperationRepository) {
-		this.repository = medicalTypeIoOperationRepository;
-	}
 
 	/**
 	 * Retrieves all the stored {@link MedicalType}s.
-	 * @return a list of all the stored {@link MedicalType}s.
+	 * @return the stored medical types.
 	 * @throws OHServiceException if an error occurs retrieving the medical types.
 	 */
 	public List<MedicalType> getMedicalTypes() throws OHServiceException {
@@ -55,40 +53,70 @@ public class MedicalTypeIoOperation {
 	/**
 	 * Updates the specified {@link MedicalType}.
 	 * @param medicalType the medical type to update.
-	 * @return the newly saved {@link MedicalType} object.
+	 * @return <code>true</code> if the medical type has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs updating the medical type.
 	 */
-	public MedicalType updateMedicalType(MedicalType medicalType) throws OHServiceException {
-		return repository.save(medicalType);
+	public boolean updateMedicalType(
+			MedicalType medicalType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		MedicalType savedMedicalType = repository.save(medicalType);
+		result = (savedMedicalType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Stores the specified {@link MedicalType}.
 	 * @param medicalType the medical type to store.
-	 * @return the newly saved {@link MedicalType} object.
+	 * @return <code>true</code> if the medical type has been stored, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs storing the new medical type.
 	 */
-	public MedicalType newMedicalType(MedicalType medicalType) throws OHServiceException {
-		return repository.save(medicalType);
+	public boolean newMedicalType(
+			MedicalType medicalType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+
+		MedicalType savedMedicalType = repository.save(medicalType);
+		result = (savedMedicalType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Deletes the specified {@link MedicalType}.
 	 * @param medicalType the medical type to delete.
+	 * @return <code>true</code> if the medical type has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs deleting the medical type.
 	 */
-	public void deleteMedicalType(MedicalType medicalType) throws OHServiceException {
+	public boolean deleteMedicalType(
+			MedicalType medicalType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(medicalType);
+		
+		return result;
 	}
 
 	/**
-	 * Checks if the specified {@link MedicalType} code is already exists.
+	 * Checks if the specified {@link MedicalType} code is already stored.
 	 * @param code the {@link MedicalType} code to check.
-	 * @return {@code true} if the medical code is already stored, {@code false} otherwise.
+	 * @return <code>true</code> if the medical code is already stored, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
-
 }

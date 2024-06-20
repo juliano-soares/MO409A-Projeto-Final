@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.admtype.service;
 
@@ -26,6 +26,7 @@ import java.util.List;
 import org.isf.admtype.model.AdmissionType;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,14 +36,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
-public class AdmissionTypeIoOperation {
+public class AdmissionTypeIoOperation 
+{
 
+	@Autowired
 	private AdmissionTypeIoOperationRepository repository;
-
-	public AdmissionTypeIoOperation(AdmissionTypeIoOperationRepository admissionTypeIoOperationRepository) {
-		this.repository = admissionTypeIoOperationRepository;
-	}
-
+	
 	/**
 	 * Returns all the available {@link AdmissionType}s.
 	 * @return a list of admission types.
@@ -55,39 +54,70 @@ public class AdmissionTypeIoOperation {
 	/**
 	 * Updates the specified {@link AdmissionType}.
 	 * @param admissionType the admission type to update.
-	 * @return the updated admissionType object that is persisted.
+	 * @return <code>true</code> if the admission type has been updated, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the update.
 	 */
-	public AdmissionType updateAdmissionType(AdmissionType admissionType) throws OHServiceException {
-		return repository.save(admissionType);
+	public boolean updateAdmissionType(
+			AdmissionType admissionType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		AdmissionType savedAdmissionType = repository.save(admissionType);
+		result = (savedAdmissionType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Stores a new {@link AdmissionType}.
 	 * @param admissionType the admission type to store.
-	 * @return the updated admissionType object that is persisted.
+	 * @return <code>true</code> if the admission type has been stored, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the storing operation.
 	 */
-	public AdmissionType newAdmissionType(AdmissionType admissionType) throws OHServiceException {
-		return repository.save(admissionType);
+	public boolean newAdmissionType(
+			AdmissionType admissionType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
+		AdmissionType savedAdmissionType = repository.save(admissionType);
+		result = (savedAdmissionType != null);
+		
+		return result;
 	}
 
 	/**
 	 * Deletes the specified {@link AdmissionType}.
 	 * @param admissionType the admission type to delete.
+	 * @return <code>true</code> if the admission type has been deleted, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the delete operation.
 	 */
-	public void deleteAdmissionType(AdmissionType admissionType) throws OHServiceException {
+	public boolean deleteAdmissionType(
+			AdmissionType admissionType) throws OHServiceException 
+	{
+		boolean result = true;
+	
+		
 		repository.delete(admissionType);
+		
+		return result;	
 	}
 
 	/**
 	 * Checks if the specified Code is already used by others {@link AdmissionType}s.
 	 * @param code the admission type code to check.
-	 * @return {@code true} if the code is already used, {@code false} otherwise.
+	 * @return <code>true</code> if the code is already used, <code>false</code> otherwise.
 	 * @throws OHServiceException if an error occurs during the check.
 	 */
-	public boolean isCodePresent(String code) throws OHServiceException {
-		return repository.existsById(code);
+	public boolean isCodePresent(
+			String code) throws OHServiceException
+	{
+		boolean result = true;
+	
+		
+		result = repository.exists(code);
+		
+		return result;
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,41 +17,46 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.hospital.model;
 
-import java.sql.Time;
-
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.persistence.Version;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
 
 import org.isf.utils.db.Auditable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Hospital - model representing the Hospital
+ * -----------------------------------------
+ * modification history
+ * 21-jan-2006 - bob - first version
+ * 06/01/2016 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_HOSPITAL")
+@Table(name="HOSPITAL")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "HOS_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "HOS_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "HOS_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "HOS_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "HOS_LAST_MODIFIED_DATE"))
-public class Hospital extends Auditable<String> {
-
-	public static final String VISIT_START_TIME = "06:30:00";
-	public static final String VISIT_END_TIME = "20:00:00";
-	public static final int VISIT_INCREMENT = 15;
-	public static final int VISIT_DURATION = 30;
-
-	@Id
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="HOS_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="HOS_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="HOS_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="HOS_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="HOS_LAST_MODIFIED_DATE"))
+})
+public class Hospital extends Auditable<String> 
+{
+	@Id 
 	@Column(name="HOS_ID_A")
     private String code;
 
@@ -79,44 +84,24 @@ public class Hospital extends Auditable<String> {
 	@Column(name="HOS_CURR_COD")
     private String currencyCod;
 
-	@NotNull
-	@Column(name="HOS_VISIT_START")
-	private Time visitStartTime;
-
-	@NotNull
-	@Column(name="HOS_VISIT_END")
-	private Time visitEndTime;
-
-	@NotNull
-	@Column(name="HOS_VISIT_INCREMENT")
-	private int visitIncrement;
-
-	@NotNull
-	@Column(name="HOS_VISIT_DURATION")
-	private int visitDuration;
-
 	@Version
 	@Column(name="HOS_LOCK")
     private Integer lock;
 
 	@Transient
-	private volatile int hashCode;
-
-	public Hospital() {
-		super();
-		this.code = null;
-		this.description = null;    // TODO field is marked as "@NotNull"
-		this.address = null;        // TODO field is marked as "@NotNull"
-		this.city = null;           // TODO field is marked as "@NotNull"
-		this.telephone = null;
-		this.fax = null;
-		this.email = null;
-		this.currencyCod = null;
-		this.visitStartTime = Time.valueOf(VISIT_START_TIME);
-		this.visitEndTime = Time.valueOf(VISIT_END_TIME);
-		this.visitIncrement = VISIT_INCREMENT;
-		this.visitDuration = VISIT_DURATION;
-	}
+	private volatile int hashCode = 0;
+	
+    public Hospital(){
+    	super();
+        this.code = null;
+        this.description = null;
+        this.address = null;
+        this.city = null;
+        this.telephone = null;
+        this.fax = null;
+        this.email = null;
+        this.currencyCod = null;
+    }
 
 	/**
 	 * @param aCode
@@ -140,31 +125,8 @@ public class Hospital extends Auditable<String> {
         this.fax = aFax;
         this.email = aEmail;
         this.currencyCod = aCurrencyCod;
-		this.visitStartTime = Time.valueOf(VISIT_START_TIME);
-		this.visitEndTime = Time.valueOf(VISIT_END_TIME);
-		this.visitIncrement = VISIT_INCREMENT;
-		this.visitDuration = VISIT_DURATION;
     }
-
-	public Hospital(String aCode, String aDescription, String aAddress,
-			String aCity, String aTelephone, String aFax,
-			String aEmail, String aCurrencyCod,
-			Time visitStartTime, Time visitEndTime, int visitIncrement, int visitDuration) {
-		super();
-		this.code = aCode;
-		this.description = aDescription;
-		this.address = aAddress;
-		this.city = aCity;
-		this.telephone = aTelephone;
-		this.fax = aFax;
-		this.email = aEmail;
-		this.currencyCod = aCurrencyCod;
-		this.visitStartTime = visitStartTime;
-		this.visitEndTime = visitEndTime;
-		this.visitIncrement = visitIncrement;
-		this.visitDuration = visitDuration;
-	}
-
+    
     public String getAddress() {
         return this.address;
     }
@@ -237,70 +199,34 @@ public class Hospital extends Auditable<String> {
         this.currencyCod = aCurrencyCod;
     }
 
-	public Time getVisitStartTime() {
-		return visitStartTime;
-	}
-
-	public void setVisitStartTime(Time startTime) {
-		this.visitStartTime = startTime;
-	}
-
-	public Time getVisitEndTime() {
-		return visitEndTime;
-	}
-
-	public void setVisitEndTime(Time endTime) {
-		this.visitEndTime = endTime;
-	}
-
-	public int getVisitIncrement() {
-		return visitIncrement;
-	}
-
-	public void setVisitIncrement(int visitIncrement) {
-		this.visitIncrement = visitIncrement;
-	}
-
-	public int getVisitDuration() {
-		return visitDuration;
-	}
-
-	public void setVisitDuration(int visitDuration) {
-		this.visitDuration = visitDuration;
-	}
-
 	@Override
 	public boolean equals(Object anObject) {
-		return anObject instanceof Hospital && (getCode().equals(((Hospital) anObject).getCode())
-				&& getDescription().equalsIgnoreCase(((Hospital) anObject).getDescription())
-				&& getTelephone().equalsIgnoreCase(((Hospital) anObject).getTelephone())
-				&& getFax().equalsIgnoreCase(((Hospital) anObject).getFax())
-				&& getAddress().equalsIgnoreCase(((Hospital) anObject).getAddress())
-				&& getCity().equalsIgnoreCase(((Hospital) anObject).getCity())
-				&& getEmail().equalsIgnoreCase(((Hospital) anObject).getEmail())
-				&& getCurrencyCod().equalsIgnoreCase(((Hospital) anObject).getCurrencyCod())
-				&& getVisitStartTime().equals(((Hospital)anObject).getVisitStartTime())
-				&& getVisitEndTime().equals(((Hospital)anObject).getVisitEndTime())
-				&& getVisitIncrement() == ((Hospital)anObject).getVisitIncrement()
-				&& getVisitDuration() == ((Hospital)anObject).getVisitDuration());
+		return !(anObject instanceof Hospital) ? false
+				: (getCode().equals(((Hospital) anObject).getCode())
+						&& getDescription().equalsIgnoreCase(((Hospital) anObject).getDescription())
+						&& getTelephone().equalsIgnoreCase(((Hospital) anObject).getTelephone())
+						&& getFax().equalsIgnoreCase(((Hospital) anObject).getFax())
+						&& getAddress().equalsIgnoreCase(((Hospital) anObject).getAddress())
+						&& getCity().equalsIgnoreCase(((Hospital) anObject).getCity())
+						&& getEmail().equalsIgnoreCase(((Hospital) anObject).getEmail()) 
+						&& getCurrencyCod().equalsIgnoreCase(((Hospital) anObject).getCurrencyCod()));
 	}
 
-	@Override
 	public String toString() {
 		return getDescription();
-	}
+	}	
 
 	@Override
 	public int hashCode() {
 	    if (this.hashCode == 0) {
 	        final int m = 23;
 	        int c = 133;
-
+	        
 	        c = m * c + code.hashCode();
-
+	        
 	        this.hashCode = c;
 	    }
-
+	  
 	    return this.hashCode;
 	}
 }

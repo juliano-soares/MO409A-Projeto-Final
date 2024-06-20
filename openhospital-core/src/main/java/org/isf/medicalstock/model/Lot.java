@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,43 +17,54 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.GregorianCalendar;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.validation.constraints.NotNull;
 
 import org.isf.generaldata.GeneralData;
 import org.isf.generaldata.MessageBundle;
 import org.isf.medicals.model.Medical;
 import org.isf.medicalstockward.service.MedicalStockWardIoOperations;
 import org.isf.utils.db.Auditable;
-import org.isf.utils.time.TimeTools;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * ------------------------------------------
+ * Medical Lot - model for the medical lot entity
+ * -----------------------------------------
+ * modification history
+ * ? - ?
+ * 17/01/2015 - Antonio - ported to JPA
+ * ------------------------------------------
+ */
 @Entity
-@Table(name="OH_MEDICALDSRLOT")
+@Table(name="MEDICALDSRLOT")
 @EntityListeners(AuditingEntityListener.class)
-@AttributeOverride(name = "createdBy", column = @Column(name = "LT_CREATED_BY", updatable = false))
-@AttributeOverride(name = "createdDate", column = @Column(name = "LT_CREATED_DATE", updatable = false))
-@AttributeOverride(name = "lastModifiedBy", column = @Column(name = "LT_LAST_MODIFIED_BY"))
-@AttributeOverride(name = "active", column = @Column(name = "LT_ACTIVE"))
-@AttributeOverride(name = "lastModifiedDate", column = @Column(name = "LT_LAST_MODIFIED_DATE"))
-public class Lot extends Auditable<String> {
-
-	@Id
+@AttributeOverrides({
+    @AttributeOverride(name="createdBy", column=@Column(name="LT_CREATED_BY")),
+    @AttributeOverride(name="createdDate", column=@Column(name="LT_CREATED_DATE")),
+    @AttributeOverride(name="lastModifiedBy", column=@Column(name="LT_LAST_MODIFIED_BY")),
+    @AttributeOverride(name="active", column=@Column(name="LT_ACTIVE")),
+    @AttributeOverride(name="lastModifiedDate", column=@Column(name="LT_LAST_MODIFIED_DATE"))
+})
+public class Lot extends Auditable<String>
+{
+	@Id 
 	@Column(name="LT_ID_A")
 	private String code;
 
@@ -63,12 +74,12 @@ public class Lot extends Auditable<String> {
 	private Medical medical;
 
 	@NotNull
-	@Column(name="LT_PREP_DATE")		// SQL type: datetime
-	private LocalDateTime preparationDate;
+	@Column(name="LT_PREP_DATE")
+	private GregorianCalendar preparationDate;
 
 	@NotNull
-	@Column(name="LT_DUE_DATE")		   // SQL type: datetime
-	private LocalDateTime dueDate;
+	@Column(name="LT_DUE_DATE")
+	private GregorianCalendar dueDate;
 
 	@Column(name="LT_COST")
 	private BigDecimal cost;
@@ -81,7 +92,7 @@ public class Lot extends Auditable<String> {
 	 * NB: COALESCE is needed for legacy connection to lots migrated from a version prior v1.11.0;
 	 * in theory, there should not exist lots without an initial charge movement
 	 * in the main MedicalStock, but sometimes it could happen if 
-	 * {@link MedicalStockWardIoOperations} are enabled (with {@link GeneralData}{@code .INTERNALPHARMACIES=true})
+	 * {@link MedicalStockWardIoOperations} are enabled (with {@link GeneralData}<code>.INTERNALPHARMACIES=true</code>) 
 	 * and some lots are registered directly there at the time of the first inventory.
 	 * 
 	 * @see <a href="https://github.com/informatici/openhospital-doc/blob/develop/doc_admin/AdminManual.adoc#5-1-19-internalpharmacies">Admin Manual</a>
@@ -104,7 +115,7 @@ public class Lot extends Auditable<String> {
 	private double wardsTotalQuantity;
 	
 	/**
-	 * Automatic calculated field for an overall lot's quantity (MedicalStock + MedicalStockWards).<br>
+	 * Automatic calculated field for a overall lot's quantity (MedicalStock + MedicalStockWards).<br>
 	 * 
 	 * <i>
 	 * @see <a href="https://github.com/informatici/openhospital-doc/blob/develop/doc_admin/AdminManual.adoc#5-1-19-internalpharmacies">Admin Manual</a>
@@ -115,140 +126,121 @@ public class Lot extends Auditable<String> {
 	private double overallQuantity;
 
 	@Transient
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 
 	public Lot() {
 	}
 
-	public Lot(String aCode) {
-		code = aCode;
+	public Lot(String aCode){
+		code=aCode;
+
+	}
+	public Lot(String aCode,GregorianCalendar aPreparationDate,GregorianCalendar aDueDate){
+		code=aCode;
+		preparationDate=aPreparationDate;
+		dueDate=aDueDate;
+	}
+	
+	public Lot(Medical aMedical, String aCode,GregorianCalendar aPreparationDate,GregorianCalendar aDueDate,BigDecimal aCost){
+		medical=aMedical;
+		code=aCode;
+		preparationDate=aPreparationDate;
+		dueDate=aDueDate;
+		cost=aCost;
 	}
 
-	public Lot(String aCode, LocalDateTime aPreparationDate, LocalDateTime aDueDate) {
-		code = aCode;
-		preparationDate = TimeTools.truncateToSeconds(aPreparationDate);
-		dueDate = TimeTools.truncateToSeconds(aDueDate);
-	}
-
-	public Lot(Medical aMedical, String aCode, LocalDateTime aPreparationDate, LocalDateTime aDueDate, BigDecimal aCost) {
-		medical = aMedical;
-		code = aCode;
-		preparationDate = TimeTools.truncateToSeconds(aPreparationDate);
-		dueDate = TimeTools.truncateToSeconds(aDueDate);
-		cost = aCost;
-	}
-
-	public String getCode() {
+	public String getCode(){
 		return code;
 	}
 
-	public Integer getMainStoreQuantity() {
+	public Integer getMainStoreQuantity(){
 		return mainStoreQuantity;
 	}
-
+	
 	public Double getWardsTotalQuantity() {
 		return wardsTotalQuantity;
 	}
-
+	
 	public double getOverallQuantity() {
 		return mainStoreQuantity + wardsTotalQuantity;
 	}
 
-	public Medical getMedical() {
-		return medical;
+	public Medical getMedical(){
+			return medical;
 	}
 
-	public LocalDateTime getPreparationDate() {
+	public GregorianCalendar getPreparationDate(){
 		return preparationDate;
 	}
-
-	public LocalDateTime getDueDate() {
+	public GregorianCalendar getDueDate(){
 		return dueDate;
 	}
-
 	public BigDecimal getCost() {
 		return cost;
 	}
-
-	public void setCode(String aCode) {
-		code = aCode;
+	public void setCode(String aCode){
+		code=aCode;
 	}
-
-	public void setMainStoreQuantity(int aQuantity) {
-		mainStoreQuantity = aQuantity;
+	public void setMainStoreQuantity(int aQuantity){
+		mainStoreQuantity=aQuantity;
 	}
-
 	public void setWardsTotalQuantity(double wardsTotalQuantity) {
 		this.wardsTotalQuantity = wardsTotalQuantity;
 	}
-
-	public void setPreparationDate(LocalDateTime aPreparationDate) {
-		preparationDate = TimeTools.truncateToSeconds(aPreparationDate);
+	public void setPreparationDate(GregorianCalendar aPreparationDate){
+		preparationDate=aPreparationDate;
 	}
-
-	public void setMedical(Medical aMedical) {
-		medical = aMedical;
+	public void setMedical(Medical aMedical){
+				medical=aMedical;
 	}
-
-	public void setDueDate(LocalDateTime aDueDate) {
-		dueDate = TimeTools.truncateToSeconds(aDueDate);
+	public void setDueDate(GregorianCalendar aDueDate){
+		dueDate=aDueDate;
 	}
-
 	public void setCost(BigDecimal cost) {
 		this.cost = cost;
 	}
-
-	@Override
-	public String toString() {
-		if (code == null) {
+	public String toString(){
+		if (code==null) {
 			return MessageBundle.getMessage("angal.medicalstock.nolot.txt");
 		}
 		return getCode();
 	}
 
-	public boolean isValidLot() {
-		return getCode().length() <= 50;
+	public boolean isValidLot(){
+		return getCode().length()<=50;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (obj == null) {
+		if (obj == null)
 			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != obj.getClass())
 			return false;
-		}
 		Lot other = (Lot) obj;
 		if (code == null) {
-			if (other.code != null) {
+			if (other.code != null)
 				return false;
-			}
-		} else if (!code.equals(other.code)) {
+		} else if (!code.equals(other.code))
 			return false;
-		}
 		if (cost != null) {
-			if (other.cost != null && cost.compareTo(other.cost) != 0) {
+			if (other.cost != null && cost.compareTo(other.cost) != 0)
 				return false;
-			}
 		}
 		if (dueDate == null) {
-			if (other.dueDate != null) {
+			if (other.dueDate != null)
 				return false;
-			}
-		} else if (!dueDate.equals(other.dueDate)) {
+		} else if (!dueDate.equals(other.dueDate))
 			return false;
-		}
 		if (preparationDate == null) {
-			if (other.preparationDate != null) {
+			if (other.preparationDate != null)
 				return false;
-			}
-		} else if (!preparationDate.equals(other.preparationDate)) {
+		} else if (!preparationDate.equals(other.preparationDate))
 			return false;
-		}
-		return mainStoreQuantity == other.mainStoreQuantity;
+		if (mainStoreQuantity != other.mainStoreQuantity)
+			return false;
+		return true;
 	}
 
 	@Override

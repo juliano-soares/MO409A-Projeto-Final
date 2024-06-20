@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,150 +17,94 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.lab.service;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Optional;
 
-import org.isf.exa.model.Exam;
 import org.isf.lab.model.Laboratory;
 import org.isf.lab.model.LaboratoryForPrint;
 import org.isf.lab.model.LaboratoryRow;
 import org.isf.patient.model.Patient;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
-import org.isf.utils.exception.model.OHExceptionMessage;
-import org.isf.utils.pagination.PageInfo;
-import org.isf.utils.pagination.PagedResponse;
-import org.isf.utils.time.TimeTools;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * ------------------------------------------
+ * lab.service.LabIoOperations - laboratory exam database io operations
+ * -----------------------------------------
+ * modification history
+ * 02/03/2006 - theo - first beta version
+ * 10/11/2006 - ross - added editing capability.
+ * 					   new fields data esame, sex, age, material, inout flag added
+ * 21/06/2008 - ross - do not add 1 to toDate!.
+ *                     the selection date switched to exam date,
+ * 04/01/2009 - ross - do not use roll, use add(week,-1)!
+ *                     roll does not change the year!
+ * 16/11/2012 - mwithi - added logging capability
+ * 					   - to do lock management
+ * 04/02/2013 - mwithi - lock management done
+ * ------------------------------------------
+ */
 @Service
-@Transactional(rollbackFor = OHServiceException.class)
+@Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class LabIoOperations {
 
+	@Autowired
 	private LabIoOperationRepository repository;
-
+        
+	@Autowired
 	private LabRowIoOperationRepository rowRepository;
-
-	public LabIoOperations(LabIoOperationRepository labIoOperationRepository, LabRowIoOperationRepository labRowIoOperationRepository) {
-		this.repository = labIoOperationRepository;
-		this.rowRepository = labRowIoOperationRepository;
-	}
-
+	
 	/**
-	 * Return a list of results ({@link LaboratoryRow}s) for passed lab code.
-	 *
+	 * Return a list of results ({@link LaboratoryRow}s) for passed lab entry.
 	 * @param code - the {@link Laboratory} record ID.
-	 * @return the list of {@link LaboratoryRow}s. It could be {@code empty}
+	 * @return the list of {@link LaboratoryRow}s. It could be <code>empty</code>
 	 * @throws OHServiceException
 	 */
-	public List<LaboratoryRow> getLabRow(Integer code) throws OHServiceException {
+	public List<LaboratoryRow> getLabRow(Integer code) throws OHServiceException	{
 		return rowRepository.findByLaboratory_Code(code);
 	}
-
+	
 	/**
-	 * Return the list of exams ({@link Laboratory}s) divided by pages.
-	 * 
-	 * @param oneWeek
-	 * @param pageNo
-	 * @param pageSize
-	 * @return the list of {@link Laboratory}s (could be empty)
-	 * @throws OHServiceException
-	 */
-	public List<Laboratory> getLaboratory(boolean oneWeek, int pageNo, int pageSize) throws OHServiceException {
-		Pageable pageable = PageRequest.of(pageNo, pageSize);
-		if (oneWeek) {
-			LocalDateTime time2 = TimeTools.getDateToday24();
-			LocalDateTime time1 = time2.minusWeeks(1);
-			return repository.findByLabDateBetweenOrderByLabDateDesc(time1, time2, pageable).getContent();
-
-		}
-		return repository.findAll(pageable).getContent();
-	}
-
-	public PagedResponse<Laboratory> getLaboratoryPageable(boolean oneWeek, int pageNo, int pageSize) throws OHServiceException {
-		Pageable pageable = PageRequest.of(pageNo, pageSize);
-		if (oneWeek) {
-			LocalDateTime time2 = TimeTools.getDateToday24();
-			LocalDateTime time1 = time2.minusWeeks(1);
-			Page<Laboratory> pagedResult = repository.findByLabDateBetweenOrderByLabDateDesc(time1, time2, pageable);
-			return setPaginationData(pagedResult);
-		}
-		Page<Laboratory> pagedResult = repository.findAll(pageable);
-		return setPaginationData(pagedResult);
-	}
-
-	/**
-	 * Return the whole list of exams ({@link Laboratory}s) within the last week.
-	 *
+	 * Return the whole list of exams ({@link Laboratory}s) within last year.
 	 * @return the list of {@link Laboratory}s 
 	 * @throws OHServiceException
 	 */
 	public List<Laboratory> getLaboratory() throws OHServiceException {
-		LocalDateTime time2 = TimeTools.getDateToday24();
-		LocalDateTime time1 = time2.minusWeeks(1);
+		GregorianCalendar time1 = new GregorianCalendar();
+		GregorianCalendar time2 = new GregorianCalendar();
+		// 04/1/2009 ross: no roll, use add!!
+		//time1.roll(GregorianCalendar.WEEK_OF_YEAR, false);
+		time1.add(GregorianCalendar.WEEK_OF_YEAR, -1);
+		// 21/6/2008 ross: no rolling !!
+		//time2.roll(GregorianCalendar.DAY_OF_YEAR, true);
 		return getLaboratory(null, time1, time2);
 	}
 
 	/**
-	 * Return a list of exams ({@link Laboratory}s) between specified dates and matching passed exam name.
-	 *
-	 * @param exam - the exam name as {@code String}
+	 * Return a list of exams ({@link Laboratory}s) between specified dates and matching passed exam name
+	 * @param exam - the exam name as <code>String</code>
 	 * @param dateFrom - the lower date for the range
 	 * @param dateTo - the highest date for the range
 	 * @return the list of {@link Laboratory}s 
 	 * @throws OHServiceException
 	 */
-	public List<Laboratory> getLaboratory(String exam, LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
-		return exam != null ? repository.findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(TimeTools.truncateToSeconds(dateFrom),
-						TimeTools.truncateToSeconds(dateTo),
-						exam)
-						: repository.findByLabDateBetweenOrderByLabDateDesc(TimeTools.truncateToSeconds(dateFrom.with(LocalTime.MIN)),
-										TimeTools.truncateToSeconds(dateTo.with(LocalTime.MAX)));
+	public List<Laboratory> getLaboratory(String exam,	GregorianCalendar dateFrom,	GregorianCalendar dateTo) throws OHServiceException {
+		return new ArrayList<>(exam != null ?
+				repository.findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(dateFrom, dateTo, exam) :
+				repository.findByExamDateBetweenOrderByLabDateDesc(dateFrom, dateTo));
 	}
-
-	/**
-	 * Return a list of exams ({@link Laboratory}s) between specified dates and matching passed exam name.
-	 *
-	 * @param exam - the exam name as {@code String}
-	 * @param dateFrom - the lower date for the range
-	 * @param dateTo - the highest date for the range
-	 * @param patient - the object of patient 
-	 * @return the list of {@link Laboratory}s 
-	 * @throws OHServiceException
-	 */
-	public List<Laboratory> getLaboratory(String exam, LocalDateTime dateFrom, LocalDateTime dateTo, Patient patient) throws OHServiceException {
-		List<Laboratory> laboritories = new ArrayList<>();
-
-		if (!exam.isEmpty() && patient != null) {
-			laboritories = repository.findByLabDateBetweenAndExamDescriptionAndPatientCode(dateFrom, dateTo, exam, patient.getCode());
-		}
-		if (!exam.isEmpty() && patient == null) {
-			laboritories = repository.findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(dateFrom, dateTo, exam);
-		}
-		if (patient != null && exam.isEmpty()) {
-			laboritories = repository.findByLabDateBetweenAndPatientCode(dateFrom, dateTo, patient.getCode());
-		}
-		if (patient == null && exam.isEmpty()) {
-			laboritories = repository.findByLabDateBetweenOrderByLabDateDesc(dateFrom, dateTo);
-		}
-		return laboritories;
-	}
-
+	
 	/**
 	 * Return a list of exams ({@link Laboratory}s) related to a {@link Patient}.
-	 *
 	 * @param aPatient - the {@link Patient}.
 	 * @return the list of {@link Laboratory}s related to the {@link Patient}.
 	 * @throws OHServiceException
@@ -168,78 +112,72 @@ public class LabIoOperations {
 	public List<Laboratory> getLaboratory(Patient aPatient) throws OHServiceException {
 		return repository.findByPatient_CodeOrderByLabDate(aPatient.getCode());
 	}
-
+	
 	/**
-	 * Return a list of exams suitable for printing ({@link LaboratoryForPrint}s) within the last week.
-	 *
+	 * Return a list of exams suitable for printing ({@link LaboratoryForPrint}s) 
+	 * within last year
 	 * @return the list of {@link LaboratoryForPrint}s 
 	 * @throws OHServiceException
 	 */
 	public List<LaboratoryForPrint> getLaboratoryForPrint() throws OHServiceException {
-		LocalDateTime time2 = TimeTools.getNow();
-		LocalDateTime time1 = time2.minusWeeks(1);
+		GregorianCalendar time1 = new GregorianCalendar();
+		GregorianCalendar time2 = new GregorianCalendar();
+		//time1.roll(GregorianCalendar.WEEK_OF_YEAR, false);
+		time1.add(GregorianCalendar.WEEK_OF_YEAR, -1);
+		// 21/6/2008 ross: no rolling !!
+		//time2.roll(GregorianCalendar.DAY_OF_YEAR, true);
 		return getLaboratoryForPrint(null, time1, time2);
 	}
-
+	
 	/**
 	 * Return a list of exams suitable for printing ({@link LaboratoryForPrint}s) 
-	 * between specified dates and matching passed exam name.
-	 *
-	 * @param exam - the exam name as {@code String}
+	 * between specified dates and matching passed exam name
+	 * @param exam - the exam name as <code>String</code>
 	 * @param dateFrom - the lower date for the range
 	 * @param dateTo - the highest date for the range
 	 * @return the list of {@link LaboratoryForPrint}s 
 	 * @throws OHServiceException
 	 */
-	public List<LaboratoryForPrint> getLaboratoryForPrint(String exam, LocalDateTime dateFrom, LocalDateTime dateTo, Patient patient)
-					throws OHServiceException {
+	public List<LaboratoryForPrint> getLaboratoryForPrint(String exam, GregorianCalendar dateFrom, GregorianCalendar dateTo) throws OHServiceException {
 		List<LaboratoryForPrint> pLaboratory = new ArrayList<>();
-		List<Laboratory> laboritories = new ArrayList<>();
-		if (exam != null && patient != null) {
-			laboritories = repository.findByLabDateBetweenAndExamDescriptionAndPatientCode(dateFrom, dateTo, exam, patient.getCode());
-		}
-		if (exam != null && patient == null) {
-			laboritories = repository.findByLabDateBetweenAndExam_DescriptionOrderByLabDateDesc(dateFrom, dateTo, exam);
-		}
-		if (patient != null && exam == null) {
-			laboritories = repository.findByLabDateBetweenAndPatientCode(dateFrom, dateTo, patient.getCode());
-		}
-		if (patient == null && exam == null) {
-			laboritories = repository.findByLabDateBetweenOrderByLabDateDesc(dateFrom, dateTo);
-		}
-		for (Laboratory laboratory : laboritories) {
+		Iterable<Laboratory> laboritories = new ArrayList<>(
+				exam != null ?
+						repository.findByLabDateBetweenAndExam_DescriptionContainingOrderByExam_Examtype_DescriptionDesc(dateFrom, dateTo, exam) :
+						repository.findByLabDateBetweenOrderByExam_Examtype_DescriptionDesc(dateFrom, dateTo)
+		);
 
+		for (Laboratory laboratory : laboritories) {
 			pLaboratory.add(new LaboratoryForPrint(
 							laboratory.getCode(),
 							laboratory.getExam(),
-							laboratory.getLabDate(),
-							laboratory.getResult(),
-							laboratory.getPatName(),
-							laboratory.getPatient().getCode()));
+							laboratory.getDate(),
+							laboratory.getResult()
+					)
+			);
 		}
+
 		return pLaboratory;
 	}
-
+	
 	/**
-	 * Insert a new Laboratory exam {@link Laboratory} and return the generated laboratory code.
-	 *
+	 * Insert a Laboratory exam {@link Laboratory} and return generated key. No commit is performed.
 	 * @param laboratory - the {@link Laboratory} to insert
-	 * @return the newly persisted {@link Laboratory} object.
+	 * @return the generated key
 	 * @throws OHServiceException
 	 */
-	private Laboratory newLaboratory(Laboratory laboratory) throws OHServiceException {
-		return repository.save(laboratory);
+	private Integer newLaboratory(Laboratory laboratory) throws OHServiceException {
+		Laboratory savedLaboratory = repository.save(laboratory);
+		return savedLaboratory.getCode();
 	}
-
+	
 	/**
 	 * Inserts one Laboratory exam {@link Laboratory} (Procedure One)
-	 *
 	 * @param laboratory - the {@link Laboratory} to insert
-	 * @return the newly persisted {@link Laboratory} object.
+	 * @return <code>true</code> if the exam has been inserted, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public Laboratory newLabFirstProcedure(Laboratory laboratory) throws OHServiceException {
-		return newLaboratory(laboratory);
+	public boolean newLabFirstProcedure(Laboratory laboratory) throws OHServiceException {
+		return newLaboratory(laboratory) > 0;
 	}
 
 	/**
@@ -247,184 +185,147 @@ public class LabIoOperations {
 	 *
 	 * @param laboratory - the {@link Laboratory} to insert
 	 * @param labRow - the list of results ({@link String}s)
-	 * @return the newly persisted {@link Laboratory} object.
+	 * @return <code>true</code> if the exam has been inserted with all its results, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public Laboratory newLabSecondProcedure(Laboratory laboratory, List<String> labRow) throws OHServiceException {
-		Laboratory newLaboratory = newLaboratory(laboratory);
-		if (newLaboratory.getCode() > 0) {
+	public boolean newLabSecondProcedure(Laboratory laboratory,	List<String> labRow) throws OHServiceException {
+		boolean result = true;
+		
+		int newCode = newLaboratory(laboratory);
+		if (newCode > 0) 
+		{
 			for (String aLabRow : labRow) {
 				LaboratoryRow laboratoryRow = new LaboratoryRow();
 				laboratoryRow.setLabId(laboratory);
-				laboratoryRow.setDescription(aLabRow);
-				rowRepository.save(laboratoryRow);
+				laboratoryRow.setDescription(aLabRow);	
+
+				LaboratoryRow savedLaboratoryRow = rowRepository.save(laboratoryRow);
+				result = result && (savedLaboratoryRow != null);
 			}
 		}
-		return newLaboratory;
+		
+		return result;
 	}
 
-	/**
-	 * Return a list of exams suitable for printing ({@link LaboratoryForPrint}s) 
-	 * between specified dates and matching passed exam name.
-	 *
-	 * @param exam - the exam name as {@code String}
-	 * @param dateFrom - the starting date for the date range
-	 * @param dateTo - the ending date for the date range
-	 * @return the list of {@link LaboratoryForPrint}s 
-	 * @throws OHServiceException
-	 */
-	public List<LaboratoryForPrint> getLaboratoryForPrint(String exam, LocalDateTime dateFrom, LocalDateTime dateTo) throws OHServiceException {
-		List<LaboratoryForPrint> pLaboratory = new ArrayList<>();
-		Iterable<Laboratory> laboritories = exam != null
-						? repository.findByLabDateBetweenAndExam_DescriptionContainingOrderByExam_Examtype_DescriptionDesc(
-										TimeTools.truncateToSeconds(dateFrom),
-										TimeTools.truncateToSeconds(dateTo),
-										exam)
-						: repository.findByLabDateBetweenOrderByExam_Examtype_DescriptionDesc(TimeTools.truncateToSeconds(dateFrom),
-										TimeTools.truncateToSeconds(dateTo));
-
-		for (Laboratory laboratory : laboritories) {
-			pLaboratory.add(new LaboratoryForPrint(
-							laboratory.getCode(),
-							laboratory.getExam(),
-							laboratory.getLabDate(),
-							laboratory.getResult()));
-		}
-		return pLaboratory;
-	}
 	/**
 	 * Inserts one Laboratory exam {@link Laboratory} with multiple results (Procedure Two)
 	 *
 	 * @param laboratory - the {@link Laboratory} to insert
 	 * @param labRow - the list of results ({@link String}s)
-	 * @return the newly persisted {@link Laboratory} object.
+	 * @return <code>true</code> if the exam has been inserted with all its results, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public Laboratory newLabSecondProcedure2(Laboratory laboratory, List<LaboratoryRow> labRow) throws OHServiceException {
-		Laboratory newLaboratory = newLaboratory(laboratory);
-		int newCode = newLaboratory.getCode();
-		if (newCode > 0) {
-			laboratory = repository.findById(newCode).orElse(null);
-			if (laboratory == null) {
-				throw new OHServiceException(new OHExceptionMessage("Laboratory with code '" + newCode + "' not found"));
-			}
+	public boolean newLabSecondProcedure2(Laboratory laboratory, List<LaboratoryRow> labRow) throws OHServiceException {
+		boolean result = true;
+		
+		int newCode = newLaboratory(laboratory);
+		if (newCode > 0) 
+		{
+			laboratory = repository.getOne(newCode);
 			for (LaboratoryRow aLabRow : labRow) {
 				aLabRow.setLabId(laboratory);
-				rowRepository.save(aLabRow);
+				//laboratoryRow.setDescription(aLabRow);	
+
+				LaboratoryRow savedLaboratoryRow = rowRepository.save(aLabRow);
+				result = result && (savedLaboratoryRow != null);
 			}
 		}
-		return newLaboratory;
+		
+		return result;
 	}
-
+	
 	/**
-	 * Update an already existing Laboratory exam {@link Laboratory}.
-	 *
+	 * Update an already existing Laboratory exam {@link Laboratory}. No commit is performed.
 	 * @param laboratory - the {@link Laboratory} to update
-	 * @return the updated {@link Laboratory} object.
+	 * @return <code>true</code> if the exam has been updated with all its results, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	private Laboratory updateLaboratory(Laboratory laboratory) throws OHServiceException {
-		return repository.save(laboratory);
+	private boolean updateLaboratory(Laboratory laboratory) throws OHServiceException	{
+		Laboratory savedLaboratory = repository.save(laboratory);
+
+		return (savedLaboratory != null);
 	}
 
 	/**
 	 * Update an already existing Laboratory exam {@link Laboratory} (Procedure One).
-	 * If the old exam was Procedure Two then all its related results are deleted.
-	 *
+	 * If old exam was Procedure Two all its releated result are deleted.
 	 * @param laboratory - the {@link Laboratory} to update
-	 * @return {@code true} if the exam has been updated, {@code false} otherwise
+	 * @return <code>true</code> if the exam has been updated, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public Laboratory updateLabFirstProcedure(Laboratory laboratory) throws OHServiceException {
-		Laboratory updatedLaborator = updateLaboratory(laboratory);
-		rowRepository.deleteByLaboratory_Code(updatedLaborator.getCode());
-		return updatedLaborator;
+	public boolean updateLabFirstProcedure(Laboratory laboratory) throws OHServiceException	{
+		boolean result = updateLaboratory(laboratory);
+		rowRepository.deleteByLaboratory_Code(laboratory.getCode());
+		
+		return result;
 	}
 
 	/**
 	 * Update an already existing Laboratory exam {@link Laboratory} (Procedure Two).
 	 * Previous results are deleted and replaced with new ones.
 	 * @param laboratory - the {@link Laboratory} to update
-	 * @return the updated {@link Laboratory} object.
+	 * @return <code>true</code> if the exam has been updated with all its results, <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public Laboratory updateLabSecondProcedure(Laboratory laboratory, List<String> labRow) throws OHServiceException {
-		Laboratory updatedLaboratory = updateLabFirstProcedure(laboratory);
-		for (String aLabRow : labRow) {
-			LaboratoryRow laboratoryRow = new LaboratoryRow();
-			laboratoryRow.setLabId(laboratory);
-			laboratoryRow.setDescription(aLabRow);
-			rowRepository.save(laboratoryRow);
+	public boolean updateLabSecondProcedure(Laboratory laboratory, List<String> labRow) throws OHServiceException {
+		boolean result = updateLabFirstProcedure(laboratory);
+		
+		if (result)	{
+			for (String aLabRow : labRow) {
+				LaboratoryRow laboratoryRow = new LaboratoryRow();
+				laboratoryRow.setLabId(laboratory);
+				laboratoryRow.setDescription(aLabRow);	
+				rowRepository.save(laboratoryRow);
+			}
 		}
-		return updatedLaboratory;
+		
+		return result;
 	}
 
 	/**
 	 * Delete a Laboratory exam {@link Laboratory} (Procedure One or Two).
 	 * Previous results, if any, are deleted as well.
 	 * @param aLaboratory - the {@link Laboratory} to delete
+	 * @return <code>true</code> if the exam has been deleted with all its results, if any. <code>false</code> otherwise
 	 * @throws OHServiceException
 	 */
-	public void deleteLaboratory(Laboratory aLaboratory) throws OHServiceException {
-		Laboratory objToRemove = repository.findById(aLaboratory.getCode()).orElse(null);
-		if (objToRemove == null) {
-			throw new OHServiceException(new OHExceptionMessage("Laboratory object not found to delete"));
-		}
+	public boolean deleteLaboratory(Laboratory aLaboratory) throws OHServiceException {
+		boolean result = true;
+		Laboratory objToRemove = repository.findOne(aLaboratory.getCode());
+		
 		if (objToRemove.getExam().getProcedure() == 2) {
 			rowRepository.deleteByLaboratory_Code(objToRemove.getCode());
 		}
-		repository.deleteById(objToRemove.getCode());
+		repository.delete(objToRemove.getCode());
+		
+		return result;
 	}
 
 	/**
 	 * Checks if the code is already in use
 	 *
 	 * @param code - the laboratory code
-	 * @return {@code true} if the code is already in use, {@code false} otherwise
+	 * @return <code>true</code> if the code is already in use, <code>false</code> otherwise
 	 * @throws OHServiceException 
 	 */
 	public boolean isCodePresent(Integer code) throws OHServiceException {
-		return repository.existsById(code);
+		return repository.exists(code);
 	}
 
-	public Optional<Laboratory> getLaboratory(int code) throws OHServiceException {
-		return repository.findById(code);
-	}
 
-	public PagedResponse<Laboratory> getLaboratoryPageable(Exam exam, LocalDateTime dateFrom, LocalDateTime dateTo, Patient patient, int page, int size)
-					throws OHServiceException {
-		Page<Laboratory> laboritories = null;
+  /*  public Integer newLabFirstProcedure2(Laboratory lab)throws OHServiceException {
+        System.out.println("ioOperations  nullllllllllllllllllllllllllllllll?");
+        System.out.println(repository == null);
+        return this.newLaboratory(lab);
+    }
 
-		if (exam != null && patient != null) {
-			laboritories = repository.findByLabDateBetweenAndExamDescriptionAndPatientCodePage(dateFrom, dateTo, exam, patient, PageRequest.of(page, size));
-		}
-		if (exam != null && patient == null) {
-			laboritories = repository.findByLabDateBetweenAndExam_DescriptionOrderByLabDateDescPage(dateFrom, dateTo, exam, PageRequest.of(page, size));
-		}
-		if (patient != null && exam == null) {
-			laboritories = repository.findByLabDateBetweenAndPatientCodePage(dateFrom, dateTo, patient, PageRequest.of(page, size));
-		}
-		if (patient == null && exam == null) {
-			laboritories = repository.findByLabDateBetweenOrderByLabDateDescPage(dateFrom, dateTo, PageRequest.of(page, size));
-		}
-		return setPaginationData(laboritories);
-	}
-
-	PagedResponse<Laboratory> setPaginationData(Page<Laboratory> pages) {
-		PagedResponse<Laboratory> data = new PagedResponse<>();
-		data.setData(pages.getContent());
-		data.setPageInfo(PageInfo.from(pages));
-		return data;
-	}
-
-	/**
-	 * Count active {@link Laboratory}s
-	 * 
-	 * @return the number of recorded {@link Laboratory}s
-	 * @throws OHServiceException
-	 */
-	public long countAllActiveLabs() {
-		return this.repository.countAllActiveLabs();
-	}
-
+    public Laboratory newLabSecondProcedure2(Laboratory lab, ArrayList<LaboratoryRow> laboratoryRows) throws OHServiceException{
+        Laboratory labo = repository.save(lab);
+        laboratoryRows.get(0).setLabId(labo);
+        for (LaboratoryRow laboratoryRow : laboratoryRows) {
+            laboratoryRow.setLabId(labo);
+            rowRepository.save(laboratoryRow);
+        }
+        return labo;
+    }*/
 }

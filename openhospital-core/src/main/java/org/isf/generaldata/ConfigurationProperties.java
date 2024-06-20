@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.generaldata;
 
@@ -38,7 +38,6 @@ public abstract class ConfigurationProperties {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationProperties.class);
 	private static final boolean EXIT_ON_FAIL = false;
-	private static boolean initialized = true;
 
 	private Properties prop;
 
@@ -67,7 +66,7 @@ public abstract class ConfigurationProperties {
 	 * @param fileProperties - the file name (to be available in the classpath)
 	 * @param logger - the {@link Logger} of the concrete class
 	 */
-	public static Properties loadPropertiesFile(String fileProperties, Logger logger) {
+	public static final Properties loadPropertiesFile(String fileProperties, Logger logger) {
 		return loadPropertiesFile(fileProperties, logger, false);
 	}
 
@@ -78,12 +77,11 @@ public abstract class ConfigurationProperties {
 	 * @param exitOnFail - if {@code true} the application will exit if configuration 
 	 * is missing, otherwise default values will be used
 	 */
-	private static Properties loadPropertiesFile(String fileProperties, Logger logger, boolean exitOnFail) {
+	private static final Properties loadPropertiesFile(String fileProperties, Logger logger, boolean exitOnFail) {
 		Properties prop = new Properties();
 		try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileProperties)) {
 			if (null == in) {
 				logger.error(">> '{}' file not found.", fileProperties);
-				initialized = false;
 				if (exitOnFail) {
 					System.exit(1);
 				}
@@ -93,10 +91,8 @@ public abstract class ConfigurationProperties {
 			logger.info("File {} loaded.", fileProperties);
 		} catch (IOException e) {
 			logger.error(">> '{}' file not found.", fileProperties);
-			initialized = false;
-			if (exitOnFail) {
+			if (exitOnFail)
 				System.exit(1);
-			}
 		}
 		return prop;
 	}
@@ -147,7 +143,7 @@ public abstract class ConfigurationProperties {
 	}
 
 	/**
-	 * Method to retrieve a double property
+	 * Method to retrieve an double property
 	 *
 	 * @param property
 	 * @param defaultValue
@@ -179,14 +175,5 @@ public abstract class ConfigurationProperties {
 			return defaultValue;
 		}
 		return value;
-	}
-
-	/**
-	 * Method to know the {@link ConfigurationProperties} initialization status.
-	 * 
-	 * @return {@code true} if the ConfigurationProperties is initialized, {@code false} otherwise
-	 */
-	public boolean isInitialized() {
-		return initialized;
 	}
 }

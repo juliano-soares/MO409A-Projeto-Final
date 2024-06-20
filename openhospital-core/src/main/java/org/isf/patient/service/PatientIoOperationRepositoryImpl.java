@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,22 +17,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.patient.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.isf.patient.model.Patient;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +59,7 @@ public class PatientIoOperationRepositoryImpl implements PatientIoOperationRepos
 	private String[] getWordsToSearchForInPatientsRepository(String regex) {
 		String[] words = new String[0];
 
-		if (regex != null && !regex.isEmpty()) {
+		if ((regex != null) && (!regex.equals(""))) {
 			String string = regex.trim().toLowerCase();
 			words = string.split(" ");
 		}
@@ -79,11 +79,11 @@ public class PatientIoOperationRepositoryImpl implements PatientIoOperationRepos
 		}
 
 		where.add(cb.or(
-				cb.equal(patientRoot.get("deleted"), 'N'),
+				cb.equal(patientRoot.get("deleted"), "N"),
 				cb.isNull(patientRoot.get("deleted"))
 		));
 
-		query.where(cb.and(where.toArray(new Predicate[0])));
+		query.where(cb.and(where.toArray(new Predicate[where.size()])));
 		query.orderBy(cb.desc(patientRoot.get("code")));
 
 		return query;
@@ -103,7 +103,7 @@ public class PatientIoOperationRepositoryImpl implements PatientIoOperationRepos
 	}
 
 	private String like(String word) {
-		return '%' + word + '%';
+		return "%" + word + "%";
 	}
 
 	public List<Patient> getPatientsByParams(Map<String, Object> params) {
@@ -113,7 +113,7 @@ public class PatientIoOperationRepositoryImpl implements PatientIoOperationRepos
 		Root<Patient> patient = query.from(Patient.class);
 
 		// Only not deleted patient
-		Predicate deletedN = cb.equal(patient.get("deleted"), 'N');
+		Predicate deletedN = cb.equal(patient.get("deleted"), "N");
 		Predicate deletedNull = cb.isNull(patient.get("deleted"));
 		Predicate notDeleted = cb.or(deletedN, deletedNull);
 
@@ -123,18 +123,19 @@ public class PatientIoOperationRepositoryImpl implements PatientIoOperationRepos
 			Path<String> keyPath = patient.get(entry.getKey());
 
 			if (entry.getKey().equals("birthDate")) {
-				LocalDateTime birthDateFrom = (LocalDateTime) entry.getValue();
-				LocalDateTime birthDateTo = birthDateFrom.plusDays(1);
-				predicates.add(cb.between(keyPath.as(LocalDateTime.class), birthDateFrom, birthDateTo));
+				Date birthDateFrom = (Date) entry.getValue();
+				Date birthDateTo = new Date(birthDateFrom.getTime() + (1000 * 60 * 60 * 24));
+				predicates.add(cb.between(keyPath.as(Date.class), birthDateFrom, birthDateTo));
 			} else {
 				if (entry.getValue() instanceof String) {
 					predicates.add(cb.like(cb.lower(keyPath), like(((String) entry.getValue()).toLowerCase())));
 				}
 			}
 		}
-		query.select(patient).where(cb.and(predicates.toArray(new Predicate[0])));
+		query.select(patient).where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
 
-		return entityManager.createQuery(query).getResultList();
+		return entityManager.createQuery(query)
+				.getResultList();
+
 	}
-
 }

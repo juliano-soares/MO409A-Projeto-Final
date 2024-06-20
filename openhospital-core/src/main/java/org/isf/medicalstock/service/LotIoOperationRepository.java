@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2024 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.medicalstock.service;
 
@@ -35,28 +35,20 @@ public interface LotIoOperationRepository extends JpaRepository<Lot, String> {
 
 	@Query("select l from Lot l where l.medical.code = :medical order by l.dueDate")
 	List<Lot> findByMedicalOrderByDueDate(@Param("medical") int medicalCode);
-
+	
 	@Query("select coalesce(sum(case when m.type.type like '+%' then m.quantity else -m.quantity end), 0) from Movement m where m.lot = :lot")
 	Integer getMainStoreQuantity(@Param("lot") Lot lot);
-
+	
 	@Query("select coalesce(sum(w.in_quantity - w.out_quantity),0) FROM MedicalWard w WHERE w.id.lot = :lot")
 	Double getWardsTotalQuantity(@Param("lot") Lot lot);
-
+	
 	@Query("select sum(w.in_quantity - w.out_quantity) FROM MedicalWard w WHERE w.id.lot = :lot and w.id.ward = :ward")
 	Double getQuantityByWard(@Param("lot") Lot lot, @Param("ward") Ward ward);
 
 	@Query(value = "select LT_ID_A,LT_PREP_DATE,LT_DUE_DATE,LT_COST,"
 			+ "SUM(IF(MMVT_TYPE LIKE '%+%',MMV_QTY,-MMV_QTY)) as quantity from "
-			+ "((OH_MEDICALDSRLOT join OH_MEDICALDSRSTOCKMOV on MMV_LT_ID_A=LT_ID_A) join OH_MEDICALDSR on MMV_MDSR_ID=MDSR_ID)"
-			+ " join OH_MEDICALDSRSTOCKMOVTYPE on MMV_MMVT_ID_A=MMVT_ID_A "
+			+ "((MEDICALDSRLOT join MEDICALDSRSTOCKMOV on MMV_LT_ID_A=LT_ID_A) join MEDICALDSR on MMV_MDSR_ID=MDSR_ID)"
+			+ " join MEDICALDSRSTOCKMOVTYPE on MMV_MMVT_ID_A=MMVT_ID_A "
 			+ "where LT_ID_A=:code group by LT_ID_A order by LT_DUE_DATE", nativeQuery = true)
 	List<Object[]> findAllWhereLot(@Param("code") String code);
-
-	@Query("SELECT m.lot.code, COALESCE(SUM(CASE WHEN m.type.type LIKE '+%' THEN m.quantity ELSE -m.quantity END), 0) " +
-					"FROM Movement m WHERE m.lot.code IN :lotCodes GROUP BY m.lot.code")
-	List<Object[]> getMainStoreQuantities(@Param("lotCodes") List<String> lotCodes);
-
-	@Query("SELECT w.id.lot.code, COALESCE(SUM(w.in_quantity - w.out_quantity), 0.0) " +
-					"FROM MedicalWard w WHERE w.id.lot.code IN :lotCodes GROUP BY w.id.lot.code")
-	List<Object[]> getWardsTotalQuantities(@Param("lotCodes") List<String> lotCodes);
 }

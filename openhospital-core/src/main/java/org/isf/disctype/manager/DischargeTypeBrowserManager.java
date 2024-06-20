@@ -1,6 +1,6 @@
 /*
  * Open Hospital (www.open-hospital.org)
- * Copyright © 2006-2023 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
+ * Copyright © 2006-2021 Informatici Senza Frontiere (info@informaticisenzafrontiere.org)
  *
  * Open Hospital is a free and open source software for healthcare data management.
  *
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.isf.disctype.manager;
 
@@ -30,19 +30,18 @@ import org.isf.generaldata.MessageBundle;
 import org.isf.utils.exception.OHDataValidationException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.utils.exception.model.OHExceptionMessage;
+import org.isf.utils.exception.model.OHSeverityLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DischargeTypeBrowserManager {
 
+	@Autowired
 	private DischargeTypeIoOperation ioOperations;
 
-	public DischargeTypeBrowserManager(DischargeTypeIoOperation dischargeTypeIoOperation) {
-		this.ioOperations = dischargeTypeIoOperation;
-	}
-
 	/**
-	 * Return all the {@link DischargeType}s in a list.
+	 * Method that returns all DischargeTypes in a list
 	 *
 	 * @return the list of all DischargeTypes (could be null)
 	 * @throws OHServiceException
@@ -52,31 +51,31 @@ public class DischargeTypeBrowserManager {
 	}
 
 	/**
-	 * Persist a new {@link DischargeType}.
+	 * Method that create a new DischargeType
 	 *
 	 * @param dischargeType
-	 * @return the persisted new DischargeType object.
+	 * @return true - if the new DischargeType has been inserted
 	 * @throws OHServiceException
 	 */
-	public DischargeType newDischargeType(DischargeType dischargeType) throws OHServiceException {
+	public boolean newDischargeType(DischargeType dischargeType) throws OHServiceException {
 		validateDischargeType(dischargeType, true);
 		return ioOperations.newDischargeType(dischargeType);
 	}
 
 	/**
-	 * Update an existing {@link DischargeType}.
+	 * Method that updates an already existing DischargeType
 	 *
 	 * @param dischargeType
-	 * @return the persisted updated DischargeType object.
+	 * @return true - if the existing DischargeType has been updated
 	 * @throws OHServiceException
 	 */
-	public DischargeType updateDischargeType(DischargeType dischargeType) throws OHServiceException {
+	public boolean updateDischargeType(DischargeType dischargeType) throws OHServiceException {
 		validateDischargeType(dischargeType, false);
 		return ioOperations.newDischargeType(dischargeType);
 	}
 
 	/**
-	 * Check if a {@link DischargeType} already exists.
+	 * Method that check if a DischargeType already exists
 	 *
 	 * @param code
 	 * @return true - if the DischargeType already exists
@@ -87,14 +86,15 @@ public class DischargeTypeBrowserManager {
 	}
 
 	/**
-	 * Delete a {@link DischargeType}.
+	 * Method that delete a DischargeType
 	 *
 	 * @param dischargeType
+	 * @return true - if the DischargeType has been deleted
 	 * @throws OHServiceException
 	 */
-	public void deleteDischargeType(DischargeType dischargeType) throws OHServiceException {
+	public boolean deleteDischargeType(DischargeType dischargeType) throws OHServiceException {
 		validateDeleteDischargeType(dischargeType);
-		ioOperations.deleteDischargeType(dischargeType);
+		return ioOperations.deleteDischargeType(dischargeType);
 	}
 
 	/**
@@ -105,8 +105,10 @@ public class DischargeTypeBrowserManager {
 	 */
 	protected void validateDeleteDischargeType(DischargeType dischargeType) throws OHDataValidationException {
 		List<OHExceptionMessage> errors = new ArrayList<>();
-		if ("D".equals(dischargeType.getCode())) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.disctype.youcannotdeletethisrecord.msg")));
+		if (dischargeType.getCode().equals("D")) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.disctype.youcannotdeletethisrecord.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
@@ -117,24 +119,35 @@ public class DischargeTypeBrowserManager {
 	 * Verify if the object is valid for CRUD and return a list of errors, if any
 	 *
 	 * @param dischargeType
-	 * @param insert {@code true} or updated {@code false}
+	 * @param insert <code>true</code> or updated <code>false</code>
 	 * @throws OHServiceException
 	 */
 	protected void validateDischargeType(DischargeType dischargeType, boolean insert) throws OHServiceException {
 		List<OHExceptionMessage> errors = new ArrayList<>();
 		String key = dischargeType.getCode();
-		if (key.isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertacode.msg")));
+		if (key.equals("")) {
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.getMessage("angal.common.pleaseinsertacode.msg"),
+					OHSeverityLevel.ERROR));
 		}
 		if (key.length() > 10) {
-			errors.add(new OHExceptionMessage(MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 10)));
+			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+					MessageBundle.formatMessage("angal.common.thecodeistoolongmaxchars.fmt.msg", 10),
+					OHSeverityLevel.ERROR));
 		}
 
-		if (insert && isCodePresent(key)) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg")));
+		if (insert) {
+			if (isCodePresent(key)) {
+				errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+						MessageBundle.getMessage("angal.common.thecodeisalreadyinuse.msg"),
+						OHSeverityLevel.ERROR));
+			}
 		}
-		if (dischargeType.getDescription().isEmpty()) {
-			errors.add(new OHExceptionMessage(MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg")));
+		if (dischargeType.getDescription().equals("")) {
+			errors.add(
+					new OHExceptionMessage(MessageBundle.getMessage("angal.common.error.title"),
+							MessageBundle.getMessage("angal.common.pleaseinsertavaliddescription.msg"),
+							OHSeverityLevel.ERROR));
 		}
 		if (!errors.isEmpty()) {
 			throw new OHDataValidationException(errors);
