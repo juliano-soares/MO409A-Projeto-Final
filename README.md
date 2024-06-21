@@ -3,7 +3,7 @@
 ## Integrantes
 
 - `234597` `Juliano Leonardo Soares`
-- `RA` `Nome Completo`
+- `183219` `Manoela Brandão Vicente Ferreira`
 
 ## Descrição
 
@@ -17,7 +17,7 @@ Para este projeto, será testado o módulo de `accounting` do Open Hospital. Est
 
 - [Documentação](https://github.com/informatici/openhospital-doc/blob/master/doc_user/UserManual.adoc#6-accounting-accounting)
 - [Open Hospital Core](https://github.com/informatici/openhospital-core)
-- [Relatório](https://docs.google.com/document/d/1QPTzuuXhVf_ZTcTnEHvfHTdjppFSIyp89n0R26jksx4/edit?usp=sharing)
+- [Relatório](https://www.overleaf.com/5443663846dctrwbmyvnwt#c21917)
 
 ## Tasks
 
