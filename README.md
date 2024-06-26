@@ -26,7 +26,7 @@ Para este projeto, será testado o módulo de `accounting` do Open Hospital. Est
     - [] Abstract
     - [] Introdução
     - [] Técnicas de Teste utilizadas
-    - ˜[DONE] Aplicação˜
+    - ˜˜[DONE] Aplicação˜˜
     - [] Teste de interface
     - [] Teste baseado e modelos de estado
     - [] Teste usando EvoSuite
@@ -42,4 +42,4 @@ Para este projeto, será testado o módulo de `accounting` do Open Hospital. Est
 - [] Testes usando o EvoSuite
 
 
-- ˜[DONE] Precisa mudar a versão do Core para java 8: https://github.com/informatici/openhospital-core/releases/tag/v1.11.5˜
+- ˜˜[DONE] Precisa mudar a versão do Core para java 8: https://github.com/informatici/openhospital-core/releases/tag/v1.11.5˜˜
