@@ -27,17 +27,14 @@ Para este projeto, será testado o módulo de `accounting` do Open Hospital. Est
     - [] Introdução
     - [] Técnicas de Teste utilizadas
     - Aplicação -> DONE
-    - [] Teste de interface
+    - [Manoela] Teste de interface
     - [] Teste baseado e modelos de estado
     - [] Teste usando EvoSuite
     - [] Discussão
     - [] Conclusão
     - [] Ref Bibliográfia
-- [Manoela] Testes de interface
-    - [] Entradas Relevantes e Domínios
-    - [] Classes de equivalência
-    - [] Criação de dados de teste
-    - [] Implemetação com JUnit
+    
+- Testes de interface -> DONE
 - [] Testes baseados em modelos de estados
 - [] Testes usando o EvoSuite
 
