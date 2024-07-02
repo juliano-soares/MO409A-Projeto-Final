@@ -29,7 +29,7 @@ Para este projeto, será testado o módulo de `accounting` do Open Hospital. Est
     - Aplicação -> DONE
     - [Manoela] Teste de interface
     - [] Teste baseado e modelos de estado
-    - [] Teste usando EvoSuite
+    - [Juliano] Teste usando EvoSuite -> Done
     - [] Discussão
     - [] Conclusão
     - [] Ref Bibliográfia
