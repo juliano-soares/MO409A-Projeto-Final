@@ -199,7 +199,21 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+			<plugin>
+                <groupId>org.graphwalker</groupId>
+                <artifactId>graphwalker-maven-plugin</artifactId>
+                <version>4.3.2</version>
+                <!-- Bind goals to the default lifecycle -->
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-sources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 	<dependencies>
@@ -461,10 +475,10 @@
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-classic</artifactId>
 				</exclusion>
-				<exclusion>
+				<!-- <exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-parent</artifactId>
-				</exclusion>
+				</exclusion> -->
 				<exclusion>
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
